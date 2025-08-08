@@ -278,4 +278,3 @@ docker compose exec api uv run -- pytest api/tests/test_api.py -k "test_api_user
 ## Developing in VS Code
 
 The project contains configuration files for devcontainers so it is possible to directly work inside the container within VS Code. When the project opens in the VS Code the popup will appear to reopen the project in container. An action **Dev Containers: Reopen in Container** is available as well. Click on the reopen button and select the container which you want to work on. When you want to switch from the frontend to the backend project run **Dev Containers: Switch container** action. In case you are done and you want to work in the parent folder run **Dev Containers: Reopen Folder Locally** action
-# elevate

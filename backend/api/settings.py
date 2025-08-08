@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "drf_spectacular",
+    "django_celery_beat",
     "api",
 ]
 
@@ -123,6 +124,13 @@ USE_TZ = True
 # Staticfiles
 ######################################################################
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+######################################################################
+# Media files
+######################################################################
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 ######################################################################
 # Rest Framework
@@ -138,6 +146,119 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
+}
+
+######################################################################
+# Social Media OAuth Settings
+######################################################################
+# Token encryption key (should be set in environment)
+TOKEN_ENCRYPTION_KEY = environ.get("TOKEN_ENCRYPTION_KEY", "your-secret-encryption-key-change-in-production")
+
+# Social Media Platform Configuration
+SOCIAL_MEDIA_PLATFORMS = {
+    'facebook': {
+        'client_id': environ.get('FACEBOOK_CLIENT_ID', ''),
+        'client_secret': environ.get('FACEBOOK_CLIENT_SECRET', ''),
+        'auth_url': 'https://www.facebook.com/v18.0/dialog/oauth',
+        'token_url': 'https://graph.facebook.com/v18.0/oauth/access_token',
+        'scope': 'email,public_profile,publish_actions',
+    },
+    'instagram': {
+        'client_id': environ.get('INSTAGRAM_CLIENT_ID', ''),
+        'client_secret': environ.get('INSTAGRAM_CLIENT_SECRET', ''),
+        'auth_url': 'https://api.instagram.com/oauth/authorize',
+        'token_url': 'https://api.instagram.com/oauth/access_token',
+        'scope': 'basic,public_content',
+    },
+    'linkedin': {
+        'client_id': environ.get('LINKEDIN_CLIENT_ID', ''),
+        'client_secret': environ.get('LINKEDIN_CLIENT_SECRET', ''),
+        'auth_url': 'https://www.linkedin.com/oauth/v2/authorization',
+        'token_url': 'https://www.linkedin.com/oauth/v2/accessToken',
+        'scope': 'r_liteprofile,r_emailaddress,w_member_social',
+    },
+    'youtube': {
+        'client_id': environ.get('YOUTUBE_CLIENT_ID', ''),
+        'client_secret': environ.get('YOUTUBE_CLIENT_SECRET', ''),
+        'auth_url': 'https://accounts.google.com/o/oauth2/v2/auth',
+        'token_url': 'https://oauth2.googleapis.com/token',
+        'scope': 'https://www.googleapis.com/auth/youtube.upload',
+    },
+    'tiktok': {
+        'client_id': environ.get('TIKTOK_CLIENT_KEY', ''),
+        'client_secret': environ.get('TIKTOK_CLIENT_SECRET', ''),
+        'auth_url': 'https://www.tiktok.com/v2/auth/authorize',
+        'token_url': 'https://open.tiktokapis.com/v2/oauth/token/',
+        'scope': 'user.info.basic,video.publish',
+    },
+    'pinterest': {
+        'client_id': environ.get('PINTEREST_CLIENT_ID', ''),
+        'client_secret': environ.get('PINTEREST_CLIENT_SECRET', ''),
+        'auth_url': 'https://www.pinterest.com/oauth/',
+        'token_url': 'https://api.pinterest.com/v5/oauth/token',
+        'scope': 'boards:read,pins:read,pins:write',
+    },
+}
+
+######################################################################
+# Celery Configuration
+######################################################################
+CELERY_BROKER_URL = environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = environ.get("CELERY_RESULT_BACKEND", "redis://localhost:6379/0")
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+
+# Celery Beat Schedule
+CELERY_BEAT_SCHEDULE = {
+    'refresh-social-media-tokens': {
+        'task': 'api.tasks.refresh_expired_tokens',
+        'schedule': 3600.0,  # Every hour
+    },
+    'process-scheduled-posts': {
+        'task': 'api.tasks.process_scheduled_posts',
+        'schedule': 300.0,  # Every 5 minutes
+    },
+}
+
+######################################################################
+# Logging Configuration
+######################################################################
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'social_media.log',
+            'formatter': 'verbose',
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'api.services': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'api.tasks': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
 }
 
 ######################################################################
@@ -158,6 +279,26 @@ UNFOLD = {
                         "title": _("Users"),
                         "icon": "person",
                         "link": reverse_lazy("admin:api_user_changelist"),
+                    },
+                    {
+                        "title": _("User Profiles"),
+                        "icon": "account_circle",
+                        "link": reverse_lazy("admin:api_userprofile_changelist"),
+                    },
+                    {
+                        "title": _("Custom Links"),
+                        "icon": "link",
+                        "link": reverse_lazy("admin:api_customlink_changelist"),
+                    },
+                    {
+                        "title": _("Social Icons"),
+                        "icon": "share",
+                        "link": reverse_lazy("admin:api_socialicon_changelist"),
+                    },
+                    {
+                        "title": _("CTA Banners"),
+                        "icon": "campaign",
+                        "link": reverse_lazy("admin:api_ctabanner_changelist"),
                     },
                     {
                         "title": _("Groups"),

@@ -8,8 +8,8 @@ services:
     volumes:
       - ./data:/var/lib/postgresql/data
     environment:
-      POSTGRES_PASSWORD: "change-password"
-      POSTGRES_DB: "db"
+      POSTGRES_PASSWORD: "BN123456"
+      POSTGRES_DB: "elevate"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 2s

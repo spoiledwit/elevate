@@ -59,7 +59,7 @@ MIDDLEWARE = [
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -265,15 +265,16 @@ LOGGING = {
 # Unfold
 ######################################################################
 UNFOLD = {
-    "SITE_HEADER": _("Turbo Admin"),
-    "SITE_TITLE": _("Turbo Admin"),
+    "SITE_HEADER": _("Elevate Admin"),
+    "SITE_TITLE": _("Elevate Admin"),
+    "DASHBOARD_CALLBACK": "api.views.dashboard_callback",
     "SIDEBAR": {
         "show_search": True,
         "show_all_applications": True,
         "navigation": [
             {
-                "title": _("Navigation"),
-                "separator": False,
+                "title": _("User Management"),
+                "separator": True,
                 "items": [
                     {
                         "title": _("Users"),
@@ -281,9 +282,25 @@ UNFOLD = {
                         "link": reverse_lazy("admin:api_user_changelist"),
                     },
                     {
+                        "title": _("Groups"),
+                        "icon": "group",
+                        "link": reverse_lazy("admin:auth_group_changelist"),
+                    },
+                    {
                         "title": _("User Profiles"),
                         "icon": "account_circle",
                         "link": reverse_lazy("admin:api_userprofile_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("Profile Components"),
+                "separator": True,
+                "items": [
+                    {
+                        "title": _("Social Icons"),
+                        "icon": "share",
+                        "link": reverse_lazy("admin:api_socialicon_changelist"),
                     },
                     {
                         "title": _("Custom Links"),
@@ -291,19 +308,62 @@ UNFOLD = {
                         "link": reverse_lazy("admin:api_customlink_changelist"),
                     },
                     {
-                        "title": _("Social Icons"),
-                        "icon": "share",
-                        "link": reverse_lazy("admin:api_socialicon_changelist"),
-                    },
-                    {
                         "title": _("CTA Banners"),
                         "icon": "campaign",
                         "link": reverse_lazy("admin:api_ctabanner_changelist"),
                     },
+                ],
+            },
+            {
+                "title": _("Social Media"),
+                "separator": True,
+                "items": [
                     {
-                        "title": _("Groups"),
-                        "icon": "label",
-                        "link": reverse_lazy("admin:auth_group_changelist"),
+                        "title": _("Platforms"),
+                        "icon": "apps",
+                        "link": reverse_lazy("admin:api_socialmediaplatform_changelist"),
+                    },
+                    {
+                        "title": _("Connections"),
+                        "icon": "cable",
+                        "link": reverse_lazy("admin:api_socialmediaconnection_changelist"),
+                    },
+                    {
+                        "title": _("Posts"),
+                        "icon": "post_add",
+                        "link": reverse_lazy("admin:api_socialmediapost_changelist"),
+                    },
+                    {
+                        "title": _("Post Templates"),
+                        "icon": "description",
+                        "link": reverse_lazy("admin:api_socialmediaposttemplate_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("AI & Automation"),
+                "separator": True,
+                "items": [
+                    {
+                        "title": _("Trigger Rules"),
+                        "icon": "rule",
+                        "link": reverse_lazy("admin:api_triggerrule_changelist"),
+                    },
+                    {
+                        "title": _("AI Chat History"),
+                        "icon": "chat",
+                        "link": reverse_lazy("admin:api_aichathistory_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("Billing"),
+                "separator": True,
+                "items": [
+                    {
+                        "title": _("Subscriptions"),
+                        "icon": "credit_card",
+                        "link": reverse_lazy("admin:api_subscription_changelist"),
                     },
                 ],
             },

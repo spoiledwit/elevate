@@ -1,0 +1,465 @@
+{% extends 'admin/base.html' %}
+
+{% load i18n %}
+
+{% block breadcrumbs %}{% endblock %}
+
+{% block title %}
+    {% if subtitle %}
+        {{ subtitle }} |
+    {% endif %}
+
+    {{ title }} | {{ site_title|default:_('Django site admin') }}
+{% endblock %}
+
+{% block branding %}
+    <h1 id="site-name"><a href="{% url 'admin:index' %}">{{ site_header|default:_('Django administration') }}</a></h1>
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  .stats-card {
+    background-color: white;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+    border-radius: 0.5rem;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .dark .stats-card {
+    background-color: #1e293b;
+    border-color: rgba(255, 255, 255, 0.05);
+  }
+  .stats-card:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+  }
+  .stats-value {
+    font-size: 1.5rem;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+    color: #1f2937;
+  }
+  .dark .stats-value {
+    color: white;
+  }
+  .stats-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.025em;
+    color: #6b7280;
+    text-transform: uppercase;
+  }
+  .dark .stats-label {
+    color: #d1d5db;
+  }
+  .stats-title {
+    font-size: 0.875rem;
+    color: #10b981;
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+  }
+  .dark .stats-title {
+    color: #34d399;
+  }
+  .chart-container {
+    background-color: white;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+  }
+  .dark .chart-container {
+    background-color: #1e293b;
+    border-color: rgba(255, 255, 255, 0.05);
+  }
+  .section-title {
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 1.25rem;
+    color: #374151;
+  }
+  .dark .section-title {
+    color: #e5e7eb;
+  }
+  .dashboard-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1.25rem;
+    color: #111827;
+  }
+  .dark .dashboard-title {
+    color: #f9fafb;
+  }
+  .category-heading {
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    color: #374151;
+  }
+  .dark .category-heading {
+    color: #e5e7eb;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-6 py-8">
+  <!-- Title -->
+  <h1 class="dashboard-title">{% trans "Elevate Analytics Dashboard" %}</h1>
+  
+  <!-- Main Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    
+    <a href="{% url 'admin:api_user_changelist' %}" class="stats-card">
+      <div class="stats-title">{% trans "Users" %}</div>
+      <div class="stats-value">{{ user_count }}</div>
+      <div class="stats-label">{% trans "Total Users" %}</div>
+    </a>
+    
+    <a href="{% url 'admin:api_userprofile_changelist' %}" class="stats-card">
+      <div class="stats-title">{% trans "Profiles" %}</div>
+      <div class="stats-value">{{ profile_count }}</div>
+      <div class="stats-label">{% trans "User Profiles" %}</div>
+    </a>
+    
+    <a href="{% url 'admin:api_subscription_changelist' %}" class="stats-card">
+      <div class="stats-title">{% trans "Subscriptions" %}</div>
+      <div class="stats-value">{{ active_subscriptions }}</div>
+      <div class="stats-label">{% trans "Active Plans" %}</div>
+    </a>
+    
+    <a href="{% url 'admin:api_socialmediaconnection_changelist' %}" class="stats-card">
+      <div class="stats-title">{% trans "Connections" %}</div>
+      <div class="stats-value">{{ social_connections }}</div>
+      <div class="stats-label">{% trans "Social Accounts" %}</div>
+    </a>
+  </div>
+
+  <!-- Secondary Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+    
+    <a href="{% url 'admin:api_customlink_changelist' %}" class="stats-card">
+      <div class="stats-title">{% trans "Links" %}</div>
+      <div class="stats-value">{{ total_custom_links }}</div>
+      <div class="stats-label">{% trans "Custom Links" %}</div>
+    </a>
+    
+    <a href="{% url 'admin:api_socialicon_changelist' %}" class="stats-card">
+      <div class="stats-title">{% trans "Icons" %}</div>
+      <div class="stats-value">{{ total_social_icons }}</div>
+      <div class="stats-label">{% trans "Social Icons" %}</div>
+    </a>
+    
+    <a href="{% url 'admin:api_ctabanner_changelist' %}" class="stats-card">
+      <div class="stats-title">{% trans "CTAs" %}</div>
+      <div class="stats-value">{{ total_cta_banners }}</div>
+      <div class="stats-label">{% trans "CTA Banners" %}</div>
+    </a>
+    
+    <a href="{% url 'admin:api_triggerrule_changelist' %}" class="stats-card">
+      <div class="stats-title">{% trans "Triggers" %}</div>
+      <div class="stats-value">{{ total_trigger_rules }}</div>
+      <div class="stats-label">{% trans "Automation Rules" %}</div>
+    </a>
+  </div>
+  
+  <!-- User & Post Activity Chart -->
+  <div class="chart-container">
+    <h2 class="category-heading">{% trans "Platform Activity (Last 30 Days)" %}</h2>
+    <div style="width: 100%; height: 400px;">
+      <canvas id="activityChart"></canvas>
+    </div>
+  </div>
+  
+  <!-- Secondary Charts Section -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+    <div class="chart-container">
+      <h2 class="section-title">{% trans "Platform Distribution" %}</h2>
+      <div style="width: 100%; height: 300px;">
+        <canvas id="platformChart"></canvas>
+      </div>
+    </div>
+    
+    <div class="chart-container">
+      <h2 class="section-title">{% trans "Post Status Overview" %}</h2>
+      <div style="width: 100%; height: 300px;">
+        <canvas id="statusChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Additional Charts -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+    <div class="chart-container">
+      <h2 class="section-title">{% trans "Subscription Status" %}</h2>
+      <div style="width: 100%; height: 300px;">
+        <canvas id="subscriptionChart"></canvas>
+      </div>
+    </div>
+    
+    <div class="chart-container">
+      <h2 class="section-title">{% trans "Top Platforms by Connections" %}</h2>
+      <div style="width: 100%; height: 300px;">
+        <canvas id="topPlatformsChart"></canvas>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Recent Activity Chart -->
+  <div class="chart-container mt-8">
+    <h2 class="section-title">{% trans "Recent Activity (Last 7 Days)" %}</h2>
+    <div style="width: 100%; height: 300px;">
+      <canvas id="recentActivityChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Load Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Data from Django
+  const dates = {{ dates_json|safe }};
+  const usersData = {{ users_data_json|safe }};
+  const postsData = {{ posts_data_json|safe }};
+  const connectionsData = {{ connections_data_json|safe }};
+  const platformLabels = {{ platform_labels_json|safe }};
+  const platformData = {{ platform_data_json|safe }};
+  const statusLabels = {{ status_labels_json|safe }};
+  const statusData = {{ status_data_json|safe }};
+  const subLabels = {{ sub_labels_json|safe }};
+  const subData = {{ sub_data_json|safe }};
+  const recentDates = {{ recent_dates_json|safe }};
+  const recentPosts = {{ recent_posts_json|safe }};
+  const recentAIChats = {{ recent_ai_chats_json|safe }};
+  const topPlatformNames = {{ top_platform_names_json|safe }};
+  const topPlatformCounts = {{ top_platform_counts_json|safe }};
+  
+  // Set up activity chart (line chart)
+  const activityCtx = document.getElementById('activityChart').getContext('2d');
+  new Chart(activityCtx, {
+    type: 'line',
+    data: {
+      labels: dates,
+      datasets: [
+        {
+          label: '{% trans "New Users" %}',
+          data: usersData,
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.2)',
+          tension: 0.1
+        },
+        {
+          label: '{% trans "Social Posts" %}',
+          data: postsData,
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59, 130, 246, 0.2)',
+          tension: 0.1
+        },
+        {
+          label: '{% trans "New Connections" %}',
+          data: connectionsData,
+          borderColor: '#f59e0b',
+          backgroundColor: 'rgba(245, 158, 11, 0.2)',
+          tension: 0.1
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top',
+        },
+        title: {
+          display: true,
+          text: '{% trans "User Registration, Posts & Connections Trend" %}'
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+  
+  // Platform distribution chart (doughnut)
+  const platformCtx = document.getElementById('platformChart').getContext('2d');
+  new Chart(platformCtx, {
+    type: 'doughnut',
+    data: {
+      labels: platformLabels,
+      datasets: [{
+        data: platformData,
+        backgroundColor: [
+          'rgba(16, 185, 129, 0.7)',
+          'rgba(59, 130, 246, 0.7)',
+          'rgba(245, 158, 11, 0.7)',
+          'rgba(239, 68, 68, 0.7)',
+          'rgba(139, 92, 246, 0.7)',
+          'rgba(236, 72, 153, 0.7)'
+        ],
+        borderColor: [
+          'rgba(16, 185, 129, 1)',
+          'rgba(59, 130, 246, 1)',
+          'rgba(245, 158, 11, 1)',
+          'rgba(239, 68, 68, 1)',
+          'rgba(139, 92, 246, 1)',
+          'rgba(236, 72, 153, 1)'
+        ],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'right',
+        }
+      }
+    }
+  });
+  
+  // Post status chart (bar)
+  const statusCtx = document.getElementById('statusChart').getContext('2d');
+  new Chart(statusCtx, {
+    type: 'bar',
+    data: {
+      labels: statusLabels,
+      datasets: [{
+        label: '{% trans "Posts by Status" %}',
+        data: statusData,
+        backgroundColor: [
+          'rgba(156, 163, 175, 0.7)', // Draft
+          'rgba(59, 130, 246, 0.7)',  // Scheduled
+          'rgba(245, 158, 11, 0.7)',  // Sending
+          'rgba(16, 185, 129, 0.7)',  // Sent
+          'rgba(239, 68, 68, 0.7)',   // Failed
+          'rgba(107, 114, 128, 0.7)'  // Cancelled
+        ],
+        borderColor: [
+          'rgba(156, 163, 175, 1)',
+          'rgba(59, 130, 246, 1)',
+          'rgba(245, 158, 11, 1)',
+          'rgba(16, 185, 129, 1)',
+          'rgba(239, 68, 68, 1)',
+          'rgba(107, 114, 128, 1)'
+        ],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+
+  // Subscription status chart (pie)
+  const subCtx = document.getElementById('subscriptionChart').getContext('2d');
+  new Chart(subCtx, {
+    type: 'pie',
+    data: {
+      labels: subLabels,
+      datasets: [{
+        data: subData,
+        backgroundColor: [
+          'rgba(16, 185, 129, 0.7)',
+          'rgba(239, 68, 68, 0.7)'
+        ],
+        borderColor: [
+          'rgba(16, 185, 129, 1)',
+          'rgba(239, 68, 68, 1)'
+        ],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+        }
+      }
+    }
+  });
+
+  // Top platforms chart (horizontal bar)
+  const topPlatformsCtx = document.getElementById('topPlatformsChart').getContext('2d');
+  new Chart(topPlatformsCtx, {
+    type: 'bar',
+    data: {
+      labels: topPlatformNames,
+      datasets: [{
+        label: '{% trans "Connections" %}',
+        data: topPlatformCounts,
+        backgroundColor: 'rgba(16, 185, 129, 0.7)',
+        borderColor: 'rgba(16, 185, 129, 1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+  
+  // Recent activity chart
+  const recentCtx = document.getElementById('recentActivityChart').getContext('2d');
+  new Chart(recentCtx, {
+    type: 'bar',
+    data: {
+      labels: recentDates,
+      datasets: [
+        {
+          label: '{% trans "Posts" %}',
+          data: recentPosts,
+          backgroundColor: 'rgba(59, 130, 246, 0.7)',
+          borderColor: 'rgba(59, 130, 246, 1)',
+          borderWidth: 1
+        },
+        {
+          label: '{% trans "AI Chats" %}',
+          data: recentAIChats,
+          backgroundColor: 'rgba(139, 92, 246, 0.7)',
+          borderColor: 'rgba(139, 92, 246, 1)',
+          borderWidth: 1
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+});
+</script>
+{% endblock %}

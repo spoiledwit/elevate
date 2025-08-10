@@ -182,7 +182,7 @@ class AIChatHistoryAdmin(ModelAdmin):
 
 # Social Media OAuth Admin
 @admin.register(SocialMediaPlatform)
-class SocialMediaPlatformAdmin(admin.ModelAdmin):
+class SocialMediaPlatformAdmin(ModelAdmin):
     list_display = ["name", "display_name", "is_active", "created_at"]
     list_filter = ["is_active", "created_at"]
     search_fields = ["name", "display_name"]
@@ -203,7 +203,7 @@ class SocialMediaPlatformAdmin(admin.ModelAdmin):
 
 
 @admin.register(SocialMediaConnection)
-class SocialMediaConnectionAdmin(admin.ModelAdmin):
+class SocialMediaConnectionAdmin(ModelAdmin):
     list_display = ["user", "platform", "platform_username", "is_active", "is_verified", "last_used_at"]
     list_filter = ["platform", "is_active", "is_verified", "created_at", "last_used_at"]
     search_fields = ["user__username", "platform__name", "platform_username"]
@@ -234,7 +234,7 @@ class SocialMediaConnectionAdmin(admin.ModelAdmin):
 
 
 @admin.register(SocialMediaPost)
-class SocialMediaPostAdmin(admin.ModelAdmin):
+class SocialMediaPostAdmin(ModelAdmin):
     list_display = ["user", "platform", "text_preview", "status", "scheduled_at", "sent_at", "created_at"]
     list_filter = ["status", "connection__platform", "created_at", "scheduled_at", "sent_at"]
     search_fields = ["user__username", "text", "connection__platform__name"]
@@ -273,7 +273,7 @@ class SocialMediaPostAdmin(admin.ModelAdmin):
 
 
 @admin.register(SocialMediaPostTemplate)
-class SocialMediaPostTemplateAdmin(admin.ModelAdmin):
+class SocialMediaPostTemplateAdmin(ModelAdmin):
     list_display = ["user", "name", "is_active", "is_public", "platforms_count", "created_at"]
     list_filter = ["is_active", "is_public", "created_at"]
     search_fields = ["user__username", "name", "description"]

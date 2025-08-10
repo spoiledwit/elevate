@@ -9,6 +9,7 @@ COPY pyproject.toml uv.lock ./
 
 RUN pip install uv && \
     uv venv && \
-    uv sync
+    uv sync && \
+    mkdir -p /app/logs
 
 EXPOSE 8000

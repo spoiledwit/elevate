@@ -5,7 +5,12 @@ import { twMerge } from 'tailwind-merge'
 
 import '@frontend/ui/styles/globals.css'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-sans'
+})
+
 
 export const metadata: Metadata = {
   title: 'Turbo - Django & Next.js Bootstrap Template'
@@ -23,8 +28,8 @@ export default function RootLayout({
         )}
       >
         <AuthProvider>
-          <div className="px-6">
-            <div className="container mx-auto my-12 max-w-6xl">{children}</div>
+          <div className="">
+            <div className="">{children}</div>
           </div>
         </AuthProvider>
       </body>

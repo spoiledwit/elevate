@@ -10,6 +10,8 @@ dependencies = [
     "drf-spectacular>=0.28",
     "django-unfold>=0.43.0",
     "pillow>=10.0.0",
+    # Stripe integration
+    "stripe>=8.0.0",
     # Social Media OAuth and API dependencies
     "requests>=2.31.0",
     "python-facebook-api>=0.1.0",
@@ -24,6 +26,10 @@ dependencies = [
     "celery>=5.3.0",
     "redis>=5.0.0",
     "django-celery-beat>=2.5.0",
+    # OpenAI integration
+    "openai>=1.54.0",
+    "cloudinary>=1.44.1",
+    "django-cloudinary-storage>=0.3.0",
 ]
 
 [dependency-groups]

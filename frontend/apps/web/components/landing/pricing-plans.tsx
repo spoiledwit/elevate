@@ -1,64 +1,121 @@
-export function PricingPlans() {
-  const plans = [
-    {
-      name: "Free Me",
-      price: "$0",
-      period: "per month",
-      billing: "billed yearly",
-      buttonStyle: "bg-black text-white",
-      popular: false,
-      features: [
-        "Custom Storefront Builder",
-        "Embedded Video + Banner CTAs"
-      ]
-    },
-    {
-      name: "Champion",
-      price: "$19.99",
-      period: "per month",
-      billing: "billed yearly",
-      buttonStyle: "bg-purple-500 text-white",
-      popular: true,
-      features: [
-        "Custom Storefront Builder",
-        "Content Scheduler + Auto-Posting",
-        "Canva / Google Drive Integration",
-        "AI Content Assistant (Basic)",
-        "Embedded Video + Banner CTAs",
-        "Link Performance Insights"
-      ]
-    },
-    {
-      name: "Elite Pro",
-      price: "$29.99",
-      period: "per month",
-      billing: "billed yearly",
-      buttonStyle: "bg-black text-white hover:bg-gray-800",
-      popular: false,
-      features: [
-        "Custom Storefront Builder",
-        "Content Scheduler + Auto-Posting",
-        "Canva / Google Drive Integration",
-        "AI Content Assistant (Basic)",
-        "Comment Trigger + DM Automation",
-        "Custom GPT Library Access",
-        "Embedded Video + Banner CTAs",
-        "Link Performance Insights",
-        "Link Heatmap"
-      ]
+"use client"
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import type { PaginatedPlanList, Subscription } from '@frontend/types/api'
+import { createCheckoutSessionAction } from '@/actions'
+
+interface PricingPlansProps {
+  plansData: PaginatedPlanList | null
+  isDashboard?: boolean
+  currentSubscription?: Subscription | { error: string } | null
+}
+
+export function PricingPlans({
+  plansData,
+  isDashboard = false,
+  currentSubscription
+}: PricingPlansProps) {
+  const router = useRouter()
+  const [loadingPlanId, setLoadingPlanId] = useState<number | null>(null)
+
+  // Handle button click based on context
+  const handleButtonClick = async (planId: number, planName: string) => {
+    if (!isDashboard) {
+      // Landing page: navigate to get-started
+      router.push('/get-started')
+      return
     }
-  ]
+
+    // Dashboard: create checkout session
+    setLoadingPlanId(planId)
+    try {
+      const result = await createCheckoutSessionAction({
+        plan_id: planId,
+        success_url: `${window.location.origin}/subscription?success=true`,
+        cancel_url: `${window.location.origin}/subscription?canceled=true`
+      })
+
+      if ('error' in result) {
+        alert(`Error: ${result.error}`)
+        return
+      }
+
+      // Redirect to Stripe checkout
+      window.location.href = result.checkout_url
+    } catch (error) {
+      console.error('Error creating checkout session:', error)
+      alert('Failed to start checkout process. Please try again.')
+    } finally {
+      setLoadingPlanId(null)
+    }
+  }
+
+  // Check if user has current subscription to this plan
+  const isCurrentPlan = (planId: number, isFree: boolean) => {
+    // If user has an active subscription, check if it matches this plan
+    if (currentSubscription && !('error' in currentSubscription) && currentSubscription.plan) {
+      return currentSubscription.plan.id === planId
+    }
+
+    // If no subscription and this is dashboard view and plan is free, mark as current
+    if (isDashboard && isFree && (!currentSubscription || 'error' in currentSubscription)) {
+      return true
+    }
+
+    return false
+  }
+
+  // Transform API data to match the existing interface
+  const plans = plansData?.results?.map((apiPlan) => {
+    const price = apiPlan.price === "0.00" ? "$0" : `$${apiPlan.price}`
+    const period = apiPlan.billing_period === "YEARLY" ? "per month" : "per month"
+    let billing = apiPlan.billing_period === "YEARLY" ? "billed yearly" : "billed monthly"
+
+    // Add trial information if available
+    if (apiPlan.trial_period_days && apiPlan.trial_period_days > 0) {
+      billing = `${apiPlan.trial_period_days}-day free trial, then ${billing}`
+    }
+
+    // Determine styling based on plan features
+    const buttonStyle = apiPlan.is_featured
+      ? "bg-purple-500 text-white"
+      : "bg-black text-white hover:bg-gray-800"
+
+    const isFree = apiPlan.price === "0.00"
+
+    return {
+      id: apiPlan.id,
+      name: apiPlan.name,
+      price,
+      period,
+      billing,
+      buttonStyle,
+      popular: apiPlan.is_featured,
+      features: apiPlan.features?.map(feature => feature.feature_name) || [],
+      hasTrial: apiPlan.trial_period_days && apiPlan.trial_period_days > 0,
+      trialDays: apiPlan.trial_period_days || 0,
+      isCurrentPlan: isCurrentPlan(apiPlan.id, isFree),
+      isFree
+    }
+  }) || []
 
   return (
     <section className="pb-20 px-8">
-      <div className="max-w-6xl mx-auto">
+      <div className={`max-w-6xl ${isDashboard ? '' : 'mx-auto'}`}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          {plans.map((plan, index) => (
+          {plans.map((plan) => (
             <div key={plan.name} className="relative">
-              {plan.popular && (
+              {plan.popular && !plan.isCurrentPlan && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
                   <span className="bg-purple-500 text-white px-4 py-1 rounded-full text-sm font-medium">
                     Popular
+                  </span>
+                </div>
+              )}
+              {plan.isCurrentPlan && (
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
+                  <span className="bg-green-500 text-white px-4 py-1 rounded-full text-sm font-medium">
+                    Current Plan
                   </span>
                 </div>
               )}
@@ -75,8 +132,20 @@ export function PricingPlans() {
                   <p className="text-gray-600 text-sm">{plan.billing}</p>
                 </div>
 
-                <button className={`w-full py-3 rounded-lg font-semibold text-lg mb-8 ${plan.buttonStyle}`}>
-                  Get Started
+                <button
+                  className={`w-full py-3 rounded-lg font-semibold text-lg mb-8 transition-all ${plan.isCurrentPlan
+                    ? 'bg-green-500 text-white cursor-default'
+                    : loadingPlanId === plan.id
+                      ? 'bg-gray-400 text-white cursor-not-allowed'
+                      : plan.buttonStyle
+                    }`}
+                  onClick={() => plan.isCurrentPlan ? undefined : handleButtonClick(plan.id, plan.name)}
+                  disabled={plan.isCurrentPlan || loadingPlanId === plan.id}
+                >
+                  {plan.isCurrentPlan ? 'Current Plan' :
+                    loadingPlanId === plan.id ? 'Loading...' :
+                      isDashboard && !plan.isFree ? 'Upgrade to This Plan' :
+                        plan.hasTrial ? `Start ${plan.trialDays}-Day Free Trial` : 'Get Started'}
                 </button>
 
                 <div className="flex-1">

@@ -1,0 +1,4 @@
+INFO 2025-08-13 19:00:26,895 stripe_service 29 281473555722272 Created Stripe product prod_SrSq0J2bUJ3cL3 for plan 5
+INFO 2025-08-13 19:00:27,408 stripe_service 29 281473555722272 Created Stripe price price_1RvjuRE3V7A3gKYDawZPXJkx for plan 5
+INFO 2025-08-13 19:00:27,882 stripe_service 29 281473555722272 Created Stripe product prod_SrSq8tSI6oh4nf for plan 6
+INFO 2025-08-13 19:00:28,375 stripe_service 29 281473555722272 Created Stripe price price_1RvjuSE3V7A3gKYDaZ9DEkSF for plan 6

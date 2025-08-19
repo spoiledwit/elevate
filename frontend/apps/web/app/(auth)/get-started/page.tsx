@@ -1,6 +1,7 @@
 import { registerAction } from '@/actions/register-action'
 import { MultiStepRegisterForm } from '@/components/forms/multi-step-register-form'
 import registerImage from '@/assets/auth/register.png'
+import logo from "@/assets/logo.png"
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -9,11 +10,11 @@ export const metadata: Metadata = {
 
 export default function GetStarted() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="h-screen flex flex-col overflow-hidden">
       {/* Top left logo */}
       <div className="absolute top-6 left-6 z-10">
         <a href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <img src={registerImage.src} alt="Elevate Social" className="h-8" />
+          <img src={logo.src} alt="Elevate Social" className="h-8" />
           <span className="font-semibold text-gray-700">elevate.social</span>
         </a>
       </div>

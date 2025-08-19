@@ -11,8 +11,11 @@ import { CTASection } from '@/components/landing/cta-section'
 import { FAQ } from '@/components/landing/faq'
 import { Footer } from '@/components/landing/footer'
 import { FloatingUsernameClaim } from '@/components/landing/floating-username-claim'
+import { getPlansAction } from '@/actions'
 
-export default function Home() {
+export default async function Home() {
+  // Fetch plans data on the server
+  const plansData = await getPlansAction()
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -20,7 +23,7 @@ export default function Home() {
       <CreatorsShowcase />
       <ContentConsistency />
       <FeaturesStack />
-      <PricingPlans />
+      <PricingPlans plansData={plansData} />
       <Testimonials />
       <ContentSection />
       <HowItWorks />

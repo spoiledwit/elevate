@@ -1,1 +1,1 @@
-# Social media OAuth and posting services
+# Services module for Elevate API

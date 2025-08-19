@@ -16,7 +16,7 @@ def dashboard_callback(request, context):
     # Get basic stats
     user_count = User.objects.count()
     profile_count = UserProfile.objects.count()
-    active_subscriptions = Subscription.objects.filter(is_active=True).count()
+    active_subscriptions = Subscription.objects.filter(status='ACTIVE').count()
     social_connections = SocialMediaConnection.objects.filter(is_active=True).count()
     
     # Get data for time-series charts (last 30 days)
@@ -71,8 +71,8 @@ def dashboard_callback(request, context):
         status_data.append(count)
     
     # Get subscription status data
-    active_subs = Subscription.objects.filter(is_active=True).count()
-    inactive_subs = Subscription.objects.filter(is_active=False).count()
+    active_subs = Subscription.objects.filter(status='ACTIVE').count()
+    inactive_subs = Subscription.objects.filter(status='INACTIVE').count()
     sub_labels = ['Active', 'Inactive']
     sub_data = [active_subs, inactive_subs]
     

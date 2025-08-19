@@ -5,6 +5,10 @@ from django.core.management.utils import get_random_secret_key
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
 ######################################################################
 # General
 ######################################################################
@@ -33,6 +37,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "cloudinary_storage",
+    "cloudinary",
     "rest_framework",
     "rest_framework_simplejwt",
     "drf_spectacular",
@@ -175,7 +181,7 @@ SOCIAL_MEDIA_PLATFORMS = {
         'client_secret': environ.get('LINKEDIN_CLIENT_SECRET', ''),
         'auth_url': 'https://www.linkedin.com/oauth/v2/authorization',
         'token_url': 'https://www.linkedin.com/oauth/v2/accessToken',
-        'scope': 'r_liteprofile,r_emailaddress,w_member_social',
+        'scope': 'r_liteprofile,r_emailaddress,w_member_social,w_organization_social,rw_organization_admin',
     },
     'youtube': {
         'client_id': environ.get('YOUTUBE_CLIENT_ID', ''),
@@ -201,6 +207,18 @@ SOCIAL_MEDIA_PLATFORMS = {
 }
 
 ######################################################################
+# Cloudinary Configuration
+######################################################################
+cloudinary.config(
+    cloud_name=environ.get('CLOUDINARY_CLOUD_NAME', ''),
+    api_key=environ.get('CLOUDINARY_API_KEY', ''),
+    api_secret=environ.get('CLOUDINARY_API_SECRET', ''),
+    secure=True
+)
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+######################################################################
 # Celery Configuration
 ######################################################################
 CELERY_BROKER_URL = environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0")
@@ -223,43 +241,85 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 ######################################################################
+# Email Configuration
+######################################################################
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = environ.get('DEFAULT_FROM_EMAIL', 'noreply@govara.com')
+
+######################################################################
 # Logging Configuration
 ######################################################################
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-            'style': '{',
-        },
-    },
     'handlers': {
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'social_media.log',
-            'formatter': 'verbose',
-        },
         'console': {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
         },
     },
     'loggers': {
-        'api.services': {
-            'handlers': ['file', 'console'],
+        'api.services.webhook_handlers': {
+            'handlers': ['console'],
             'level': 'INFO',
             'propagate': True,
         },
-        'api.tasks': {
-            'handlers': ['file', 'console'],
+        'api.services.stripe_service': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'api.services.integrations.meta_service': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'api.services.integrations.linkedin_service': {
+            'handlers': ['console'],
             'level': 'INFO',
             'propagate': True,
         },
     },
 }
+
+######################################################################
+# Stripe Configuration
+######################################################################
+STRIPE_PUBLISHABLE_KEY = environ.get("STRIPE_PUBLISHABLE_KEY", "")
+STRIPE_SECRET_KEY = environ.get("STRIPE_SECRET_KEY", "")
+STRIPE_WEBHOOK_SECRET = environ.get("STRIPE_WEBHOOK_SECRET", "")
+FRONTEND_URL=environ.get("FRONTEND_URL", "http://localhost:3000")
+
+######################################################################
+# Meta Integration Configuration
+######################################################################
+FACEBOOK_APP_ID = environ.get("FACEBOOK_APP_ID", "")
+FACEBOOK_APP_SECRET = environ.get("FACEBOOK_APP_SECRET", "")
+META_REDIRECT_URI = environ.get("META_REDIRECT_URI", f"{environ.get('BACKEND_URL', 'http://localhost:8000')}/api/integrations/meta/callback/")
+
+######################################################################
+# Pinterest Integration Configuration
+######################################################################
+PINTEREST_APP_ID = environ.get("PINTEREST_APP_ID", "")
+PINTEREST_APP_SECRET = environ.get("PINTEREST_APP_SECRET", "")
+PINTEREST_REDIRECT_URI = environ.get("PINTEREST_REDIRECT_URI", f"{environ.get('BACKEND_URL', 'http://localhost:8000')}/api/integrations/pinterest/callback/")
+
+######################################################################
+# LinkedIn Integration Configuration
+######################################################################
+LINKEDIN_CLIENT_ID = environ.get("LINKEDIN_CLIENT_ID", "")
+LINKEDIN_CLIENT_SECRET = environ.get("LINKEDIN_CLIENT_SECRET", "")
+LINKEDIN_REDIRECT_URI = environ.get("LINKEDIN_REDIRECT_URI", f"{environ.get('BACKEND_URL', 'http://localhost:8000')}/api/integrations/linkedin/callback/")
+
+######################################################################
+# OPENAI
+######################################################################
+OPENAI_API_KEY = environ.get("OPENAI_API_KEY", "")
 
 ######################################################################
 # Unfold
@@ -297,6 +357,11 @@ UNFOLD = {
                 "title": _("Profile Components"),
                 "separator": True,
                 "items": [
+                    {
+                        "title": _("User Social Links"),
+                        "icon": "public",
+                        "link": reverse_lazy("admin:api_usersociallinks_changelist"),
+                    },
                     {
                         "title": _("Social Icons"),
                         "icon": "share",
@@ -357,13 +422,49 @@ UNFOLD = {
                 ],
             },
             {
-                "title": _("Billing"),
+                "title": _("Billing & Payments"),
                 "separator": True,
                 "items": [
+                    {
+                        "title": _("Plans"),
+                        "icon": "payment",
+                        "link": reverse_lazy("admin:api_plan_changelist"),
+                    },
+                    {
+                        "title": _("Plan Features"),
+                        "icon": "featured_play_list",
+                        "link": reverse_lazy("admin:api_planfeature_changelist"),
+                    },
                     {
                         "title": _("Subscriptions"),
                         "icon": "credit_card",
                         "link": reverse_lazy("admin:api_subscription_changelist"),
+                    },
+                    {
+                        "title": _("Stripe Customers"),
+                        "icon": "person_outline",
+                        "link": reverse_lazy("admin:api_stripecustomer_changelist"),
+                    },
+                    {
+                        "title": _("Payment Events"),
+                        "icon": "receipt",
+                        "link": reverse_lazy("admin:api_paymentevent_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("Media Library"),
+                "separator": True,
+                "items": [
+                    {
+                        "title": _("Folders"),
+                        "icon": "folder",
+                        "link": reverse_lazy("admin:api_folder_changelist"),
+                    },
+                    {
+                        "title": _("Media Files"),
+                        "icon": "photo",
+                        "link": reverse_lazy("admin:api_media_changelist"),
                     },
                 ],
             },

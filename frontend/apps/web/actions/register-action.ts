@@ -15,8 +15,18 @@ export async function registerAction(
 
     await apiClient.users.usersCreate({
       username: data.username,
+      email: data.email,
       password: data.password,
-      password_retype: data.passwordRetype
+      password_retype: data.passwordRetype,
+      // Include social media links if provided
+      instagram: data.instagram || '',
+      facebook: data.facebook || '',
+      pinterest: data.pinterest || '',
+      linkedin: data.linkedin || '',
+      tiktok: data.tiktok || '',
+      youtube: data.youtube || '',
+      twitter: data.twitter || '',
+      website: data.website || '',
     })
 
     return true

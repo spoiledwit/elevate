@@ -4,14 +4,15 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group
 from unfold.admin import ModelAdmin
 from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
-from django.utils.html import format_html
-from django.urls import reverse
-from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy as _
+from .services.stripe_service import stripe_service
+from django.contrib import messages
 
 from .models import (
-    User, UserProfile, SocialIcon, CustomLink, CTABanner, Subscription,
+    User, UserProfile, UserSocialLinks, SocialIcon, CustomLink, CTABanner, Subscription,
     TriggerRule, AIChatHistory,
-    SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate
+    SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, PaymentEvent, Plan, PlanFeature, StripeCustomer,
+    Folder, Media
 )
 
 admin.site.unregister(Group)
@@ -50,6 +51,38 @@ class UserProfileAdmin(ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+
+@admin.register(UserSocialLinks)
+class UserSocialLinksAdmin(ModelAdmin):
+    list_display = ['user', 'links_count', 'created_at', 'modified_at']
+    list_filter = ['created_at', 'modified_at']
+    search_fields = ['user__username', 'user__email']
+    readonly_fields = ['created_at', 'modified_at']
+    fieldsets = (
+        ('User', {
+            'fields': ('user',)
+        }),
+        ('Social Media Links', {
+            'fields': ('instagram', 'facebook', 'pinterest', 'linkedin', 'tiktok', 'youtube', 'twitter')
+        }),
+        ('Additional Links', {
+            'fields': ('website',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'modified_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def links_count(self, obj):
+        """Count non-empty social links"""
+        count = 0
+        for field in ['instagram', 'facebook', 'pinterest', 'linkedin', 'tiktok', 'youtube', 'twitter', 'website']:
+            if getattr(obj, field, ''):
+                count += 1
+        return count
+    links_count.short_description = 'Active Links'
 
 
 @admin.register(SocialIcon)
@@ -113,24 +146,6 @@ class CTABannerAdmin(ModelAdmin):
     )
 
 
-@admin.register(Subscription)
-class SubscriptionAdmin(ModelAdmin):
-    list_display = ['user', 'stripe_subscription_id', 'start_date', 'end_date', 'is_active']
-    list_filter = ['is_active', 'start_date', 'end_date']
-    search_fields = ['user__username', 'user__email', 'stripe_subscription_id']
-    readonly_fields = ['created_at', 'modified_at']
-    fieldsets = (
-        ('Subscription Information', {
-            'fields': ('user', 'stripe_subscription_id', 'start_date', 'end_date', 'last_payment')
-        }),
-        ('Status', {
-            'fields': ('is_active',)
-        }),
-        ('Timestamps', {
-            'fields': ('created_at', 'modified_at'),
-            'classes': ('collapse',)
-        }),
-    )
 
 
 
@@ -302,3 +317,186 @@ class SocialMediaPostTemplateAdmin(ModelAdmin):
     
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('user').prefetch_related('platforms')
+
+
+# STRIPE ADMIN #
+
+
+class PlanFeatureInline(admin.TabularInline):
+    model = PlanFeature
+    extra = 1
+    fields = ("feature_key", "feature_name", "feature_value", "is_highlight", "sort_order")
+
+
+@admin.register(Plan)
+class PlanAdmin(ModelAdmin):
+    list_display = ("name", "price", "billing_period", "is_active", "is_featured", "subscription_count", "stripe_synced", "created_at")
+    list_filter = ("billing_period", "is_active", "is_featured", "created_at")
+    search_fields = ("name", "description")
+    prepopulated_fields = {"slug": ("name",)}
+    readonly_fields = ("created_at", "modified_at", "stripe_product_id", "stripe_price_id")
+    inlines = [PlanFeatureInline]
+    actions = ["sync_to_stripe"]
+    
+    fieldsets = (
+        (None, {
+            "fields": ("name", "slug", "description")
+        }),
+        ("Pricing", {
+            "fields": ("price", "billing_period", "trial_period_days")
+        }),
+        ("Display Options", {
+            "fields": ("is_active", "is_featured", "sort_order")
+        }),
+        ("Stripe Integration", {
+            "fields": ("stripe_product_id", "stripe_price_id"),
+            "classes": ("collapse",),
+            "description": "These fields are automatically managed when the plan is saved."
+        }),
+        ("Timestamps", {
+            "fields": ("created_at", "modified_at"),
+            "classes": ("collapse",)
+        })
+    )
+    
+    def subscription_count(self, obj):
+        return obj.subscriptions.count()
+    subscription_count.short_description = "Active Subscriptions"
+    
+    def stripe_synced(self, obj):
+        """Check if plan is synced to Stripe"""
+        return bool(obj.stripe_product_id and obj.stripe_price_id)
+    stripe_synced.boolean = True
+    stripe_synced.short_description = "Synced to Stripe"
+    
+    def save_model(self, request, obj, form, change):
+        """Override save to sync with Stripe"""
+        super().save_model(request, obj, form, change)
+        
+        try:
+            # Sync to Stripe
+            result = stripe_service.sync_plan_to_stripe(obj)
+            messages.success(
+                request,
+                f"Plan '{obj.name}' synced to Stripe successfully. "
+                f"Product ID: {result['stripe_product_id']}, "
+                f"Price ID: {result['stripe_price_id']}"
+            )
+        except Exception as e:
+            messages.error(
+                request,
+                f"Failed to sync plan to Stripe: {str(e)}"
+            )
+    
+    @admin.action(description="Sync selected plans to Stripe")
+    def sync_to_stripe(self, request, queryset):
+        """Admin action to sync plans to Stripe"""
+        success_count = 0
+        error_count = 0
+        
+        for plan in queryset:
+            try:
+                stripe_service.sync_plan_to_stripe(plan)
+                success_count += 1
+            except Exception as e:
+                error_count += 1
+                messages.error(request, f"Error syncing {plan.name}: {str(e)}")
+        
+        if success_count:
+            messages.success(
+                request,
+                f"Successfully synced {success_count} plan(s) to Stripe"
+            )
+        if error_count:
+            messages.error(
+                request,
+                f"Failed to sync {error_count} plan(s) to Stripe"
+            )
+
+
+@admin.register(PlanFeature)
+class PlanFeatureAdmin(ModelAdmin):
+    list_display = ("plan", "feature_name", "feature_value", "is_highlight", "sort_order")
+    list_filter = ("plan", "is_highlight")
+    search_fields = ("feature_name", "feature_key", "feature_value")
+    ordering = ("plan", "sort_order", "feature_name")
+
+
+@admin.register(StripeCustomer)
+class StripeCustomerAdmin(ModelAdmin):
+    list_display = ("user", "stripe_customer_id", "created_at")
+    search_fields = ("stripe_customer_id", "user__username", "user__email")
+
+
+@admin.register(Subscription)
+class SubscriptionAdmin(ModelAdmin):
+    list_display = ("user", "plan", "status", "current_period_start", "current_period_end", "created_at")
+    list_filter = ("status", "plan", "created_at")
+    search_fields = ("user__username", "user__email", "plan__name", "stripe_subscription_id")
+    readonly_fields = ("created_at",)
+
+
+@admin.register(PaymentEvent)
+class PaymentEventAdmin(ModelAdmin):
+    list_display = ("user", "event_type", "created_at")
+    search_fields = ("stripe_event_id", "event_type", "user__username", "user__email")
+
+
+# Media Library Admin
+@admin.register(Folder)
+class FolderAdmin(ModelAdmin):
+    list_display = ['user', 'name', 'is_default', 'media_count', 'created_at']
+    list_filter = ['is_default', 'created_at']
+    search_fields = ['user__username', 'user__email', 'name', 'description']
+    readonly_fields = ['created_at', 'modified_at']
+    fieldsets = (
+        ('Folder Information', {
+            'fields': ('user', 'name', 'description', 'is_default')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'modified_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def media_count(self, obj):
+        return obj.media_files.count()
+    media_count.short_description = 'Media Count'
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user').prefetch_related('media_files')
+
+
+@admin.register(Media)
+class MediaAdmin(ModelAdmin):
+    list_display = ['user', 'file_name', 'folder', 'file_size_display', 'used_in_posts_count', 'created_at']
+    list_filter = ['folder', 'created_at']
+    search_fields = ['user__username', 'user__email', 'file_name', 'folder__name']
+    readonly_fields = ['created_at', 'modified_at', 'image']
+    fieldsets = (
+        ('Media Information', {
+            'fields': ('user', 'folder', 'file_name')
+        }),
+        ('File Details', {
+            'fields': ('image', 'file_size', 'used_in_posts_count')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'modified_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def file_size_display(self, obj):
+        if obj.file_size:
+            # Convert bytes to KB/MB
+            if obj.file_size < 1024:
+                return f"{obj.file_size} B"
+            elif obj.file_size < 1024 * 1024:
+                return f"{obj.file_size // 1024} KB"
+            else:
+                return f"{obj.file_size // (1024 * 1024)} MB"
+        return "Unknown"
+    file_size_display.short_description = 'File Size'
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user', 'folder')

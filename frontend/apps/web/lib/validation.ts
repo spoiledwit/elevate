@@ -7,9 +7,19 @@ const loginFormSchema = z.object({
 
 const registerFormSchema = z
   .object({
-    username: z.string().min(6),
-    password: z.string().min(6),
-    passwordRetype: z.string().min(6)
+    username: z.string().min(3),
+    email: z.string().email('Please enter a valid email'),
+    password: z.string().min(8),
+    passwordRetype: z.string().min(8),
+    // Optional social media links
+    instagram: z.string().url().optional().or(z.literal('')),
+    facebook: z.string().url().optional().or(z.literal('')),
+    pinterest: z.string().url().optional().or(z.literal('')),
+    linkedin: z.string().url().optional().or(z.literal('')),
+    tiktok: z.string().url().optional().or(z.literal('')),
+    youtube: z.string().url().optional().or(z.literal('')),
+    twitter: z.string().url().optional().or(z.literal('')),
+    website: z.string().url().optional().or(z.literal(''))
   })
   .refine((data) => data.password === data.passwordRetype, {
     message: 'Passwords are not matching',

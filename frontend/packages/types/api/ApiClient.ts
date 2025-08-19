@@ -1,42 +1,61 @@
-/* generated using openapi-typescript-codegen -- do no edit */
+/* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { BaseHttpRequest } from './core/BaseHttpRequest'
-import type { OpenAPIConfig } from './core/OpenAPI'
-import { FetchHttpRequest } from './core/FetchHttpRequest'
-
-import { SchemaService } from './services/SchemaService'
-import { TokenService } from './services/TokenService'
-import { UsersService } from './services/UsersService'
-
-type HttpRequestConstructor = new (config: OpenAPIConfig) => BaseHttpRequest
-
+import type { BaseHttpRequest } from './core/BaseHttpRequest';
+import type { OpenAPIConfig } from './core/OpenAPI';
+import { FetchHttpRequest } from './core/FetchHttpRequest';
+import { AiService } from './services/AiService';
+import { AuthService } from './services/AuthService';
+import { IntegrationsService } from './services/IntegrationsService';
+import { MediaService } from './services/MediaService';
+import { PlansService } from './services/PlansService';
+import { PostsService } from './services/PostsService';
+import { ProfilesService } from './services/ProfilesService';
+import { SchemaService } from './services/SchemaService';
+import { SubscriptionsService } from './services/SubscriptionsService';
+import { TokenService } from './services/TokenService';
+import { UsersService } from './services/UsersService';
+import { WebhooksService } from './services/WebhooksService';
+type HttpRequestConstructor = new (config: OpenAPIConfig) => BaseHttpRequest;
 export class ApiClient {
-  public readonly schema: SchemaService
-  public readonly token: TokenService
-  public readonly users: UsersService
-
-  public readonly request: BaseHttpRequest
-
-  constructor(
-    config?: Partial<OpenAPIConfig>,
-    HttpRequest: HttpRequestConstructor = FetchHttpRequest
-  ) {
-    this.request = new HttpRequest({
-      BASE: config?.BASE ?? '',
-      VERSION: config?.VERSION ?? '0.0.0',
-      WITH_CREDENTIALS: config?.WITH_CREDENTIALS ?? false,
-      CREDENTIALS: config?.CREDENTIALS ?? 'include',
-      TOKEN: config?.TOKEN,
-      USERNAME: config?.USERNAME,
-      PASSWORD: config?.PASSWORD,
-      HEADERS: config?.HEADERS,
-      ENCODE_PATH: config?.ENCODE_PATH
-    })
-
-    this.schema = new SchemaService(this.request)
-    this.token = new TokenService(this.request)
-    this.users = new UsersService(this.request)
-  }
+    public readonly ai: AiService;
+    public readonly auth: AuthService;
+    public readonly integrations: IntegrationsService;
+    public readonly media: MediaService;
+    public readonly plans: PlansService;
+    public readonly posts: PostsService;
+    public readonly profiles: ProfilesService;
+    public readonly schema: SchemaService;
+    public readonly subscriptions: SubscriptionsService;
+    public readonly token: TokenService;
+    public readonly users: UsersService;
+    public readonly webhooks: WebhooksService;
+    public readonly request: BaseHttpRequest;
+    constructor(config?: Partial<OpenAPIConfig>, HttpRequest: HttpRequestConstructor = FetchHttpRequest) {
+        this.request = new HttpRequest({
+            BASE: config?.BASE ?? '',
+            VERSION: config?.VERSION ?? '0.0.0',
+            WITH_CREDENTIALS: config?.WITH_CREDENTIALS ?? false,
+            CREDENTIALS: config?.CREDENTIALS ?? 'include',
+            TOKEN: config?.TOKEN,
+            USERNAME: config?.USERNAME,
+            PASSWORD: config?.PASSWORD,
+            HEADERS: config?.HEADERS,
+            ENCODE_PATH: config?.ENCODE_PATH,
+        });
+        this.ai = new AiService(this.request);
+        this.auth = new AuthService(this.request);
+        this.integrations = new IntegrationsService(this.request);
+        this.media = new MediaService(this.request);
+        this.plans = new PlansService(this.request);
+        this.posts = new PostsService(this.request);
+        this.profiles = new ProfilesService(this.request);
+        this.schema = new SchemaService(this.request);
+        this.subscriptions = new SubscriptionsService(this.request);
+        this.token = new TokenService(this.request);
+        this.users = new UsersService(this.request);
+        this.webhooks = new WebhooksService(this.request);
+    }
 }
+

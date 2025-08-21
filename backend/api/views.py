@@ -2,6 +2,7 @@ import json
 from datetime import timedelta
 from django.utils import timezone
 from django.db.models import Sum, Count, Q
+
 from .models import (
     User, UserProfile, SocialIcon, CustomLink, CTABanner, 
     Subscription, TriggerRule, AIChatHistory,

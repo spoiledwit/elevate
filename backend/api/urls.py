@@ -5,6 +5,12 @@ from django.conf.urls.static import static
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework import routers
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from django.http import JsonResponse
+from django.views.generic import RedirectView
+
+def health_check(request):
+    """Simple health check endpoint"""
+    return JsonResponse({"status": "healthy"})
 
 from .apis.auth import (
     UserViewSet, UserProfileViewSet
@@ -63,10 +69,12 @@ router.register("plans", PlanViewSet, basename="api-plans")
 router.register("ai", OpenAIViewSet, basename="api-ai")
 
 urlpatterns = [
+    path("", RedirectView.as_view(url="/admin/", permanent=True), name="root_redirect"),
     path(
         "api/schema/swagger-ui/",
         SpectacularSwaggerView.as_view(url_name="schema"),
     ),
+    path("health/", health_check, name="health_check"),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/", include(router.urls)),
     

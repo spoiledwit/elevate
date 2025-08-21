@@ -30,6 +30,7 @@ dependencies = [
     "openai>=1.54.0",
     "cloudinary>=1.44.1",
     "django-cloudinary-storage>=0.3.0",
+    "whitenoise>=6.9.0",
 ]
 
 [dependency-groups]

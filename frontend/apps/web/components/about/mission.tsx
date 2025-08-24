@@ -1,5 +1,5 @@
-import img4 from '@/assets/about/founder/img4.jpeg'
-import img5 from '@/assets/about/founder/img5.jpeg'
+import img4 from '../../assets/about/founder/img4.jpeg'
+import img5 from '../../assets/about/founder/img5.jpeg'
 
 export function AboutMission() {
   return (

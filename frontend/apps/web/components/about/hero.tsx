@@ -1,5 +1,5 @@
-import sparkle from '@/assets/about/sparkle.svg'
-import smile from '@/assets/about/smile.svg'
+import sparkle from '../../assets/about/sparkle.svg'
+import smile from '../../assets/about/smile.svg'
 import { CreatorsShowcase } from '../landing/creators-showcase'
 
 export function AboutHero() {
@@ -8,7 +8,7 @@ export function AboutHero() {
       {/* Purple blur decorative elements */}
       <div className="absolute top-0 right-0 w-[450px] h-[450px] bg-purple-300 rounded-full blur-3xl opacity-25"></div>
       <div className="absolute bottom-0 left-0 w-[450px] h-[450px] bg-purple-300 rounded-full blur-3xl opacity-20"></div>
-      
+
       {/* Background decorative elements */}
       <div className="max-w-6xl mx-auto px-8 text-center relative z-10 pt-8">
         {/* Main heading with sparkle icon */}

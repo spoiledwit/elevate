@@ -1,4 +1,4 @@
-import graphic from '@/assets/about/graphic.png'
+import graphic from '../../assets/about/graphic.png'
 
 export function AboutStory() {
   return (

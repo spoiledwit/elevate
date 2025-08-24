@@ -67,7 +67,7 @@ export function PostCreatorManager({ initialPlatforms }: PostCreatorManagerProps
     } else {
       return status === 'draft' 
         ? await saveAsDraftAction(dataWithStatus)
-        : await schedulePostAction(dataWithStatus)
+        : await schedulePostAction(dataWithStatus as CreatePostData & { scheduled_at: string })
     }
   }
 

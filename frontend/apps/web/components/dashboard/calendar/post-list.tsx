@@ -190,11 +190,11 @@ export function PostList({ posts }: PostListProps) {
                           if (!platform) return null
                           const PlatformIcon = platform.icon
                           return (
-                            <PlatformIcon 
-                              key={platformId}
-                              className={cn("w-4 h-4", platform.color)} 
-                              title={platform.name}
-                            />
+                            <span key={platformId} title={platform.name}>
+                              <PlatformIcon 
+                                className={cn("w-4 h-4", platform.color)} 
+                              />
+                            </span>
                           )
                         })}
                       </div>

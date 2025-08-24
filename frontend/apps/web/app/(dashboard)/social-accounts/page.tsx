@@ -1,6 +1,8 @@
 import { getPlatformStatusAction } from '@/actions'
 import { SocialAccountsManager } from '@/components/dashboard/social-accounts/SocialAccountsManager'
 
+export const dynamic = 'force-dynamic'
+
 interface Platform {
   name: string
   display_name: string

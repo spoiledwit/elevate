@@ -109,7 +109,7 @@ const templates = [
   }
 ]
 
-const categories = [...new Set(templates.map(t => t.category))]
+const categories = Array.from(new Set(templates.map(t => t.category)))
 
 export function BannerTemplates({ onClose, onTemplateSelect }: BannerTemplatesProps) {
   const handleTemplateSelect = (template: any) => {

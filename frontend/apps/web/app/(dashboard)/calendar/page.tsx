@@ -1,6 +1,8 @@
 import { getPostsAction } from '@/actions'
 import { CalendarManager } from '@/components/dashboard/calendar/CalendarManager'
 
+export const dynamic = 'force-dynamic'
+
 // Types for calendar posts (matching the expected Post interface from calendar components)
 interface CalendarPost {
   id: string

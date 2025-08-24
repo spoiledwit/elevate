@@ -3,6 +3,7 @@ import { MultiStepRegisterForm } from '@/components/forms/multi-step-register-fo
 import registerImage from '@/assets/auth/register.png'
 import logo from "@/assets/logo.png"
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 
 export const metadata: Metadata = {
   title: 'Get Started - Elevate Social'
@@ -22,7 +23,9 @@ export default function GetStarted() {
       <div className="flex-1 flex w-full justify-between items-center">
         {/* Left side - Form */}
         <div className='flex-1 p-8 flex items-center justify-center'>
-          <MultiStepRegisterForm onSubmitHandler={registerAction} />
+          <Suspense fallback={<div>Loading...</div>}>
+            <MultiStepRegisterForm onSubmitHandler={registerAction} />
+          </Suspense>
         </div>
 
         {/* Right side - Image */}

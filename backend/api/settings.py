@@ -18,7 +18,7 @@ SECRET_KEY = environ.get("SECRET_KEY", get_random_secret_key())
 
 DEBUG = environ.get("DEBUG", "") == "1"
 
-ALLOWED_HOSTS = ["localhost", "api"]
+ALLOWED_HOSTS = ["localhost", "api", "77d705372425.ngrok-free.app", "*.ngrok-free.app", "*.ngrok.io"]
 
 WSGI_APPLICATION = "api.wsgi.application"
 

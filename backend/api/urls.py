@@ -69,6 +69,13 @@ from .apis.media import (
     media_stats,
     move_media_to_folder,
 )
+from .apis.webhooks import FacebookWebhookView
+from .apis.comments import (
+    subscribe_page_webhooks,
+    get_post_comments,
+    reply_to_comment,
+    list_facebook_pages,
+)
 
 router = routers.DefaultRouter()
 router.register("users", UserViewSet, basename="api-users")
@@ -109,7 +116,10 @@ urlpatterns = [
     path("api/subscriptions/create-portal/", CreatePortalSessionView.as_view(), name="create_portal_session"),
     path("api/subscriptions/current/", CurrentSubscriptionView.as_view(), name="current_subscription"),
     path("api/subscriptions/cancel/", CancelSubscriptionView.as_view(), name="cancel_subscription"),
+    
+    # Webhook URLs
     path("api/webhooks/stripe/", StripeWebhookView.as_view(), name="stripe_webhook"),
+    path("api/webhooks/facebook/", FacebookWebhookView.as_view(), name="facebook_webhook"),
     
     # Meta Integration URLs
     path("api/integrations/meta/auth/", MetaAuthUrlView.as_view(), name="meta_auth_url"),
@@ -161,6 +171,12 @@ urlpatterns = [
     path("api/media/bulk-delete/", bulk_delete_media, name="media_bulk_delete"),
     path("api/media/stats/", media_stats, name="media_stats"),
     path("api/media/move/", move_media_to_folder, name="media_move_to_folder"),
+    
+    # Comment Management URLs
+    path("api/comments/pages/", list_facebook_pages, name="comments_facebook_pages"),
+    path("api/comments/subscribe-webhooks/", subscribe_page_webhooks, name="comments_subscribe_webhooks"),
+    path("api/comments/", get_post_comments, name="comments_get_post_comments"),
+    path("api/comments/reply/", reply_to_comment, name="comments_reply"),
     
     path("admin/", admin.site.urls),
     

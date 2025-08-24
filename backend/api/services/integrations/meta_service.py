@@ -6,6 +6,7 @@ for Facebook Pages and Instagram Business accounts.
 """
 import requests
 import logging
+import json
 from typing import Dict, Any, Optional, List
 from urllib.parse import urlencode
 from django.conf import settings
@@ -53,7 +54,7 @@ class MetaService(BaseIntegrationService):
         params = {
             'client_id': self.app_id,
             'redirect_uri': self.redirect_uri,
-            'scope': 'instagram_basic,instagram_content_publish,pages_show_list,pages_manage_posts,business_management,instagram_manage_insights',
+            'scope': 'instagram_basic,instagram_content_publish,pages_show_list,pages_manage_posts,pages_manage_engagement,pages_read_engagement,pages_manage_metadata,business_management,instagram_manage_insights',
             'response_type': 'code',
         }
         
@@ -250,6 +251,222 @@ class MetaService(BaseIntegrationService):
         except Exception as e:
             self.log_error(f"Failed to disconnect connection {connection.id}", e)
             return False
+    
+    def get_post_comments(self, post_id: str, connection: SocialMediaConnection) -> Dict[str, Any]:
+        """
+        Get comments for a specific Facebook post.
+        
+        Args:
+            post_id: Facebook post ID
+            connection: SocialMediaConnection instance
+            
+        Returns:
+            Dict containing comments data
+        """
+        try:
+            url = f"{self.graph_api_base}/{post_id}/comments"
+            params = {
+                'access_token': connection.access_token,
+                'fields': 'id,message,from,created_time,parent',
+                'limit': 100
+            }
+            
+            response = requests.get(url, params=params)
+            response.raise_for_status()
+            
+            data = response.json()
+            
+            self.log_info(f"Retrieved {len(data.get('data', []))} comments for post {post_id}")
+            return {
+                'success': True,
+                'comments': data.get('data', []),
+                'paging': data.get('paging', {})
+            }
+            
+        except Exception as e:
+            self.log_error(f"Failed to get comments for post {post_id}", e)
+            return {'success': False, 'error': str(e)}
+    
+    def reply_to_comment(self, comment_id: str, message: str, connection: SocialMediaConnection) -> Dict[str, Any]:
+        """
+        Reply to a Facebook comment.
+        
+        Args:
+            comment_id: Facebook comment ID to reply to
+            message: Reply message text
+            connection: SocialMediaConnection instance
+            
+        Returns:
+            Dict containing reply information
+        """
+        try:
+            url = f"{self.graph_api_base}/{comment_id}/comments"
+            data = {
+                'message': message,
+                'access_token': connection.access_token
+            }
+            
+            response = requests.post(url, data=data)
+            response.raise_for_status()
+            
+            result = response.json()
+            
+            self.log_info(f"Successfully replied to comment {comment_id}")
+            return {
+                'success': True,
+                'reply_id': result['id'],
+                'message': message
+            }
+            
+        except Exception as e:
+            self.log_error(f"Failed to reply to comment {comment_id}", e)
+            return {'success': False, 'error': str(e)}
+    
+    def send_private_reply(self, page_id: str, comment_id: str, message: str, connection: SocialMediaConnection) -> Dict[str, Any]:
+        """
+        Send a private message reply to a comment (one-time DM).
+        
+        Args:
+            page_id: Facebook page ID
+            comment_id: Comment ID to reply to privately
+            message: Private message text
+            connection: SocialMediaConnection instance
+            
+        Returns:
+            Dict containing private reply information
+        """
+        try:
+            url = f"{self.graph_api_base}/{page_id}/messages"
+            data = {
+                'recipient': json.dumps({'comment_id': comment_id}),
+                'message': json.dumps({'text': message}),
+                'access_token': connection.access_token
+            }
+            
+            response = requests.post(url, data=data)
+            response.raise_for_status()
+            
+            result = response.json()
+            
+            self.log_info(f"Successfully sent private reply for comment {comment_id}")
+            return {
+                'success': True,
+                'message_id': result.get('message_id', ''),
+                'message': message
+            }
+            
+        except Exception as e:
+            self.log_error(f"Failed to send private reply for comment {comment_id}", e)
+            return {'success': False, 'error': str(e)}
+    
+    def subscribe_page_to_webhooks(self, page_id: str, connection: SocialMediaConnection) -> Dict[str, Any]:
+        """
+        Subscribe a Facebook page to webhooks for real-time notifications.
+        
+        Args:
+            page_id: Facebook page ID
+            connection: SocialMediaConnection instance
+            
+        Returns:
+            Dict containing subscription result
+        """
+        try:
+            url = f"{self.graph_api_base}/{page_id}/subscribed_apps"
+            data = {
+                'subscribed_fields': 'feed,mention',
+                'access_token': connection.access_token
+            }
+            
+            logger.info(f"Subscribing page {page_id} to webhooks with data: {data}")
+            
+            response = requests.post(url, data=data)
+            
+            # Log the response details for debugging
+            logger.info(f"Facebook API response status: {response.status_code}")
+            logger.info(f"Facebook API response headers: {response.headers}")
+            
+            try:
+                response_data = response.json()
+                logger.info(f"Facebook API response data: {response_data}")
+            except:
+                logger.info(f"Facebook API response text: {response.text}")
+                response_data = {'raw_response': response.text}
+            
+            if response.status_code != 200:
+                error_msg = f"Facebook API error {response.status_code}: {response_data}"
+                logger.error(error_msg)
+                return {
+                    'success': False,
+                    'error': error_msg,
+                    'status_code': response.status_code,
+                    'response_data': response_data
+                }
+            
+            response.raise_for_status()
+            
+            self.log_info(f"Successfully subscribed page {page_id} to webhooks")
+            return {
+                'success': True,
+                'result': response_data
+            }
+            
+        except requests.exceptions.HTTPError as e:
+            # Try to get more specific error from response
+            try:
+                error_data = response.json()
+                error_msg = f"Facebook API HTTP {response.status_code}: {error_data.get('error', {}).get('message', str(e))}"
+                detailed_error = error_data.get('error', {})
+                
+                logger.error(f"HTTP Error subscribing page {page_id}: {error_msg}")
+                logger.error(f"Error details: {detailed_error}")
+                
+                return {
+                    'success': False,
+                    'error': error_msg,
+                    'status_code': response.status_code,
+                    'error_details': detailed_error
+                }
+            except:
+                error_msg = f"HTTP {response.status_code}: {response.text}"
+                logger.error(f"Failed to parse error response: {error_msg}")
+                return {'success': False, 'error': error_msg, 'status_code': response.status_code}
+                
+        except Exception as e:
+            error_msg = f"Exception subscribing page {page_id} to webhooks: {str(e)}"
+            self.log_error(error_msg, e)
+            return {'success': False, 'error': error_msg}
+    
+    def unsubscribe_page_from_webhooks(self, page_id: str, connection: SocialMediaConnection) -> Dict[str, Any]:
+        """
+        Unsubscribe a Facebook page from webhooks.
+        
+        Args:
+            page_id: Facebook page ID
+            connection: SocialMediaConnection instance
+            
+        Returns:
+            Dict containing unsubscription result
+        """
+        try:
+            url = f"{self.graph_api_base}/{page_id}/subscribed_apps"
+            params = {
+                'access_token': connection.access_token
+            }
+            
+            response = requests.delete(url, params=params)
+            response.raise_for_status()
+            
+            result = response.json()
+            
+            self.log_info(f"Successfully unsubscribed page {page_id} from webhooks")
+            return {
+                'success': True,
+                'result': result
+            }
+            
+        except Exception as e:
+            self.log_error(f"Failed to unsubscribe page {page_id} from webhooks", e)
+            return {'success': False, 'error': str(e)}
     
     def _exchange_code_for_token(self, auth_code: str) -> str:
         """Exchange authorization code for short-lived access token."""

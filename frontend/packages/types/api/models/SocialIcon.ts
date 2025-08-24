@@ -4,7 +4,9 @@
 /* eslint-disable */
 import type { PlatformEnum } from './PlatformEnum';
 export type SocialIcon = {
+    readonly id: number;
     platform: PlatformEnum;
     url: string;
+    is_active?: boolean;
 };
 

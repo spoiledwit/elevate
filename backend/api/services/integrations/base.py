@@ -18,7 +18,8 @@ class BaseIntegrationService(ABC):
     and implement the required methods.
     """
     
-    def __init__(self):
+    def __init__(self, connection=None):
+        self.connection = connection
         self.platform_name = self.__class__.__name__.replace('Service', '').lower()
         self.logger = logging.getLogger(f"api.services.integrations.{self.platform_name}")
     

@@ -27,7 +27,7 @@ def refresh_expired_tokens():
     for connection in connections:
         try:
             service = SocialMediaServiceFactory.get_service(connection.platform.name, connection)
-            success = service.refresh_access_token()
+            success = service.refresh_token(connection)
             
             if success:
                 refreshed_count += 1
@@ -75,7 +75,9 @@ def process_scheduled_posts():
                 post.connection
             )
             
-            result = service.post_content(post.text, post.media_urls)
+            # Get first media URL if any
+            media_url = post.media_urls[0] if post.media_urls else None
+            result = service.publish_post(post.connection, post.text, media_url)
             
             if result.get('success'):
                 post.status = 'sent'
@@ -136,7 +138,9 @@ def retry_failed_posts():
                 post.connection
             )
             
-            result = service.post_content(post.text, post.media_urls)
+            # Get first media URL if any
+            media_url = post.media_urls[0] if post.media_urls else None
+            result = service.publish_post(post.connection, post.text, media_url)
             
             if result.get('success'):
                 post.status = 'sent'
@@ -168,46 +172,63 @@ def retry_failed_posts():
 
 
 @shared_task
-def validate_connections():
-    """Validate all active connections"""
-    logger.info("Starting connection validation task")
+def publish_scheduled_post(post_id):
+    """Publish a single scheduled post immediately"""
+    logger.info(f"Publishing post {post_id} immediately")
     
-    connections = SocialMediaConnection.objects.filter(is_active=True)
-    
-    valid_count = 0
-    invalid_count = 0
-    
-    for connection in connections:
+    try:
+        # Get the post
+        post = SocialMediaPost.objects.get(id=post_id)
+        
+        # Skip if not in sending status
+        if post.status != 'sending':
+            logger.warning(f"Post {post_id} is not in sending status, skipping")
+            return {'success': False, 'error': f'Post is in {post.status} status'}
+        
+        # Get service and publish
+        service = SocialMediaServiceFactory.get_service(
+            post.connection.platform.name, 
+            post.connection
+        )
+        
+        # Get first media URL if any
+        media_url = post.media_urls[0] if post.media_urls else None
+        result = service.publish_post(post.connection, post.text, media_url)
+        
+        if result.get('success'):
+            post.status = 'sent'
+            post.sent_at = timezone.now()
+            post.platform_post_id = result.get('post_id', '')
+            post.platform_post_url = result.get('post_url', '')
+            post.error_message = ''
+            logger.info(f"Post {post_id} published successfully")
+        else:
+            post.status = 'failed'
+            post.error_message = result.get('error', 'Unknown error')
+            logger.error(f"Post {post_id} failed: {result.get('error')}")
+        
+        post.save()
+        
+        return {
+            'success': result.get('success', False),
+            'post_id': post_id,
+            'status': post.status,
+            'error': result.get('error') if not result.get('success') else None
+        }
+        
+    except SocialMediaPost.DoesNotExist:
+        logger.error(f"Post {post_id} not found")
+        return {'success': False, 'error': 'Post not found'}
+    except Exception as e:
+        logger.error(f"Error publishing post {post_id}: {str(e)}")
         try:
-            service = SocialMediaServiceFactory.get_service(connection.platform.name, connection)
-            is_valid = service.validate_connection()
-            
-            if is_valid:
-                connection.is_verified = True
-                connection.last_error = ""
-                valid_count += 1
-                logger.info(f"Connection valid: {connection.user.username} - {connection.platform.name}")
-            else:
-                connection.is_verified = False
-                connection.last_error = "Connection validation failed"
-                invalid_count += 1
-                logger.warning(f"Connection invalid: {connection.user.username} - {connection.platform.name}")
-            
-            connection.save()
-            
-        except Exception as e:
-            connection.is_verified = False
-            connection.last_error = str(e)
-            connection.save()
-            invalid_count += 1
-            logger.error(f"Error validating connection {connection.id}: {str(e)}")
-    
-    logger.info(f"Connection validation completed: {valid_count} valid, {invalid_count} invalid")
-    return {
-        'valid_count': valid_count,
-        'invalid_count': invalid_count,
-        'total_processed': len(connections)
-    }
+            post = SocialMediaPost.objects.get(id=post_id)
+            post.status = 'failed'
+            post.error_message = str(e)
+            post.save()
+        except:
+            pass
+        return {'success': False, 'error': str(e)}
 
 
 @shared_task

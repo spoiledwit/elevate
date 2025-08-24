@@ -11,7 +11,7 @@ export type SocialMediaPostList = {
     readonly platform_name: string;
     readonly platform_username: string;
     text: string;
-    media_urls?: any;
+    readonly media_urls: string;
     status?: StatusD18Enum;
     scheduled_at?: string | null;
     sent_at?: string | null;

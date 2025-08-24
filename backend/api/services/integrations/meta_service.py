@@ -29,8 +29,9 @@ class MetaService(BaseIntegrationService):
     - Token refresh and management
     """
     
-    def __init__(self):
+    def __init__(self, connection=None):
         super().__init__()
+        self.connection = connection
         self.app_id = getattr(settings, 'FACEBOOK_APP_ID', '')
         self.app_secret = getattr(settings, 'FACEBOOK_APP_SECRET', '')
         self.redirect_uri = getattr(settings, 'META_REDIRECT_URI', '')
@@ -52,7 +53,7 @@ class MetaService(BaseIntegrationService):
         params = {
             'client_id': self.app_id,
             'redirect_uri': self.redirect_uri,
-            'scope': 'instagram_basic,instagram_content_publish,pages_show_list,pages_manage_posts',
+            'scope': 'instagram_basic,instagram_content_publish,pages_show_list,pages_manage_posts,business_management,instagram_manage_insights',
             'response_type': 'code',
         }
         
@@ -87,26 +88,54 @@ class MetaService(BaseIntegrationService):
             accounts_data = self._get_user_accounts(long_token_data['access_token'])
             logger.debug(f"Got accounts data: {accounts_data}")
             
+            print("\n" + "="*80)
+            print("FACEBOOK PAGES AND INSTAGRAM ACCOUNTS DISCOVERY")
+            print("="*80)
+            
             # Step 4: Create connections for each account
             connections = []
             
             # Create Facebook page connections
             pages = accounts_data.get('pages', [])
-            logger.debug(f"Found {len(pages)} Facebook pages: {pages}")
-            for page in pages:
+            print(f"\n--- FACEBOOK PAGES FOUND: {len(pages)} ---")
+            for i, page in enumerate(pages, 1):
+                print(f"\nPage {i}:")
+                print(f"  ID: {page.get('id')}")
+                print(f"  Name: {page.get('name')}")
+                print(f"  Has Token: {'access_token' in page}")
+                print(f"  Has Instagram: {'instagram_business_account' in page}")
+                
                 logger.debug(f"Creating Facebook connection for page: {page}")
-                connection = self._create_facebook_connection(user, page, long_token_data)
-                connections.append(connection)
-                logger.debug(f"Created Facebook connection: {connection}")
+                try:
+                    connection = self._create_facebook_connection(user, page, long_token_data)
+                    connections.append(connection)
+                    print(f"  ✓ Facebook connection created: {connection.id}")
+                except Exception as e:
+                    print(f"  ✗ Failed to create Facebook connection: {str(e)}")
+                    logger.error(f"Failed to create Facebook connection for page {page.get('name')}: {e}")
             
             # Create Instagram business connections
             ig_accounts = accounts_data.get('instagram_accounts', [])
-            logger.debug(f"Found {len(ig_accounts)} Instagram accounts: {ig_accounts}")
-            for ig_account in ig_accounts:
+            print(f"\n--- INSTAGRAM ACCOUNTS FOUND: {len(ig_accounts)} ---")
+            for i, ig_account in enumerate(ig_accounts, 1):
+                print(f"\nInstagram Account {i}:")
+                print(f"  ID: {ig_account.get('id')}")
+                print(f"  Username: {ig_account.get('username')}")
+                print(f"  Name: {ig_account.get('name')}")
+                print(f"  Page ID: {ig_account.get('page_id')}")
+                print(f"  Has Token: {'access_token' in ig_account}")
+                
                 logger.debug(f"Creating Instagram connection for account: {ig_account}")
-                connection = self._create_instagram_connection(user, ig_account, long_token_data)
-                connections.append(connection)
-                logger.debug(f"Created Instagram connection: {connection}")
+                try:
+                    connection = self._create_instagram_connection(user, ig_account, long_token_data)
+                    connections.append(connection)
+                    print(f"  ✓ Instagram connection created: {connection.id}")
+                except Exception as e:
+                    print(f"  ✗ Failed to create Instagram connection: {str(e)}")
+                    logger.error(f"Failed to create Instagram connection for account {ig_account.get('username')}: {e}")
+            
+            print(f"\n--- TOTAL CONNECTIONS CREATED: {len(connections)} ---")
+            print("="*80)
             
             self.log_info(
                 f"Successfully connected {len(connections)} Meta accounts for user {user.username}",
@@ -255,57 +284,146 @@ class MetaService(BaseIntegrationService):
     
     def _get_user_accounts(self, access_token: str) -> Dict[str, Any]:
         """Get user's Facebook pages and Instagram business accounts."""
-        # Get Facebook pages
-        pages_url = f"{self.graph_api_base}/me/accounts"
-        pages_params = {
-            'access_token': access_token,
-            'fields': 'id,name,access_token,instagram_business_account'
-        }
-        
-        logger.debug(f"Requesting Facebook pages from: {pages_url}")
-        logger.debug(f"Request params: {pages_params}")
-        
-        pages_response = requests.get(pages_url, params=pages_params)
-        logger.debug(f"Facebook pages API response status: {pages_response.status_code}")
-        logger.debug(f"Facebook pages API response: {pages_response.text}")
-        
-        pages_response.raise_for_status()
-        pages_data = pages_response.json()
-        logger.debug(f"Parsed pages data: {pages_data}")
+        print("\n" + "-"*80)
+        print("FETCHING USER ACCOUNTS FROM FACEBOOK API")
+        print("-"*80)
         
         instagram_accounts = []
         pages = []
         
-        # Process pages and extract Instagram business accounts
-        for page in pages_data.get('data', []):
-            pages.append({
-                'id': page['id'],
-                'name': page['name'],
-                'access_token': page['access_token']
-            })
+        # Get Facebook pages with pagination
+        pages_url = f"{self.graph_api_base}/me/accounts"
+        pages_params = {
+            'access_token': access_token,
+            'fields': 'id,name,access_token,instagram_business_account',
+            'limit': 100  # Get more pages per request
+        }
+        
+        page_count = 0
+        request_count = 0
+        
+        while pages_url:
+            request_count += 1
+            print(f"\nRequest #{request_count}: {pages_url}")
+            print(f"With fields: {pages_params.get('fields', 'N/A')}")
             
-            # Check if page has Instagram business account
-            if 'instagram_business_account' in page:
-                ig_id = page['instagram_business_account']['id']
+            pages_response = requests.get(pages_url, params=pages_params)
+            print(f"Response status: {pages_response.status_code}")
+            
+            pages_response.raise_for_status()
+            pages_data = pages_response.json()
+            
+            current_batch = pages_data.get('data', [])
+            print(f"Pages in this batch: {len(current_batch)}")
+            page_count += len(current_batch)
+            
+            # Check if there's pagination
+            if 'paging' in pages_data:
+                print(f"Has pagination: YES")
+                if 'next' in pages_data.get('paging', {}):
+                    pages_url = pages_data['paging']['next']
+                    pages_params = {}  # Clear params for next URL (already included in next URL)
+                    print(f"Next page URL found - continuing...")
+                else:
+                    print(f"No next page - ending pagination")
+                    pages_url = None
+            else:
+                print(f"No pagination - ending")
+                pages_url = None
+            
+            # Process pages and extract Instagram business accounts
+            print(f"\n--- PROCESSING BATCH #{request_count} PAGES ---")
+            for idx, page in enumerate(current_batch, 1):
+                global_idx = len(pages) + idx
+                print(f"\nPage {global_idx}: {page.get('name', 'Unknown')}")
+                print(f"  Page ID: {page.get('id')}")
+                print(f"  Has access_token: {'access_token' in page}")
+                print(f"  Has instagram_business_account: {'instagram_business_account' in page}")
                 
-                # Get Instagram account details
-                ig_url = f"{self.graph_api_base}/{ig_id}"
-                ig_params = {
-                    'access_token': page['access_token'],
-                    'fields': 'id,username,name,profile_picture_url'
-                }
+                pages.append({
+                    'id': page['id'],
+                    'name': page['name'],
+                    'access_token': page['access_token']
+                })
                 
-                ig_response = requests.get(ig_url, params=ig_params)
-                if ig_response.status_code == 200:
-                    ig_data = ig_response.json()
-                    instagram_accounts.append({
-                        'id': ig_data['id'],
-                        'username': ig_data.get('username', ''),
-                        'name': ig_data.get('name', ''),
-                        'profile_picture_url': ig_data.get('profile_picture_url', ''),
+                # Check if page has Instagram business account
+                if 'instagram_business_account' in page:
+                    ig_id = page['instagram_business_account']['id']
+                    print(f"  Instagram Business Account ID: {ig_id}")
+                    
+                    # Get Instagram account details
+                    ig_url = f"{self.graph_api_base}/{ig_id}"
+                    ig_params = {
                         'access_token': page['access_token'],
-                        'page_id': page['id']
-                    })
+                        'fields': 'id,username,name,profile_picture_url'
+                    }
+                    
+                    print(f"  Fetching Instagram details from: {ig_url}")
+                    ig_response = requests.get(ig_url, params=ig_params)
+                    print(f"  Instagram API response status: {ig_response.status_code}")
+                    
+                    if ig_response.status_code == 200:
+                        ig_data = ig_response.json()
+                        print(f"  Instagram username: {ig_data.get('username', 'N/A')}")
+                        print(f"  Instagram name: {ig_data.get('name', 'N/A')}")
+                        
+                        instagram_accounts.append({
+                            'id': ig_data['id'],
+                            'username': ig_data.get('username', ''),
+                            'name': ig_data.get('name', ''),
+                            'profile_picture_url': ig_data.get('profile_picture_url', ''),
+                            'access_token': page['access_token'],
+                            'page_id': page['id']
+                        })
+                        print(f"  ✓ Instagram account added to list")
+                    else:
+                        print(f"  ✗ Failed to fetch Instagram details: {ig_response.text}")
+                        print(f"  Full error response: {ig_response.json() if ig_response.headers.get('content-type', '').startswith('application/json') else ig_response.text}")
+                else:
+                    print(f"  No Instagram business account linked")
+                    # Try alternative method - check if this page manages any Instagram accounts directly
+                    print(f"  Trying alternative Instagram discovery method...")
+                    
+                    alt_ig_url = f"{self.graph_api_base}/{page['id']}"
+                    alt_ig_params = {
+                        'access_token': page['access_token'],
+                        'fields': 'instagram_accounts{id,username,name,profile_picture_url}'
+                    }
+                    
+                    print(f"  Alternative Instagram API call: {alt_ig_url}")
+                    alt_ig_response = requests.get(alt_ig_url, params=alt_ig_params)
+                    print(f"  Alternative API response status: {alt_ig_response.status_code}")
+                    
+                    if alt_ig_response.status_code == 200:
+                        alt_ig_data = alt_ig_response.json()
+                        print(f"  Alternative response: {alt_ig_data}")
+                        
+                        if 'instagram_accounts' in alt_ig_data:
+                            alt_accounts = alt_ig_data['instagram_accounts'].get('data', [])
+                            print(f"  Found {len(alt_accounts)} Instagram accounts via alternative method")
+                            
+                            for alt_account in alt_accounts:
+                                print(f"    Alt Instagram ID: {alt_account.get('id')}")
+                                print(f"    Alt Instagram username: {alt_account.get('username')}")
+                                
+                                instagram_accounts.append({
+                                    'id': alt_account['id'],
+                                    'username': alt_account.get('username', ''),
+                                    'name': alt_account.get('name', ''),
+                                    'profile_picture_url': alt_account.get('profile_picture_url', ''),
+                                    'access_token': page['access_token'],
+                                    'page_id': page['id']
+                                })
+                                print(f"    ✓ Alternative Instagram account added")
+                        else:
+                            print(f"  No instagram_accounts field in alternative response")
+                    else:
+                        print(f"  ✗ Alternative Instagram discovery failed: {alt_ig_response.text}")
+        
+        print(f"\n--- FINAL SUMMARY ---")
+        print(f"Total API requests made: {request_count}")
+        print(f"Total Facebook pages found: {len(pages)}")
+        print(f"Total Instagram accounts found: {len(instagram_accounts)}")
         
         return {
             'pages': pages,

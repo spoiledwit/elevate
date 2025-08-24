@@ -156,6 +156,7 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
+    "EXCEPTION_HANDLER": "api.exceptions.custom_exception_handler",
 }
 
 ######################################################################
@@ -453,6 +454,27 @@ UNFOLD = {
                         "title": _("Payment Events"),
                         "icon": "receipt",
                         "link": reverse_lazy("admin:api_paymentevent_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("Analytics"),
+                "separator": True,
+                "items": [
+                    {
+                        "title": _("Profile Views"),
+                        "icon": "visibility",
+                        "link": reverse_lazy("admin:api_profileview_changelist"),
+                    },
+                    {
+                        "title": _("Link Clicks"),
+                        "icon": "mouse",
+                        "link": reverse_lazy("admin:api_linkclick_changelist"),
+                    },
+                    {
+                        "title": _("Banner Clicks"),
+                        "icon": "ads_click",
+                        "link": reverse_lazy("admin:api_bannerclick_changelist"),
                     },
                 ],
             },

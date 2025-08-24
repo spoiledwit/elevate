@@ -84,8 +84,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         return { itemId: 'automation-rules', sectionId: 'automation' }
       case '/subscription':
         return { itemId: 'subscription', sectionId: 'business' }
-      case '/affiliate-dashboard':
-        return { itemId: 'affiliate-dashboard', sectionId: 'business' }
       case '/settings':
         return { itemId: 'settings', sectionId: 'account' }
       case '/support':
@@ -111,6 +109,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     switch (itemId) {
       case 'dashboard':
         router.push('/dashboard')
+        break
+      case 'storefront':
+        router.push('/storefront')
+        break
+      case 'custom-links':
+        router.push('/custom-links')
+        break
+      case 'cta-banners':
+        router.push('/cta-banners')
         break
       case 'subscription':
         router.push('/subscription')
@@ -142,7 +149,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       icon: Home,
       items: [
         { id: 'dashboard', label: 'Dashboard', icon: Home },
-        { id: 'analytics', label: 'Analytics', icon: BarChart3 },
       ]
     },
     {
@@ -192,7 +198,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       icon: CreditCard,
       items: [
         { id: 'subscription', label: 'Subscription', icon: CreditCard },
-        { id: 'affiliate-dashboard', label: 'Affiliate Dashboard', icon: Users },
+
       ]
     },
     {
@@ -215,16 +221,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="flex items-center gap-2">
             <img src={logo.src} alt="Elevate Social" className="h-10" />
             <span className="font-semibold text-lg text-gray-900">Elevate Social</span>
-          </div>
-        </div>
-
-        {/* Pro Badge */}
-        <div className="flex-shrink-0 p-4">
-          <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white text-center py-2.5 px-4 rounded-lg text-sm font-semibold shadow-sm">
-            <div className="flex items-center justify-center gap-2">
-              <Crown className="w-4 h-4" />
-              GET ELEVATE PRO
-            </div>
           </div>
         </div>
 

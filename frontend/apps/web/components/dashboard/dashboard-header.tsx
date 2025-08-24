@@ -25,11 +25,6 @@ export function DashboardHeader() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors shadow-sm">
-            <GiftIcon className="w-4 h-4" />
-            Refer a friend
-          </button>
-          
           <button
             onClick={() => signOut({ callbackUrl: '/login' })}
             className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors shadow-sm"

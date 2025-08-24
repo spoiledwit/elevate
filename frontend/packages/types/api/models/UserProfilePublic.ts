@@ -9,7 +9,7 @@ export type UserProfilePublic = {
     slug?: string;
     display_name: string;
     bio?: string;
-    profile_image?: string | null;
+    readonly profile_image: string;
     embedded_video?: string;
     readonly social_icons: Array<SocialIcon>;
     readonly custom_links: Array<CustomLink>;

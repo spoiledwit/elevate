@@ -10,7 +10,7 @@ from django.contrib import messages
 
 from .models import (
     User, UserProfile, UserSocialLinks, SocialIcon, CustomLink, CTABanner, Subscription,
-    TriggerRule, AIChatHistory,
+    TriggerRule, AIChatHistory, ProfileView, LinkClick, BannerClick,
     SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, PaymentEvent, Plan, PlanFeature, StripeCustomer,
     Folder, Media
 )
@@ -32,16 +32,19 @@ class GroupAdmin(BaseGroupAdmin, ModelAdmin):
 
 @admin.register(UserProfile)
 class UserProfileAdmin(ModelAdmin):
-    list_display = ['user', 'display_name', 'slug', 'is_active', 'created_at']
+    list_display = ['user', 'display_name', 'slug', 'view_count', 'is_active', 'created_at']
     list_filter = ['is_active', 'created_at']
     search_fields = ['user__username', 'user__email', 'display_name', 'slug']
-    readonly_fields = ['created_at', 'modified_at']
+    readonly_fields = ['created_at', 'modified_at', 'view_count']
     fieldsets = (
         ('User Information', {
             'fields': ('user', 'display_name', 'slug')
         }),
         ('Profile Content', {
             'fields': ('bio', 'profile_image', 'embedded_video')
+        }),
+        ('Analytics', {
+            'fields': ('view_count',)
         }),
         ('Status', {
             'fields': ('is_active',)
@@ -51,6 +54,14 @@ class UserProfileAdmin(ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+    
+    def view_count(self, obj):
+        """Return the number of profile views"""
+        return obj.profile_views.count()
+    view_count.short_description = 'Profile Views'
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user').prefetch_related('profile_views')
 
 
 @admin.register(UserSocialLinks)
@@ -107,14 +118,17 @@ class SocialIconAdmin(ModelAdmin):
 
 @admin.register(CustomLink)
 class CustomLinkAdmin(ModelAdmin):
-    list_display = ['user_profile', 'text', 'order', 'is_active', 'created_at']
+    list_display = ['user_profile', 'text', 'order', 'click_count', 'is_active', 'created_at']
     list_filter = ['is_active', 'created_at']
     search_fields = ['user_profile__user__username', 'text', 'url']
-    readonly_fields = ['created_at', 'modified_at']
+    readonly_fields = ['created_at', 'modified_at', 'click_count']
     list_editable = ['order']
     fieldsets = (
         ('Link Information', {
             'fields': ('user_profile', 'text', 'url', 'thumbnail', 'order')
+        }),
+        ('Analytics', {
+            'fields': ('click_count',)
         }),
         ('Status', {
             'fields': ('is_active',)
@@ -124,20 +138,28 @@ class CustomLinkAdmin(ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+    
+    def click_count(self, obj):
+        """Return the number of clicks for this link"""
+        return obj.clicks.count()
+    click_count.short_description = 'Click Count'
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user_profile__user').prefetch_related('clicks')
 
 
 @admin.register(CTABanner)
 class CTABannerAdmin(ModelAdmin):
-    list_display = ['user_profile', 'text', 'button_text', 'is_active', 'created_at']
-    list_filter = ['is_active', 'created_at']
+    list_display = ['user_profile', 'text', 'button_text', 'style', 'is_active', 'click_count', 'created_at']
+    list_filter = ['style', 'is_active', 'created_at']
     search_fields = ['user_profile__user__username', 'text', 'button_text']
-    readonly_fields = ['created_at', 'modified_at']
+    readonly_fields = ['created_at', 'modified_at', 'click_count']
     fieldsets = (
         ('Banner Information', {
-            'fields': ('user_profile', 'text', 'button_text', 'button_url')
+            'fields': ('user_profile', 'text', 'button_text', 'button_url', 'style')
         }),
-        ('Status', {
-            'fields': ('is_active',)
+        ('Status & Analytics', {
+            'fields': ('is_active', 'click_count')
         }),
         ('Timestamps', {
             'fields': ('created_at', 'modified_at'),
@@ -257,7 +279,7 @@ class SocialMediaPostAdmin(ModelAdmin):
     
     fieldsets = (
         ('Post Information', {
-            'fields': ('user', 'connection', 'text', 'media_urls')
+            'fields': ('user', 'connection', 'text', 'media_files')
         }),
         ('Scheduling', {
             'fields': ('scheduled_at', 'sent_at')
@@ -300,7 +322,7 @@ class SocialMediaPostTemplateAdmin(ModelAdmin):
             'fields': ('user', 'name', 'description', 'is_active', 'is_public')
         }),
         ('Content', {
-            'fields': ('text_template', 'media_urls')
+            'fields': ('text_template',)
         }),
         ('Platforms', {
             'fields': ('platforms',)
@@ -500,3 +522,119 @@ class MediaAdmin(ModelAdmin):
     
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('user', 'folder')
+
+
+# Analytics Admin
+@admin.register(ProfileView)
+class ProfileViewAdmin(ModelAdmin):
+    list_display = ['user_profile', 'ip_address', 'user_agent_short', 'referrer_domain', 'viewed_at']
+    list_filter = ['viewed_at', 'user_profile__user__username']
+    search_fields = ['user_profile__user__username', 'ip_address', 'user_agent', 'referrer']
+    readonly_fields = ['viewed_at']
+    date_hierarchy = 'viewed_at'
+    
+    fieldsets = (
+        ('Profile View Information', {
+            'fields': ('user_profile', 'ip_address', 'user_agent', 'referrer')
+        }),
+        ('Timestamps', {
+            'fields': ('viewed_at',),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def user_agent_short(self, obj):
+        if obj.user_agent:
+            return obj.user_agent[:50] + '...' if len(obj.user_agent) > 50 else obj.user_agent
+        return 'Unknown'
+    user_agent_short.short_description = 'User Agent'
+    
+    def referrer_domain(self, obj):
+        if obj.referrer:
+            from urllib.parse import urlparse
+            domain = urlparse(obj.referrer).netloc
+            return domain if domain else obj.referrer[:30]
+        return 'Direct'
+    referrer_domain.short_description = 'Referrer'
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user_profile__user')
+
+
+@admin.register(BannerClick)
+class BannerClickAdmin(ModelAdmin):
+    list_display = ['banner', 'banner_user', 'ip_address', 'user_agent_short', 'referrer_domain', 'timestamp']
+    list_filter = ['timestamp', 'banner__user_profile__user__username']
+    search_fields = ['banner__user_profile__user__username', 'banner__text', 'ip_address', 'user_agent']
+    readonly_fields = ['timestamp']
+    date_hierarchy = 'timestamp'
+    
+    fieldsets = (
+        ('Banner Click Information', {
+            'fields': ('banner', 'ip_address', 'user_agent', 'referrer')
+        }),
+        ('Timestamps', {
+            'fields': ('timestamp',),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def banner_user(self, obj):
+        return obj.banner.user_profile.user.username
+    banner_user.short_description = 'User'
+    banner_user.admin_order_field = 'banner__user_profile__user__username'
+    
+    def user_agent_short(self, obj):
+        if obj.user_agent:
+            return obj.user_agent[:50] + '...' if len(obj.user_agent) > 50 else obj.user_agent
+        return 'Unknown'
+    user_agent_short.short_description = 'User Agent'
+    
+    def referrer_domain(self, obj):
+        if obj.referrer:
+            try:
+                from urllib.parse import urlparse
+                return urlparse(obj.referrer).netloc
+            except:
+                return obj.referrer[:30] + '...' if len(obj.referrer) > 30 else obj.referrer
+        return 'Direct'
+    referrer_domain.short_description = 'Referrer Domain'
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('banner__user_profile__user')
+
+
+@admin.register(LinkClick)
+class LinkClickAdmin(ModelAdmin):
+    list_display = ['custom_link', 'user_profile', 'ip_address', 'user_agent_short', 'referrer_domain', 'clicked_at']
+    list_filter = ['clicked_at', 'user_profile__user__username', 'custom_link__text']
+    search_fields = ['user_profile__user__username', 'custom_link__text', 'ip_address', 'user_agent']
+    readonly_fields = ['clicked_at']
+    date_hierarchy = 'clicked_at'
+    
+    fieldsets = (
+        ('Link Click Information', {
+            'fields': ('user_profile', 'custom_link', 'ip_address', 'user_agent', 'referrer')
+        }),
+        ('Timestamps', {
+            'fields': ('clicked_at',),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def user_agent_short(self, obj):
+        if obj.user_agent:
+            return obj.user_agent[:50] + '...' if len(obj.user_agent) > 50 else obj.user_agent
+        return 'Unknown'
+    user_agent_short.short_description = 'User Agent'
+    
+    def referrer_domain(self, obj):
+        if obj.referrer:
+            from urllib.parse import urlparse
+            domain = urlparse(obj.referrer).netloc
+            return domain if domain else obj.referrer[:30]
+        return 'Direct'
+    referrer_domain.short_description = 'Referrer'
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user_profile__user', 'custom_link')

@@ -1,6 +1,7 @@
 from rest_framework import status, generics, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.utils import timezone
 from django.db import transaction
 from django.shortcuts import get_object_or_404
@@ -19,6 +20,7 @@ class PostListCreateView(generics.ListCreateAPIView):
     List all posts for the authenticated user or create a new post
     """
     permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
     
     def get_serializer_class(self):
         if self.request.method == 'GET':
@@ -51,6 +53,7 @@ class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     serializer_class = SocialMediaPostSerializer
     permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
     
     def get_queryset(self):
         """Return posts for the authenticated user"""
@@ -97,6 +100,22 @@ def bulk_create_posts(request):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # Handle media file uploads - create once and share across all posts
+        media_objects = []
+        media_files = validated_data.get('media_files_data', [])
+        if media_files:
+            from ..models import Folder, Media
+            default_folder = Folder.get_or_create_default(user)
+            for file in media_files:
+                media = Media.objects.create(
+                    user=user,
+                    folder=default_folder,
+                    image=file,
+                    file_size=file.size,
+                    file_name=file.name
+                )
+                media_objects.append(media)
+        
         posts = []
         try:
             with transaction.atomic():
@@ -105,11 +124,20 @@ def bulk_create_posts(request):
                         user=user,
                         connection=connection,
                         text=validated_data['text'],
-                        media_urls=validated_data.get('media_urls', []),
                         status=validated_data.get('status', 'draft'),
                         scheduled_at=validated_data.get('scheduled_at')
                     )
+                    # Add the same media files to each post
+                    if media_objects:
+                        post.media_files.set(media_objects)
+                    
                     posts.append(post)
+                
+                # Update usage count only once after all posts are created
+                if media_objects:
+                    for media in media_objects:
+                        media.used_in_posts_count += len(connections)  # Increment by number of posts created
+                        media.save(update_fields=['used_in_posts_count'])
             
             # Return serialized posts
             serialized_posts = SocialMediaPostListSerializer(posts, many=True)
@@ -191,10 +219,17 @@ def duplicate_post(request, post_id):
         user=request.user,
         connection=original_post.connection,
         text=original_post.text,
-        media_urls=original_post.media_urls,
         status='draft',  # Always create duplicates as drafts
         scheduled_at=None  # Remove scheduling from duplicates
     )
+    
+    # Copy media files
+    if original_post.media_files.exists():
+        duplicate.media_files.set(original_post.media_files.all())
+        # Update usage count for each media
+        for media in original_post.media_files.all():
+            media.used_in_posts_count += 1
+            media.save(update_fields=['used_in_posts_count'])
     
     serialized_post = SocialMediaPostSerializer(duplicate)
     return Response({
@@ -288,17 +323,19 @@ def publish_now(request, post_id):
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    # Update status to sending (actual publishing would be handled by background task)
+    # Trigger immediate background processing
+    from ..tasks import publish_scheduled_post
+    
+    # Mark as sending
     post.status = 'sending'
-    post.scheduled_at = None  # Clear scheduling
     post.save()
     
-    # TODO: Trigger background task for actual publishing
-    # This would typically call the appropriate platform API
+    # Queue the task immediately (fire-and-forget)
+    publish_scheduled_post.apply_async(args=[post.id], ignore_result=True)
     
     serialized_post = SocialMediaPostSerializer(post)
     return Response({
         'success': True,
         'post': serialized_post.data,
-        'message': 'Post queued for publishing'
+        'message': 'Post queued for immediate publishing'
     })

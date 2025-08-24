@@ -13,6 +13,7 @@ import { PlansService } from './services/PlansService';
 import { PostsService } from './services/PostsService';
 import { ProfilesService } from './services/ProfilesService';
 import { SchemaService } from './services/SchemaService';
+import { StorefrontService } from './services/StorefrontService';
 import { SubscriptionsService } from './services/SubscriptionsService';
 import { TokenService } from './services/TokenService';
 import { UsersService } from './services/UsersService';
@@ -27,6 +28,7 @@ export class ApiClient {
     public readonly posts: PostsService;
     public readonly profiles: ProfilesService;
     public readonly schema: SchemaService;
+    public readonly storefront: StorefrontService;
     public readonly subscriptions: SubscriptionsService;
     public readonly token: TokenService;
     public readonly users: UsersService;
@@ -52,6 +54,7 @@ export class ApiClient {
         this.posts = new PostsService(this.request);
         this.profiles = new ProfilesService(this.request);
         this.schema = new SchemaService(this.request);
+        this.storefront = new StorefrontService(this.request);
         this.subscriptions = new SubscriptionsService(this.request);
         this.token = new TokenService(this.request);
         this.users = new UsersService(this.request);

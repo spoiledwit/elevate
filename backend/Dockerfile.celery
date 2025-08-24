@@ -1,0 +1,22 @@
+FROM python:3.13-slim-bookworm AS builder
+
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV UV_PROJECT_ENVIRONMENT=/.venv
+
+WORKDIR /app
+RUN pip install uv
+COPY pyproject.toml uv.lock ./
+RUN uv venv && uv sync --frozen --no-dev
+
+FROM python:3.13-slim-bookworm AS production
+
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PATH="/.venv/bin:$PATH"
+
+WORKDIR /app
+COPY --from=builder /.venv /.venv
+COPY . .
+
+CMD ["celery", "-A", "api", "worker", "--loglevel=info"]

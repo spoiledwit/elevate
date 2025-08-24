@@ -13,10 +13,21 @@ export type SocialMediaPost = {
      * List of SocialMediaConnection IDs to publish to
      */
     connection_ids: Array<number>;
+    /**
+     * List of media files to upload
+     */
+    media_files_data?: Array<string>;
     readonly connection: SocialMediaConnection;
     readonly platform_name: string;
     text: string;
-    media_urls?: any;
+    /**
+     * URLs of attached media files
+     */
+    readonly media_urls: string;
+    /**
+     * Number of attached media files
+     */
+    readonly media_count: string;
     status?: StatusD18Enum;
     scheduled_at?: string | null;
     readonly sent_at: string | null;

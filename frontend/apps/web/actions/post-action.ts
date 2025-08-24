@@ -4,7 +4,6 @@ import { getApiClient } from '@/lib/api'
 import { authOptions } from '@/lib/auth'
 import { 
   ApiError,
-  type SocialMediaPost,
   type PatchedSocialMediaPost
 } from '@frontend/types/api'
 import { getServerSession } from 'next-auth'
@@ -12,14 +11,14 @@ import { getServerSession } from 'next-auth'
 export interface CreatePostData {
   connection_ids: number[]
   text: string
-  media_urls?: string[]
+  media_files?: File[]
   status?: 'draft' | 'scheduled'
   scheduled_at?: string
 }
 
 export interface UpdatePostData {
   text?: string
-  media_urls?: string[]
+  media_files?: File[]
   status?: 'draft' | 'scheduled' | 'cancelled'
   scheduled_at?: string
 }
@@ -27,7 +26,7 @@ export interface UpdatePostData {
 export interface BulkCreatePostData {
   connection_ids: number[]
   text: string
-  media_urls?: string[]
+  media_files?: File[]
   status?: 'draft' | 'scheduled'
   scheduled_at?: string
 }
@@ -38,7 +37,41 @@ export interface PostStatusUpdate {
 }
 
 /**
- * Create a new social media post
+ * Helper function to create FormData for post creation
+ */
+export async function createPostFormData(data: CreatePostData): Promise<FormData> {
+  const formData = new FormData()
+  
+  // Add connection IDs (as individual form fields to handle array properly)
+  data.connection_ids.forEach((id) => {
+    formData.append(`connection_ids`, id.toString())
+  })
+  
+  // Add text content
+  formData.append('text', data.text)
+  
+  // Add media files if present
+  if (data.media_files && data.media_files.length > 0) {
+    data.media_files.forEach((file) => {
+      formData.append(`media_files_data`, file)
+    })
+  }
+  
+  // Add status if provided
+  if (data.status) {
+    formData.append('status', data.status)
+  }
+  
+  // Add scheduled date if provided
+  if (data.scheduled_at) {
+    formData.append('scheduled_at', data.scheduled_at)
+  }
+  
+  return formData
+}
+
+/**
+ * Create a new social media post with media files support
  */
 export async function createPostAction(data: CreatePostData) {
   const session = await getServerSession(authOptions)
@@ -48,16 +81,26 @@ export async function createPostAction(data: CreatePostData) {
   }
 
   try {
-    const apiClient = await getApiClient(session)
-    const response = await apiClient.posts.postsCreate(data as SocialMediaPost)
+    const formData = await createPostFormData(data)
     
-    return response
+    const response = await fetch(`${process.env.API_URL}/api/posts/`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.accessToken}`,
+      },
+      body: formData,
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.detail || errorData.error || 'Failed to create post')
+    }
+
+    const result = await response.json()
+    return result
   } catch (error) {
     console.error('Failed to create post:', error)
-    if (error instanceof ApiError) {
-      return { error: error.body?.error || 'Failed to create post' }
-    }
-    return { error: 'Failed to create post' }
+    return { error: error instanceof Error ? error.message : 'Failed to create post' }
   }
 }
 
@@ -120,16 +163,48 @@ export async function updatePostAction(postId: number, data: UpdatePostData) {
   }
 
   try {
-    const apiClient = await getApiClient(session)
-    const response = await apiClient.posts.postsPartialUpdate(postId, data as PatchedSocialMediaPost)
+    const formData = new FormData()
     
-    return response
+    // Add text content if provided
+    if (data.text !== undefined) {
+      formData.append('text', data.text)
+    }
+    
+    // Add media files if present
+    if (data.media_files && data.media_files.length > 0) {
+      data.media_files.forEach((file) => {
+        formData.append('media_files_data', file)
+      })
+    }
+    
+    // Add status if provided
+    if (data.status) {
+      formData.append('status', data.status)
+    }
+    
+    // Add scheduled date if provided
+    if (data.scheduled_at !== undefined) {
+      formData.append('scheduled_at', data.scheduled_at)
+    }
+    
+    const response = await fetch(`${process.env.API_URL}/api/posts/${postId}/`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${session.accessToken}`,
+      },
+      body: formData,
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.detail || errorData.error || 'Failed to update post')
+    }
+
+    const result = await response.json()
+    return result
   } catch (error) {
     console.error('Failed to update post:', error)
-    if (error instanceof ApiError) {
-      return { error: error.body?.error || 'Failed to update post' }
-    }
-    return { error: 'Failed to update post' }
+    return { error: error instanceof Error ? error.message : 'Failed to update post' }
   }
 }
 
@@ -168,23 +243,58 @@ export async function bulkCreatePostsAction(data: BulkCreatePostData) {
   }
 
   try {
-    const apiClient = await getApiClient(session)
-    const response = await apiClient.posts.postsBulkCreateCreate()
+    const formData = new FormData()
     
-    return response
+    // Add connection IDs
+    data.connection_ids.forEach((id) => {
+      formData.append('connection_ids', id.toString())
+    })
+    
+    // Add text content
+    formData.append('text', data.text)
+    
+    // Add media files if present  
+    if (data.media_files && data.media_files.length > 0) {
+      data.media_files.forEach((file) => {
+        formData.append('media_files_data', file)
+      })
+    }
+    
+    // Add status if provided
+    if (data.status) {
+      formData.append('status', data.status)
+    }
+    
+    // Add scheduled date if provided
+    if (data.scheduled_at) {
+      formData.append('scheduled_at', data.scheduled_at)
+    }
+    
+    const response = await fetch(`${process.env.API_URL}/api/posts/bulk-create/`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.accessToken}`,
+      },
+      body: formData,
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.detail || errorData.error || 'Failed to create posts')
+    }
+
+    const result = await response.json()
+    return result
   } catch (error) {
     console.error('Failed to bulk create posts:', error)
-    if (error instanceof ApiError) {
-      return { error: error.body?.error || 'Failed to create posts' }
-    }
-    return { error: 'Failed to create posts' }
+    return { error: error instanceof Error ? error.message : 'Failed to create posts' }
   }
 }
 
 /**
  * Update the status of a post
  */
-export async function updatePostStatusAction(postId: number, data: PostStatusUpdate) {
+export async function updatePostStatusAction(postId: number, _data: PostStatusUpdate) {
   const session = await getServerSession(authOptions)
 
   if (!session) {

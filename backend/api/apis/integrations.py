@@ -121,18 +121,39 @@ class MetaOAuthCallbackView(APIView):
         description="Process OAuth callback and create account connections"
     )
     def get(self, request):
+        # PRINT EVERYTHING TO CONSOLE
+        print("\n" + "="*80)
+        print("FACEBOOK OAUTH CALLBACK - FULL REQUEST DEBUG")
+        print("="*80)
+        print(f"REQUEST METHOD: {request.method}")
+        print(f"REQUEST PATH: {request.get_full_path()}")
+        print(f"REQUEST URL: {request.build_absolute_uri()}")
+        print("\n--- QUERY PARAMETERS ---")
+        for key, value in request.GET.items():
+            print(f"{key}: {value}")
+        print("\n--- REQUEST HEADERS ---")
+        for key, value in request.headers.items():
+            print(f"{key}: {value}")
+        print("\n--- REQUEST META ---")
+        for key, value in request.META.items():
+            if key.startswith(('HTTP_', 'REMOTE_', 'SERVER_')):
+                print(f"{key}: {value}")
+        print("="*80 + "\n")
+        
         try:
             # Check for errors
             error = request.GET.get('error')
             if error:
                 error_description = request.GET.get('error_description', 'Unknown error')
                 logger.warning(f"Meta OAuth error: {error} - {error_description}")
+                print(f"ERROR DETECTED: {error} - {error_description}")
                 frontend_url = f"{settings.FRONTEND_URL}/social-accounts"
                 return redirect(f"{frontend_url}?connection=error&message={error_description}")
             
             # Get authorization code
             auth_code = request.GET.get('code')
             if not auth_code:
+                print("ERROR: Missing authorization code")
                 frontend_url = f"{settings.FRONTEND_URL}/social-accounts"
                 return redirect(f"{frontend_url}?connection=error&message=Missing authorization code")
             
@@ -162,8 +183,16 @@ class MetaOAuthCallbackView(APIView):
                 return redirect(f"{frontend_url}?connection=error&message=Invalid user information")
             
             # Connect the account
+            print(f"\n--- CONNECTING ACCOUNT FOR USER: {user.username} (ID: {user.id}) ---")
+            print(f"AUTH CODE: {auth_code[:20]}..." if len(auth_code) > 20 else auth_code)
+            
             meta_service = MetaService()
             result = meta_service.connect_account(user, auth_code)
+            
+            print(f"\n--- CONNECTION RESULT ---")
+            print(f"Success: {result.get('success')}")
+            print(f"Connections created: {result.get('connections_created')}")
+            print(f"Accounts: {result.get('accounts')}")
             
             # Redirect back to frontend with success
             frontend_url = f"{settings.FRONTEND_URL}/social-accounts"

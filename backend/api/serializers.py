@@ -5,7 +5,7 @@ from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 from rest_framework import exceptions, serializers
 
-from .models import UserProfile, UserSocialLinks, SocialIcon, CustomLink, CTABanner, SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, Plan, PlanFeature, Subscription, Folder, Media
+from .models import UserProfile, UserSocialLinks, SocialIcon, CustomLink, CTABanner, SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, Plan, PlanFeature, Subscription, Folder, Media, ProfileView, LinkClick
 
 User = get_user_model()
 
@@ -187,38 +187,58 @@ class UserCreateErrorSerializer(serializers.Serializer):
 class SocialIconSerializer(serializers.ModelSerializer):
     class Meta:
         model = SocialIcon
-        fields = ['platform', 'url']
+        fields = ['id', 'platform', 'url', 'is_active']
+        read_only_fields = ['id']
 
 
 class CustomLinkSerializer(serializers.ModelSerializer):
+    click_count = serializers.IntegerField(read_only=True)
+    thumbnail = serializers.SerializerMethodField()
+    
     class Meta:
         model = CustomLink
-        fields = ['text', 'url', 'thumbnail', 'order']
+        fields = ['id', 'text', 'url', 'thumbnail', 'order', 'is_active', 'click_count']
+        read_only_fields = ['id', 'click_count']
+    
+    def get_thumbnail(self, obj):
+        """Return the full Cloudinary URL for the thumbnail"""
+        if obj.thumbnail:
+            return obj.thumbnail.url
+        return None
 
 
 class CTABannerSerializer(serializers.ModelSerializer):
     class Meta:
         model = CTABanner
-        fields = ['text', 'button_text', 'button_url']
+        fields = ['id', 'text', 'button_text', 'button_url', 'style', 'is_active', 'click_count']
+        read_only_fields = ['id', 'click_count']
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
     social_icons = SocialIconSerializer(many=True, read_only=True)
     custom_links = CustomLinkSerializer(many=True, read_only=True)
     cta_banner = CTABannerSerializer(read_only=True)
+    profile_image = serializers.SerializerMethodField()
     
     class Meta:
         model = UserProfile
         fields = [
-            'slug', 'display_name', 'bio', 'profile_image', 
-            'embedded_video', 'social_icons', 'custom_links', 'cta_banner'
+            'id', 'slug', 'display_name', 'bio', 'profile_image', 
+            'embedded_video', 'is_active', 'social_icons', 'custom_links', 'cta_banner'
         ]
+    
+    def get_profile_image(self, obj):
+        """Return the full Cloudinary URL for the profile image"""
+        if obj.profile_image:
+            return obj.profile_image.url
+        return None
 
 
 class UserProfilePublicSerializer(serializers.ModelSerializer):
     social_icons = SocialIconSerializer(many=True, read_only=True)
     custom_links = CustomLinkSerializer(many=True, read_only=True)
     cta_banner = CTABannerSerializer(read_only=True)
+    profile_image = serializers.SerializerMethodField()
     
     class Meta:
         model = UserProfile
@@ -226,6 +246,12 @@ class UserProfilePublicSerializer(serializers.ModelSerializer):
             'slug', 'display_name', 'bio', 'profile_image', 
             'embedded_video', 'social_icons', 'custom_links', 'cta_banner'
         ]
+    
+    def get_profile_image(self, obj):
+        """Return the full Cloudinary URL for the profile image"""
+        if obj.profile_image:
+            return obj.profile_image.url
+        return None
 
 class PlanFeatureSerializer(serializers.ModelSerializer):
     class Meta:
@@ -483,18 +509,28 @@ class SocialMediaPostSerializer(serializers.ModelSerializer):
         required=True,
         help_text="List of SocialMediaConnection IDs to publish to"
     )
+    media_files_data = serializers.ListField(
+        child=serializers.FileField(),
+        write_only=True,
+        required=False,
+        help_text="List of media files to upload"
+    )
     connection = SocialMediaConnectionSerializer(read_only=True)
     platform_name = serializers.CharField(source='connection.platform.display_name', read_only=True)
+    media_urls = serializers.ReadOnlyField(help_text="URLs of attached media files")
+    media_count = serializers.ReadOnlyField(help_text="Number of attached media files")
     
     class Meta:
         model = SocialMediaPost
         fields = [
             'id',
             'connection_ids',
+            'media_files_data',
             'connection',
             'platform_name',
             'text',
             'media_urls',
+            'media_count',
             'status',
             'scheduled_at',
             'sent_at',
@@ -553,6 +589,7 @@ class SocialMediaPostSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         """Create posts for multiple connections"""
         connection_ids = validated_data.pop('connection_ids')
+        media_files_data = validated_data.pop('media_files_data', [])
         user = self.context['request'].user
         
         # Verify all connections belong to the user
@@ -565,6 +602,20 @@ class SocialMediaPostSerializer(serializers.ModelSerializer):
         if len(connections) != len(connection_ids):
             raise serializers.ValidationError("Invalid connection IDs provided")
         
+        # Handle media file uploads
+        media_objects = []
+        if media_files_data:
+            default_folder = Folder.get_or_create_default(user)
+            for file in media_files_data:
+                media = Media.objects.create(
+                    user=user,
+                    folder=default_folder,
+                    image=file,
+                    file_size=file.size,
+                    file_name=file.name
+                )
+                media_objects.append(media)
+        
         posts = []
         with transaction.atomic():
             for connection in connections:
@@ -573,10 +624,17 @@ class SocialMediaPostSerializer(serializers.ModelSerializer):
                     connection=connection,
                     **validated_data
                 )
+                # Add media files to the post
+                if media_objects:
+                    post.media_files.set(media_objects)
+                    # Update usage count for each media
+                    for media in media_objects:
+                        media.used_in_posts_count += 1
+                        media.save(update_fields=['used_in_posts_count'])
+                
                 posts.append(post)
         
         # Return the first post for single response
-        # In practice, you might want to return all posts
         return posts[0] if posts else None
 
 
@@ -608,10 +666,11 @@ class BulkPostCreateSerializer(serializers.Serializer):
         help_text="List of SocialMediaConnection IDs"
     )
     text = serializers.CharField(required=True)
-    media_urls = serializers.ListField(
-        child=serializers.URLField(),
+    media_files_data = serializers.ListField(
+        child=serializers.FileField(),
         required=False,
-        default=list
+        default=list,
+        help_text="List of media files to upload"
     )
     status = serializers.ChoiceField(
         choices=['draft', 'scheduled'],
@@ -806,3 +865,111 @@ class BulkDeleteSerializer(serializers.Serializer):
             raise serializers.ValidationError(f"Invalid media IDs: {list(invalid_ids)}")
         
         return value
+
+
+# Enhanced Storefront Serializers
+class CustomLinkCreateUpdateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for creating and updating custom links.
+    Used in storefront management APIs.
+    """
+    thumbnail = serializers.FileField(required=False, allow_null=True)
+    
+    class Meta:
+        model = CustomLink
+        fields = ['text', 'url', 'thumbnail', 'order', 'is_active']
+    
+    def validate(self, attrs):
+        print("DEBUG - Serializer received data:", attrs)
+        result = super().validate(attrs)
+        print("DEBUG - Serializer validated data:", result)
+        return result
+    
+    def to_internal_value(self, data):
+        print("DEBUG - Raw data to serializer:", data)
+        try:
+            result = super().to_internal_value(data)
+            print("DEBUG - Serializer internal value:", result)
+            return result
+        except Exception as e:
+            print("DEBUG - Serializer validation error:", str(e))
+            raise
+    
+    def validate_url(self, value):
+        """Validate URL for security and proper format"""
+        if not value:
+            return value
+        
+        # Ensure URL has proper protocol
+        if not value.startswith(('http://', 'https://')):
+            value = f'https://{value}'
+        
+        # Basic URL validation
+        from django.core.validators import URLValidator
+        from django.core.exceptions import ValidationError
+        
+        validator = URLValidator()
+        try:
+            validator(value)
+        except ValidationError:
+            raise serializers.ValidationError("Invalid URL format")
+        
+        # Security checks
+        from urllib.parse import urlparse
+        parsed = urlparse(value)
+        
+        # Block dangerous schemes
+        if parsed.scheme not in ['http', 'https']:
+            raise serializers.ValidationError("Only HTTP and HTTPS URLs are allowed")
+        
+        # Block localhost and private IP ranges (optional security measure)
+        if parsed.hostname:
+            hostname = parsed.hostname.lower()
+            if hostname in ['localhost', '127.0.0.1', '0.0.0.0'] or hostname.startswith('192.168.') or hostname.startswith('10.') or hostname.startswith('172.'):
+                raise serializers.ValidationError("Private/localhost URLs are not allowed")
+        
+        # Length limit
+        if len(value) > 2048:
+            raise serializers.ValidationError("URL too long (max 2048 characters)")
+        
+        return value
+
+
+class ProfileAnalyticsSerializer(serializers.Serializer):
+    """
+    Serializer for profile analytics data.
+    """
+    profile_id = serializers.IntegerField()
+    total_views = serializers.IntegerField()
+    total_clicks = serializers.IntegerField()
+    date_range = serializers.DictField()
+    top_links = CustomLinkSerializer(many=True)
+    daily_views = serializers.ListField(child=serializers.DictField(), required=False)
+
+
+class LinkClickSerializer(serializers.ModelSerializer):
+    """
+    Serializer for link click analytics.
+    """
+    custom_link_text = serializers.CharField(source='custom_link.text', read_only=True)
+    custom_link_url = serializers.CharField(source='custom_link.url', read_only=True)
+    
+    class Meta:
+        model = LinkClick
+        fields = [
+            'id', 'custom_link_text', 'custom_link_url', 
+            'ip_address', 'user_agent', 'referrer', 'clicked_at'
+        ]
+        read_only_fields = ['id', 'clicked_at']
+
+
+class ProfileViewSerializer(serializers.ModelSerializer):
+    """
+    Serializer for profile view analytics.
+    """
+    class Meta:
+        model = ProfileView
+        fields = [
+            'id', 'ip_address', 'user_agent', 'referrer', 'viewed_at'
+        ]
+        read_only_fields = ['id', 'viewed_at']

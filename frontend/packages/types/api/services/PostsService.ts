@@ -28,18 +28,18 @@ export class PostsService {
     }
     /**
      * List all posts for the authenticated user or create a new post
-     * @param requestBody
+     * @param formData
      * @returns SocialMediaPost
      * @throws ApiError
      */
     public postsCreate(
-        requestBody: SocialMediaPost,
+        formData: SocialMediaPost,
     ): CancelablePromise<SocialMediaPost> {
         return this.httpRequest.request({
             method: 'POST',
             url: '/api/posts/',
-            body: requestBody,
-            mediaType: 'application/json',
+            formData: formData,
+            mediaType: 'multipart/form-data',
         });
     }
     /**
@@ -62,13 +62,13 @@ export class PostsService {
     /**
      * Retrieve, update, or delete a specific post
      * @param id
-     * @param requestBody
+     * @param formData
      * @returns SocialMediaPost
      * @throws ApiError
      */
     public postsUpdate(
         id: number,
-        requestBody: SocialMediaPost,
+        formData: SocialMediaPost,
     ): CancelablePromise<SocialMediaPost> {
         return this.httpRequest.request({
             method: 'PUT',
@@ -76,20 +76,20 @@ export class PostsService {
             path: {
                 'id': id,
             },
-            body: requestBody,
-            mediaType: 'application/json',
+            formData: formData,
+            mediaType: 'multipart/form-data',
         });
     }
     /**
      * Retrieve, update, or delete a specific post
      * @param id
-     * @param requestBody
+     * @param formData
      * @returns SocialMediaPost
      * @throws ApiError
      */
     public postsPartialUpdate(
         id: number,
-        requestBody?: PatchedSocialMediaPost,
+        formData?: PatchedSocialMediaPost,
     ): CancelablePromise<SocialMediaPost> {
         return this.httpRequest.request({
             method: 'PATCH',
@@ -97,8 +97,8 @@ export class PostsService {
             path: {
                 'id': id,
             },
-            body: requestBody,
-            mediaType: 'application/json',
+            formData: formData,
+            mediaType: 'multipart/form-data',
         });
     }
     /**

@@ -25,9 +25,10 @@ class UserProfile(models.Model):
     slug = models.SlugField(_("slug"), max_length=255, unique=True, blank=True)
     display_name = models.CharField(_("display name"), max_length=255)
     bio = models.TextField(_("bio"), blank=True)
-    profile_image = models.ImageField(_("profile image"), upload_to='profile_images/', blank=True, null=True)
+    profile_image = CloudinaryField('profile_image', blank=True, null=True)
     embedded_video = models.URLField(_("embedded video"), blank=True)
     is_active = models.BooleanField(_("is active"), default=True)
+    view_count = models.PositiveIntegerField(_("view count"), default=0)
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
     modified_at = models.DateTimeField(_("modified at"), auto_now=True)
 
@@ -150,9 +151,10 @@ class CustomLink(models.Model):
     user_profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='custom_links')
     text = models.CharField(_("text"), max_length=255)
     url = models.URLField(_("url"))
-    thumbnail = models.ImageField(_("thumbnail"), upload_to='link_thumbnails/', blank=True, null=True)
+    thumbnail = CloudinaryField('link_thumbnail', blank=True, null=True)
     order = models.IntegerField(_("order"), default=0)
     is_active = models.BooleanField(_("is active"), default=True)
+    click_count = models.PositiveIntegerField(_("click count"), default=0)
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
     modified_at = models.DateTimeField(_("modified at"), auto_now=True)
 
@@ -171,7 +173,9 @@ class CTABanner(models.Model):
     text = models.CharField(_("text"), max_length=255)
     button_text = models.CharField(_("button text"), max_length=100)
     button_url = models.URLField(_("button url"))
+    style = models.CharField(_("style"), max_length=50, default='gradient-purple')
     is_active = models.BooleanField(_("is active"), default=True)
+    click_count = models.PositiveIntegerField(_("click count"), default=0)
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
     modified_at = models.DateTimeField(_("modified at"), auto_now=True)
 
@@ -350,7 +354,12 @@ class SocialMediaPost(models.Model):
     
     # Post content
     text = models.TextField(_("post text"))
-    media_urls = models.JSONField(_("media urls"), default=list, blank=True)
+    media_files = models.ManyToManyField(
+        'Media', 
+        related_name='social_posts', 
+        blank=True,
+        help_text=_("Media files (images/videos) for this post")
+    )
     
     # Scheduling
     scheduled_at = models.DateTimeField(_("scheduled at"), null=True, blank=True)
@@ -376,6 +385,16 @@ class SocialMediaPost(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.connection.platform.display_name} - {self.text[:50]}"
+    
+    @property
+    def media_urls(self):
+        """Return list of media URLs for backward compatibility"""
+        return [media.image.url for media in self.media_files.all()]
+    
+    @property
+    def media_count(self):
+        """Return count of media files"""
+        return self.media_files.count()
 
 
 class SocialMediaPostTemplate(models.Model):
@@ -599,4 +618,73 @@ class Media(models.Model):
         if not self.folder:
             self.folder = Folder.get_or_create_default(self.user)
         super().save(*args, **kwargs)
+
+
+# Analytics Models for Storefront
+class ProfileView(models.Model):
+    """Track profile page views for analytics"""
+    user_profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='profile_views')
+    ip_address = models.GenericIPAddressField(_("IP address"), null=True, blank=True)
+    user_agent = models.TextField(_("user agent"), blank=True)
+    referrer = models.URLField(_("referrer"), blank=True, max_length=500)
+    viewed_at = models.DateTimeField(_("viewed at"), auto_now_add=True)
+
+    class Meta:
+        db_table = "profile_views"
+        verbose_name = _("profile view")
+        verbose_name_plural = _("profile views")
+        ordering = ['-viewed_at']
+        indexes = [
+            models.Index(fields=['user_profile', '-viewed_at']),
+            models.Index(fields=['viewed_at']),
+            models.Index(fields=['ip_address', 'viewed_at']),  # For duplicate detection
+        ]
+
+    def __str__(self):
+        return f"{self.user_profile.user.username} - {self.viewed_at}"
+
+
+class LinkClick(models.Model):
+    """Track clicks on custom links for analytics"""
+    user_profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='link_clicks')
+    custom_link = models.ForeignKey(CustomLink, on_delete=models.CASCADE, related_name='clicks', null=True, blank=True)
+    ip_address = models.GenericIPAddressField(_("IP address"), null=True, blank=True)
+    user_agent = models.TextField(_("user agent"), blank=True)
+    referrer = models.URLField(_("referrer"), blank=True, max_length=500)
+    clicked_at = models.DateTimeField(_("clicked at"), auto_now_add=True)
+
+    class Meta:
+        db_table = "link_clicks"
+        verbose_name = _("link click")
+        verbose_name_plural = _("link clicks")
+        ordering = ['-clicked_at']
+        indexes = [
+            models.Index(fields=['user_profile', '-clicked_at']),
+            models.Index(fields=['custom_link', '-clicked_at']),
+            models.Index(fields=['clicked_at']),
+            models.Index(fields=['ip_address', 'clicked_at']),  # For duplicate detection
+        ]
+
+
+class BannerClick(models.Model):
+    """Track clicks on CTA banners for analytics"""
+    banner = models.ForeignKey(CTABanner, on_delete=models.CASCADE, related_name='clicks')
+    ip_address = models.GenericIPAddressField(_("IP address"), null=True, blank=True)
+    user_agent = models.TextField(_("user agent"), blank=True)
+    referrer = models.URLField(_("referrer"), blank=True, max_length=500)
+    timestamp = models.DateTimeField(_("timestamp"), auto_now_add=True)
+
+    class Meta:
+        db_table = "banner_clicks"
+        verbose_name = _("banner click")
+        verbose_name_plural = _("banner clicks")
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['banner', '-timestamp']),
+            models.Index(fields=['timestamp']),
+            models.Index(fields=['ip_address', 'timestamp']),  # For duplicate detection
+        ]
+
+    def __str__(self):
+        return f"{self.banner.user_profile.user.username} - Banner Click - {self.timestamp}"
 

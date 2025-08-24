@@ -12,6 +12,14 @@ def health_check(request):
     """Simple health check endpoint"""
     return JsonResponse({"status": "healthy"})
 
+# Import storefront ViewSets
+from .apis.storefront import (
+    UserProfileStorefrontViewSet,
+    CustomLinkViewSet,
+    SocialIconViewSet,
+    CTABannerViewSet,
+)
+
 from .apis.auth import (
     UserViewSet, UserProfileViewSet
 )
@@ -67,6 +75,12 @@ router.register("users", UserViewSet, basename="api-users")
 router.register("profiles", UserProfileViewSet, basename="api-profiles")
 router.register("plans", PlanViewSet, basename="api-plans")
 router.register("ai", OpenAIViewSet, basename="api-ai")
+
+# Storefront API endpoints
+router.register("storefront/profiles", UserProfileStorefrontViewSet, basename="storefront-profiles")
+router.register("storefront/links", CustomLinkViewSet, basename="storefront-links")
+router.register("storefront/social-icons", SocialIconViewSet, basename="storefront-social-icons")
+router.register("storefront/cta-banners", CTABannerViewSet, basename="storefront-cta-banners")
 
 urlpatterns = [
     path("", RedirectView.as_view(url="/admin/", permanent=True), name="root_redirect"),

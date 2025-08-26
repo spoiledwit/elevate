@@ -6,6 +6,8 @@ from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework import status, permissions, generics
 from rest_framework.decorators import api_view, permission_classes
+from drf_spectacular.utils import extend_schema
+from drf_spectacular.types import OpenApiTypes
 
 from ..models import SocialMediaConnection, Comment, CommentAutomationRule, CommentAutomationSettings, CommentReply
 from ..serializers import (
@@ -19,6 +21,35 @@ from ..services.integrations.meta_service import MetaService
 logger = logging.getLogger(__name__)
 
 
+@extend_schema(
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {
+                'page_id': {'type': 'string', 'description': 'Facebook page ID to subscribe'}
+            },
+            'required': ['page_id']
+        }
+    },
+    responses={
+        200: {
+            'type': 'object',
+            'properties': {
+                'success': {'type': 'boolean'},
+                'message': {'type': 'string'},
+                'result': {'type': 'object'}
+            }
+        },
+        400: {
+            'type': 'object', 
+            'properties': {
+                'error': {'type': 'string'}
+            }
+        }
+    },
+    summary="Subscribe page to webhooks",
+    description="Subscribe a Facebook page to webhooks for comment automation"
+)
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
 def subscribe_page_webhooks(request):

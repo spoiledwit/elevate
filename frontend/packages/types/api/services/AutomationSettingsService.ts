@@ -59,7 +59,7 @@ export class AutomationSettingsService {
         });
     }
     /**
-     * Delete automation settings by ID.
+     * Delete automation settings by ID and unsubscribe from webhooks.
      * @param settingsId
      * @returns void
      * @throws ApiError
@@ -76,7 +76,7 @@ export class AutomationSettingsService {
         });
     }
     /**
-     * Toggle automation settings enabled/disabled status.
+     * Toggle automation settings enabled/disabled status and manage webhooks.
      * @param settingsId
      * @returns any No response body
      * @throws ApiError

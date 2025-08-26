@@ -93,14 +93,29 @@ export class CommentsService {
         });
     }
     /**
-     * Subscribe a Facebook page to webhooks for comment automation.
-     * @returns any No response body
+     * Subscribe page to webhooks
+     * Subscribe a Facebook page to webhooks for comment automation
+     * @param requestBody
+     * @returns any
      * @throws ApiError
      */
-    public commentsSubscribeWebhooksCreate(): CancelablePromise<any> {
+    public commentsSubscribeWebhooksCreate(
+        requestBody?: {
+            /**
+             * Facebook page ID to subscribe
+             */
+            page_id: string;
+        },
+    ): CancelablePromise<{
+        success?: boolean;
+        message?: string;
+        result?: Record<string, any>;
+    }> {
         return this.httpRequest.request({
             method: 'POST',
             url: '/api/comments/subscribe-webhooks/',
+            body: requestBody,
+            mediaType: 'application/json',
         });
     }
 }

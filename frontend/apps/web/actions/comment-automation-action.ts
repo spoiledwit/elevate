@@ -548,7 +548,9 @@ export async function subscribePageWebhooksAction(pageId: string) {
 
   try {
     const apiClient = await getApiClient(session)
-    const response = await apiClient.comments.commentsSubscribeWebhooksCreate()
+    const response = await apiClient.comments.commentsSubscribeWebhooksCreate({
+      page_id: pageId
+    })
     
     return response
   } catch (error) {

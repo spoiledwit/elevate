@@ -75,6 +75,19 @@ from .apis.comments import (
     get_post_comments,
     reply_to_comment,
     list_facebook_pages,
+    CommentListView,
+    CommentDetailView,
+    CommentAutomationRuleListCreateView,
+    CommentAutomationRuleDetailView,
+    toggle_automation_rule,
+    CommentAutomationSettingsListView,
+    automation_settings_by_connection,
+    update_automation_settings,
+    delete_automation_settings,
+    toggle_automation_settings,
+    CommentReplyListView,
+    comment_replies_for_comment,
+    automation_stats,
 )
 
 router = routers.DefaultRouter()
@@ -175,8 +188,31 @@ urlpatterns = [
     # Comment Management URLs
     path("api/comments/pages/", list_facebook_pages, name="comments_facebook_pages"),
     path("api/comments/subscribe-webhooks/", subscribe_page_webhooks, name="comments_subscribe_webhooks"),
-    path("api/comments/", get_post_comments, name="comments_get_post_comments"),
+    path("api/comments/get-post-comments/", get_post_comments, name="comments_get_post_comments"),
     path("api/comments/reply/", reply_to_comment, name="comments_reply"),
+    
+    # Comment Automation URLs
+    path("api/comments/", CommentListView.as_view(), name="comments_list"),
+    path("api/comments/<int:pk>/", CommentDetailView.as_view(), name="comments_detail"),
+    path("api/comments/<int:comment_id>/replies/", comment_replies_for_comment, name="comments_replies"),
+    
+    # Automation Rules URLs
+    path("api/automation-rules/", CommentAutomationRuleListCreateView.as_view(), name="automation_rules_list_create"),
+    path("api/automation-rules/<int:pk>/", CommentAutomationRuleDetailView.as_view(), name="automation_rules_detail"),
+    path("api/automation-rules/<int:rule_id>/toggle/", toggle_automation_rule, name="automation_rules_toggle"),
+    
+    # Automation Settings URLs
+    path("api/automation-settings/", CommentAutomationSettingsListView.as_view(), name="automation_settings_list"),
+    path("api/automation-settings/<int:connection_id>/", automation_settings_by_connection, name="automation_settings_by_connection"),
+    path("api/automation-settings/<int:settings_id>/update/", update_automation_settings, name="automation_settings_update"),
+    path("api/automation-settings/<int:settings_id>/delete/", delete_automation_settings, name="automation_settings_delete"),
+    path("api/automation-settings/<int:settings_id>/toggle/", toggle_automation_settings, name="automation_settings_toggle"),
+    
+    # Comment Replies URLs
+    path("api/comment-replies/", CommentReplyListView.as_view(), name="comment_replies_list"),
+    
+    # Statistics URLs
+    path("api/automation-stats/", automation_stats, name="automation_stats"),
     
     path("admin/", admin.site.urls),
     

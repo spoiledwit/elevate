@@ -424,6 +424,106 @@ class SocialMediaPostTemplate(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.name}"
+
+
+# COMMENT AUTOMATION MODELS #
+
+class Comment(models.Model):
+    """Store Facebook comments from webhooks"""
+    comment_id = models.CharField("Facebook comment ID", max_length=255, unique=True)
+    post_id = models.CharField("Facebook post ID", max_length=255)
+    page_id = models.CharField("Facebook page ID", max_length=255)
+    
+    from_user_name = models.CharField("User name", max_length=255)
+    from_user_id = models.CharField("Facebook user ID", max_length=255, blank=True)
+    message = models.TextField("Comment message")
+    
+    connection = models.ForeignKey(SocialMediaConnection, on_delete=models.CASCADE, related_name='comments')
+    
+    status = models.CharField("Status", max_length=20, default='new', choices=[
+        ('new', 'New'),
+        ('replied', 'Replied'),
+        ('ignored', 'Ignored')
+    ])
+    
+    created_time = models.DateTimeField("Facebook created time")
+    received_at = models.DateTimeField("Received at", auto_now_add=True)
+    
+    class Meta:
+        db_table = 'comments'
+        ordering = ['-created_time']
+
+    def __str__(self):
+        return f"Comment by {self.from_user_name}: {self.message[:50]}"
+
+
+class CommentAutomationRule(models.Model):
+    """User-defined automation rules for comment replies"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='automation_rules')
+    connection = models.ForeignKey(SocialMediaConnection, on_delete=models.CASCADE, related_name='automation_rules')
+    
+    rule_name = models.CharField("Rule name", max_length=100)
+    keywords = models.JSONField("Keywords", default=list)
+    reply_template = models.TextField("Reply template")
+    
+    is_active = models.BooleanField("Is active", default=True)
+    priority = models.IntegerField("Priority", default=0)
+    
+    times_triggered = models.IntegerField("Times triggered", default=0)
+    created_at = models.DateTimeField("Created at", auto_now_add=True)
+    
+    class Meta:
+        db_table = 'comment_automation_rules'
+        ordering = ['connection', '-priority']
+        unique_together = [['user', 'connection', 'rule_name']]
+
+    def __str__(self):
+        return f"{self.rule_name} ({self.connection.facebook_page_name})"
+
+
+class CommentAutomationSettings(models.Model):
+    """Global automation settings per connection"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='automation_settings')
+    connection = models.ForeignKey(SocialMediaConnection, on_delete=models.CASCADE, related_name='automation_settings', unique=True)
+    
+    is_enabled = models.BooleanField("Automation enabled", default=True)
+    default_reply = models.TextField("Default reply", blank=True)
+    reply_delay_seconds = models.IntegerField("Reply delay (seconds)", default=5)
+    
+    created_at = models.DateTimeField("Created at", auto_now_add=True)
+    updated_at = models.DateTimeField("Updated at", auto_now=True)
+    
+    class Meta:
+        db_table = 'comment_automation_settings'
+
+    def __str__(self):
+        return f"Settings for {self.connection.facebook_page_name}"
+
+
+class CommentReply(models.Model):
+    """Track automated replies sent"""
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='replies')
+    rule = models.ForeignKey(CommentAutomationRule, on_delete=models.SET_NULL, null=True, blank=True, related_name='replies')
+    
+    reply_text = models.TextField("Reply text")
+    facebook_reply_id = models.CharField("Facebook reply ID", max_length=255, blank=True)
+    
+    status = models.CharField("Status", max_length=20, default='sent', choices=[
+        ('pending', 'Pending'),
+        ('sent', 'Sent'),
+        ('failed', 'Failed')
+    ])
+    
+    sent_at = models.DateTimeField("Sent at", auto_now_add=True)
+    
+    class Meta:
+        db_table = 'comment_replies'
+        ordering = ['-sent_at']
+
+    def __str__(self):
+        return f"Reply to {self.comment.comment_id}"
+
+
 # STRIPE PLANS #
 
 class BillingPeriod(models.TextChoices):

@@ -17,8 +17,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 
-from ..models import SocialMediaConnection
+from ..models import SocialMediaConnection, Comment, CommentAutomationRule, CommentAutomationSettings, CommentReply
 from ..services.integrations.meta_service import MetaService
+from django.utils.dateparse import parse_datetime
+from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -174,8 +176,13 @@ class FacebookWebhookView(APIView):
             post_id = event_data.get('post_id')
             message = event_data.get('message', '')
             verb = event_data.get('verb', '')  # 'add', 'edit', 'remove'
+            from_user = event_data.get('from', {})
+            from_user_name = from_user.get('name', 'Unknown User')
+            from_user_id = from_user.get('id', '')
+            created_time = event_data.get('created_time')
             
             logger.info(f"Comment event: {verb} comment {comment_id} on post {post_id}")
+            logger.info(f"Comment from: {from_user_name}")
             logger.info(f"Comment message: {message}")
             
             # Only handle new comments
@@ -195,66 +202,47 @@ class FacebookWebhookView(APIView):
                 logger.warning(f"No active Facebook connection found for page {page_id}")
                 return
             
-            # Apply simple automation logic
-            self._apply_comment_automation(connection, comment_id, message, post_id)
+            # Parse created time
+            comment_created_time = timezone.now()
+            if created_time:
+                try:
+                    comment_created_time = parse_datetime(created_time) or timezone.now()
+                except:
+                    pass
+            
+            # Save comment to database
+            comment, created = Comment.objects.get_or_create(
+                comment_id=comment_id,
+                defaults={
+                    'post_id': post_id,
+                    'page_id': page_id,
+                    'from_user_name': from_user_name,
+                    'from_user_id': from_user_id,
+                    'message': message,
+                    'connection': connection,
+                    'created_time': comment_created_time,
+                    'status': 'new'
+                }
+            )
+            
+            if created:
+                logger.info(f"Saved new comment {comment_id} to database")
+                
+                # Queue Celery task for automation processing
+                from ..tasks import process_comment_automation
+                
+                # Get delay from settings if exists
+                try:
+                    settings = CommentAutomationSettings.objects.get(connection=connection)
+                    delay = settings.reply_delay_seconds
+                except CommentAutomationSettings.DoesNotExist:
+                    delay = 5  # Default delay
+                
+                # Queue the task
+                process_comment_automation.delay(comment.id, delay_seconds=delay)
+                logger.info(f"Queued automation task for comment {comment_id} with {delay}s delay")
+            else:
+                logger.info(f"Comment {comment_id} already exists in database")
             
         except Exception as e:
             logger.error(f"Error handling comment event: {e}")
-    
-    def _apply_comment_automation(self, connection: SocialMediaConnection, 
-                                 comment_id: str, message: str, post_id: str):
-        """
-        Apply simple comment automation rules.
-        
-        Args:
-            connection: SocialMediaConnection instance
-            comment_id: Facebook comment ID
-            message: Comment message text
-            post_id: Facebook post ID
-        """
-        try:
-            logger.info(f"Applying automation for comment: {message}")
-            
-            # Simple keyword-based automation
-            message_lower = message.lower()
-            reply_message = None
-            
-            # Define simple automation rules
-            automation_rules = [
-                {
-                    'keywords': ['thanks', 'thank you', 'great', 'awesome', 'love'],
-                    'reply': 'Thank you so much for your kind words! 🙏 We really appreciate your support!'
-                },
-                {
-                    'keywords': ['help', 'support', 'question', 'how'],
-                    'reply': 'Hi there! We\'re here to help. Please send us a private message and we\'ll get back to you shortly! 💬'
-                },
-                {
-                    'keywords': ['price', 'cost', 'buy', 'purchase'],
-                    'reply': 'Thanks for your interest! Please check our website or send us a DM for pricing details. 💰'
-                }
-            ]
-            
-            # Check each rule
-            for rule in automation_rules:
-                if any(keyword in message_lower for keyword in rule['keywords']):
-                    reply_message = rule['reply']
-                    logger.info(f"Matched automation rule: {rule['keywords']}")
-                    break
-            
-            # If no specific rule matched, use a default friendly response
-            if not reply_message:
-                reply_message = 'Thanks for your comment! We appreciate you taking the time to engage with us. 😊'
-                logger.info("Using default automation response")
-            
-            # Send the reply
-            meta_service = MetaService(connection)
-            result = meta_service.reply_to_comment(comment_id, reply_message, connection)
-            
-            if result.get('success'):
-                logger.info(f"Successfully sent automated reply to comment {comment_id}")
-            else:
-                logger.error(f"Failed to send automated reply: {result.get('error')}")
-            
-        except Exception as e:
-            logger.error(f"Error applying comment automation: {e}")

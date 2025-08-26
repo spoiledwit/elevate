@@ -3,8 +3,11 @@ from celery import shared_task
 from django.utils import timezone
 from datetime import timedelta
 
-from .models import SocialMediaConnection, SocialMediaPost
+from .models import SocialMediaConnection, SocialMediaPost, Comment, CommentAutomationRule, CommentAutomationSettings, CommentReply
 from .services.factory import SocialMediaServiceFactory
+from .services.integrations.meta_service import MetaService
+from django.utils.dateparse import parse_datetime
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -249,3 +252,154 @@ def cleanup_old_posts():
     return {
         'deleted_count': deleted_count
     }
+
+
+# COMMENT AUTOMATION TASKS
+
+@shared_task
+def process_comment_automation(comment_id, delay_seconds=0):
+    """Process comment automation with optional delay"""
+    logger.info(f"Processing comment automation for comment {comment_id}")
+    
+    if delay_seconds > 0:
+        logger.info(f"Delaying reply by {delay_seconds} seconds")
+        time.sleep(delay_seconds)
+    
+    try:
+        # Get the comment
+        comment = Comment.objects.get(id=comment_id)
+        
+        # Skip if comment is from the page itself (don't reply to our own comments)
+        if comment.from_user_id and comment.page_id == comment.from_user_id:
+            logger.info(f"Comment {comment_id} is from the page itself (user_id: {comment.from_user_id}), skipping automation")
+            comment.status = 'ignored'
+            comment.save()
+            return {'success': True, 'message': 'Comment from page itself, ignored'}
+        
+        # Skip if already replied
+        if comment.status == 'replied':
+            logger.info(f"Comment {comment_id} already replied, skipping")
+            return {'success': True, 'message': 'Already replied'}
+        
+        # Check if automation is enabled for this connection
+        try:
+            settings = CommentAutomationSettings.objects.get(connection=comment.connection)
+            if not settings.is_enabled:
+                logger.info(f"Automation disabled for connection {comment.connection.id}")
+                comment.status = 'ignored'
+                comment.save()
+                return {'success': True, 'message': 'Automation disabled'}
+        except CommentAutomationSettings.DoesNotExist:
+            # No settings found, skip automation
+            logger.info(f"No automation settings found for connection {comment.connection.id}")
+            comment.status = 'ignored'
+            comment.save()
+            return {'success': True, 'message': 'No automation settings'}
+        
+        # Get matching rules
+        rules = CommentAutomationRule.objects.filter(
+            connection=comment.connection,
+            is_active=True
+        ).order_by('-priority', 'rule_name')
+        
+        matched_rule = None
+        reply_text = None
+        
+        # Find matching rule
+        for rule in rules:
+            if _does_comment_match_rule(comment, rule):
+                matched_rule = rule
+                reply_text = rule.reply_template
+                break
+        
+        # Use default reply if no rule matched
+        if not matched_rule and settings.default_reply:
+            reply_text = settings.default_reply
+        
+        # Send reply if we have text
+        if reply_text:
+            result = _send_comment_reply(comment, reply_text, matched_rule)
+            
+            if result.get('success'):
+                comment.status = 'replied'
+                comment.save()
+                
+                # Update rule statistics
+                if matched_rule:
+                    matched_rule.times_triggered += 1
+                    matched_rule.save()
+                
+                logger.info(f"Successfully replied to comment {comment_id}")
+                return {'success': True, 'reply_sent': True, 'rule': matched_rule.rule_name if matched_rule else 'default'}
+            else:
+                comment.status = 'error'
+                comment.save()
+                logger.error(f"Failed to send reply to comment {comment_id}: {result.get('error')}")
+                return {'success': False, 'error': result.get('error')}
+        else:
+            # No matching rule and no default reply
+            comment.status = 'ignored'
+            comment.save()
+            logger.info(f"No matching rule or default reply for comment {comment_id}")
+            return {'success': True, 'message': 'No matching rule or default reply'}
+        
+    except Comment.DoesNotExist:
+        logger.error(f"Comment {comment_id} not found")
+        return {'success': False, 'error': 'Comment not found'}
+    except Exception as e:
+        logger.error(f"Error processing comment automation for {comment_id}: {str(e)}")
+        return {'success': False, 'error': str(e)}
+
+
+def _does_comment_match_rule(comment, rule):
+    """Check if comment matches a rule's conditions"""
+    message = comment.message.lower()
+    keywords = rule.keywords
+    
+    if not keywords:
+        return False
+    
+    matches = []
+    for keyword in keywords:
+        keyword_check = keyword.lower()
+        matches.append(keyword_check in message)
+    
+    # Return True if any keyword matches (OR logic)
+    # For AND logic, we'd use: return all(matches)
+    return any(matches)
+
+
+def _send_comment_reply(comment, reply_text, rule=None):
+    """Send reply to a comment"""
+    try:
+        # Use Meta service to send reply
+        meta_service = MetaService(comment.connection)
+        result = meta_service.reply_to_comment(comment.comment_id, reply_text, comment.connection)
+        
+        if result.get('success'):
+            # Save reply record
+            CommentReply.objects.create(
+                comment=comment,
+                rule=rule,
+                reply_text=reply_text,
+                facebook_reply_id=result.get('reply_id', ''),
+                status='sent',
+                sent_at=timezone.now()
+            )
+            
+            return {'success': True, 'reply_id': result.get('reply_id')}
+        else:
+            # Save failed reply record
+            CommentReply.objects.create(
+                comment=comment,
+                rule=rule,
+                reply_text=reply_text,
+                status='failed',
+                error_message=result.get('error', 'Unknown error')
+            )
+            
+            return {'success': False, 'error': result.get('error', 'Unknown error')}
+    
+    except Exception as e:
+        logger.error(f"Error sending reply to comment {comment.comment_id}: {str(e)}")
+        return {'success': False, 'error': str(e)}

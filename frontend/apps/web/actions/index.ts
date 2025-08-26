@@ -114,6 +114,27 @@ export {
   getDashboardStatsAction
 } from './storefront-action'
 
+// Comment Automation actions
+export {
+  getCommentsAction,
+  getCommentAction,
+  getCommentRepliesAction,
+  getAutomationRulesAction,
+  createAutomationRuleAction,
+  getAutomationRuleAction,
+  updateAutomationRuleAction,
+  deleteAutomationRuleAction,
+  toggleAutomationRuleAction,
+  getAutomationSettingsAction,
+  getAutomationSettingsByConnectionAction,
+  createOrUpdateAutomationSettingsAction,
+  getCommentRepliesListAction,
+  getAutomationStatsAction,
+  getFacebookPagesAction,
+  subscribePageWebhooksAction,
+  replyToCommentAction
+} from './comment-automation-action'
+
 // Export types
 export type { RegisterFormSchema } from './register-action'
 export type { ProfileFormSchema } from './profile-action'
@@ -163,3 +184,12 @@ export type {
   ProfileImageUploadData,
   AnalyticsParams
 } from './storefront-action'
+export type {
+  CommentAutomationRuleCreateData,
+  CommentAutomationRuleUpdateData,
+  CommentAutomationSettingsCreateData,
+  CommentAutomationSettingsUpdateData,
+  CommentFilters,
+  AutomationRuleFilters,
+  CommentReplyFilters
+} from './comment-automation-action'

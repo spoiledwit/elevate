@@ -486,6 +486,32 @@ UNFOLD = {
                 ],
             },
             {
+                "title": _("Comment Automation"),
+                "separator": True,
+                "items": [
+                    {
+                        "title": _("Comments"),
+                        "icon": "comment",
+                        "link": reverse_lazy("admin:api_comment_changelist"),
+                    },
+                    {
+                        "title": _("Automation Rules"),
+                        "icon": "auto_awesome",
+                        "link": reverse_lazy("admin:api_commentautomationrule_changelist"),
+                    },
+                    {
+                        "title": _("Automation Settings"),
+                        "icon": "settings",
+                        "link": reverse_lazy("admin:api_commentautomationsettings_changelist"),
+                    },
+                    {
+                        "title": _("Comment Replies"),
+                        "icon": "reply",
+                        "link": reverse_lazy("admin:api_commentreply_changelist"),
+                    },
+                ],
+            },
+            {
                 "title": _("Media Library"),
                 "separator": True,
                 "items": [

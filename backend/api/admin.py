@@ -12,7 +12,7 @@ from .models import (
     User, UserProfile, UserSocialLinks, SocialIcon, CustomLink, CTABanner, Subscription,
     TriggerRule, AIChatHistory, ProfileView, LinkClick, BannerClick,
     SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, PaymentEvent, Plan, PlanFeature, StripeCustomer,
-    Folder, Media
+    Folder, Media, Comment, CommentAutomationRule, CommentAutomationSettings, CommentReply
 )
 
 admin.site.unregister(Group)
@@ -638,3 +638,148 @@ class LinkClickAdmin(ModelAdmin):
     
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('user_profile__user', 'custom_link')
+
+
+# Comment Automation Admin
+@admin.register(Comment)
+class CommentAdmin(ModelAdmin):
+    list_display = ['comment_id', 'from_user_name', 'message_preview', 'connection_page', 'status', 'created_time']
+    list_filter = ['status', 'connection__platform', 'created_time', 'received_at']
+    search_fields = ['comment_id', 'from_user_name', 'message', 'connection__facebook_page_name']
+    readonly_fields = ['comment_id', 'post_id', 'page_id', 'from_user_name', 'from_user_id', 'message', 'created_time', 'received_at']
+    
+    fieldsets = (
+        ('Facebook Data', {
+            'fields': ('comment_id', 'post_id', 'page_id', 'from_user_name', 'from_user_id')
+        }),
+        ('Comment Content', {
+            'fields': ('message', 'status')
+        }),
+        ('Connection', {
+            'fields': ('connection',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_time', 'received_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def message_preview(self, obj):
+        return obj.message[:50] + '...' if len(obj.message) > 50 else obj.message
+    message_preview.short_description = 'Message Preview'
+    
+    def connection_page(self, obj):
+        return obj.connection.facebook_page_name or 'Unknown Page'
+    connection_page.short_description = 'Facebook Page'
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('connection')
+
+
+@admin.register(CommentAutomationRule)
+class CommentAutomationRuleAdmin(ModelAdmin):
+    list_display = ['rule_name', 'user', 'connection_page', 'keywords_preview', 'is_active', 'priority', 'times_triggered', 'created_at']
+    list_filter = ['is_active', 'connection__platform', 'created_at', 'priority']
+    search_fields = ['rule_name', 'user__username', 'connection__facebook_page_name', 'reply_template']
+    readonly_fields = ['times_triggered', 'created_at']
+    
+    fieldsets = (
+        ('Rule Information', {
+            'fields': ('user', 'connection', 'rule_name', 'is_active', 'priority')
+        }),
+        ('Automation Logic', {
+            'fields': ('keywords', 'reply_template')
+        }),
+        ('Statistics', {
+            'fields': ('times_triggered',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at',),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def connection_page(self, obj):
+        return obj.connection.facebook_page_name or 'Unknown Page'
+    connection_page.short_description = 'Facebook Page'
+    
+    def keywords_preview(self, obj):
+        if obj.keywords:
+            keywords_str = ', '.join(obj.keywords[:3])
+            if len(obj.keywords) > 3:
+                keywords_str += f' (+{len(obj.keywords) - 3} more)'
+            return keywords_str
+        return 'No keywords'
+    keywords_preview.short_description = 'Keywords'
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user', 'connection')
+
+
+@admin.register(CommentAutomationSettings)
+class CommentAutomationSettingsAdmin(ModelAdmin):
+    list_display = ['user', 'connection_page', 'is_enabled', 'reply_delay_seconds', 'has_default_reply', 'created_at']
+    list_filter = ['is_enabled', 'connection__platform', 'created_at']
+    search_fields = ['user__username', 'connection__facebook_page_name', 'default_reply']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Settings', {
+            'fields': ('user', 'connection', 'is_enabled')
+        }),
+        ('Reply Configuration', {
+            'fields': ('default_reply', 'reply_delay_seconds')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def connection_page(self, obj):
+        return obj.connection.facebook_page_name or 'Unknown Page'
+    connection_page.short_description = 'Facebook Page'
+    
+    def has_default_reply(self, obj):
+        return bool(obj.default_reply and obj.default_reply.strip())
+    has_default_reply.boolean = True
+    has_default_reply.short_description = 'Has Default Reply'
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user', 'connection')
+
+
+@admin.register(CommentReply)
+class CommentReplyAdmin(ModelAdmin):
+    list_display = ['comment', 'from_user', 'reply_preview', 'rule_used', 'status', 'sent_at']
+    list_filter = ['status', 'sent_at', 'rule__rule_name']
+    search_fields = ['comment__comment_id', 'comment__from_user_name', 'reply_text', 'facebook_reply_id']
+    readonly_fields = ['comment', 'rule', 'reply_text', 'facebook_reply_id', 'sent_at']
+    
+    fieldsets = (
+        ('Reply Information', {
+            'fields': ('comment', 'rule', 'reply_text', 'status')
+        }),
+        ('Facebook Data', {
+            'fields': ('facebook_reply_id',)
+        }),
+        ('Timestamps', {
+            'fields': ('sent_at',),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def from_user(self, obj):
+        return obj.comment.from_user_name
+    from_user.short_description = 'Original Commenter'
+    
+    def reply_preview(self, obj):
+        return obj.reply_text[:50] + '...' if len(obj.reply_text) > 50 else obj.reply_text
+    reply_preview.short_description = 'Reply Preview'
+    
+    def rule_used(self, obj):
+        return obj.rule.rule_name if obj.rule else 'Default Reply'
+    rule_used.short_description = 'Rule Used'
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('comment', 'rule')

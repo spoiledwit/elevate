@@ -17,12 +17,11 @@ export default async function Dashboard() {
   return (
     <div className="flex-1 bg-gray-50">
       <DashboardHeader />
-      
+
       <div className="p-6">
         <div className="max-w-7xl mx-auto space-y-6">
           <StartGuide />
           <AnalyticsOverview initialStats={dashboardStats} />
-          <ConnectPromoBanner />
         </div>
       </div>
     </div>

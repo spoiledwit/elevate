@@ -5,7 +5,7 @@ from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 from rest_framework import exceptions, serializers
 
-from .models import UserProfile, UserSocialLinks, SocialIcon, CustomLink, CTABanner, SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, Plan, PlanFeature, Subscription, Folder, Media, ProfileView, LinkClick
+from .models import UserProfile, UserSocialLinks, SocialIcon, CustomLink, CTABanner, SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, Plan, PlanFeature, Subscription, Folder, Media, ProfileView, LinkClick, Comment, CommentAutomationRule, CommentAutomationSettings, CommentReply
 
 User = get_user_model()
 
@@ -973,3 +973,293 @@ class ProfileViewSerializer(serializers.ModelSerializer):
             'id', 'ip_address', 'user_agent', 'referrer', 'viewed_at'
         ]
         read_only_fields = ['id', 'viewed_at']
+
+
+# Comment Automation Serializers
+
+class CommentSerializer(serializers.ModelSerializer):
+    """
+    Serializer for displaying received Facebook comments.
+    """
+    connection_name = serializers.CharField(source='connection.facebook_page_name', read_only=True)
+    platform_name = serializers.CharField(source='connection.platform.display_name', read_only=True)
+    
+    class Meta:
+        model = Comment
+        fields = [
+            'id',
+            'comment_id',
+            'post_id',
+            'page_id',
+            'from_user_name',
+            'from_user_id',
+            'message',
+            'status',
+            'connection_name',
+            'platform_name',
+            'created_time',
+            'received_at'
+        ]
+        read_only_fields = ['id', 'received_at']
+
+
+class CommentListSerializer(serializers.ModelSerializer):
+    """
+    Simplified serializer for listing comments.
+    """
+    connection_name = serializers.CharField(source='connection.facebook_page_name', read_only=True)
+    replies_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Comment
+        fields = [
+            'id',
+            'comment_id',
+            'from_user_name',
+            'message',
+            'status',
+            'connection_name',
+            'created_time',
+            'replies_count'
+        ]
+    
+    def get_replies_count(self, obj):
+        return obj.replies.count()
+
+
+class CommentAutomationRuleSerializer(serializers.ModelSerializer):
+    """
+    Serializer for comment automation rules.
+    """
+    connection_name = serializers.CharField(source='connection.facebook_page_name', read_only=True)
+    times_triggered = serializers.IntegerField(read_only=True)
+    
+    class Meta:
+        model = CommentAutomationRule
+        fields = [
+            'id',
+            'rule_name',
+            'keywords',
+            'reply_template',
+            'is_active',
+            'priority',
+            'connection_name',
+            'times_triggered',
+            'created_at'
+        ]
+        read_only_fields = ['id', 'times_triggered', 'created_at']
+    
+    def validate_keywords(self, value):
+        """Validate that keywords is a list of strings"""
+        if not isinstance(value, list):
+            raise serializers.ValidationError("Keywords must be a list")
+        if not value:
+            raise serializers.ValidationError("At least one keyword is required")
+        for keyword in value:
+            if not isinstance(keyword, str) or not keyword.strip():
+                raise serializers.ValidationError("All keywords must be non-empty strings")
+        return [keyword.strip() for keyword in value]
+    
+    def validate_rule_name(self, value):
+        """Validate rule name uniqueness per connection"""
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            # Get connection_id from request data
+            connection_id = self.initial_data.get('connection_id')
+            if connection_id:
+                queryset = CommentAutomationRule.objects.filter(
+                    user=request.user,
+                    connection_id=connection_id,
+                    rule_name=value
+                )
+                # Exclude current instance when updating
+                if self.instance:
+                    queryset = queryset.exclude(pk=self.instance.pk)
+                if queryset.exists():
+                    raise serializers.ValidationError(
+                        "A rule with this name already exists for this connection"
+                    )
+        return value
+
+
+class CommentAutomationRuleCreateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for creating comment automation rules.
+    """
+    connection_id = serializers.IntegerField(write_only=True)
+    
+    class Meta:
+        model = CommentAutomationRule
+        fields = [
+            'rule_name',
+            'keywords', 
+            'reply_template',
+            'is_active',
+            'priority',
+            'connection_id'
+        ]
+    
+    def validate_connection_id(self, value):
+        """Validate that connection belongs to the user"""
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            try:
+                connection = SocialMediaConnection.objects.get(
+                    id=value,
+                    user=request.user,
+                    platform__name='facebook',
+                    is_active=True
+                )
+                return value
+            except SocialMediaConnection.DoesNotExist:
+                raise serializers.ValidationError(
+                    "Invalid connection ID or connection not found"
+                )
+        return value
+    
+    def validate_keywords(self, value):
+        """Validate that keywords is a list of strings"""
+        if not isinstance(value, list):
+            raise serializers.ValidationError("Keywords must be a list")
+        if not value:
+            raise serializers.ValidationError("At least one keyword is required")
+        for keyword in value:
+            if not isinstance(keyword, str) or not keyword.strip():
+                raise serializers.ValidationError("All keywords must be non-empty strings")
+        return [keyword.strip() for keyword in value]
+    
+    def create(self, validated_data):
+        """Create rule with user and connection"""
+        connection_id = validated_data.pop('connection_id')
+        connection = SocialMediaConnection.objects.get(id=connection_id)
+        
+        rule = CommentAutomationRule.objects.create(
+            user=self.context['request'].user,
+            connection=connection,
+            **validated_data
+        )
+        return rule
+
+
+class CommentAutomationSettingsSerializer(serializers.ModelSerializer):
+    """
+    Serializer for comment automation settings.
+    """
+    connection_name = serializers.CharField(source='connection.facebook_page_name', read_only=True)
+    
+    class Meta:
+        model = CommentAutomationSettings
+        fields = [
+            'id',
+            'is_enabled',
+            'default_reply',
+            'reply_delay_seconds',
+            'connection_name',
+            'created_at',
+            'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+    
+    def validate_reply_delay_seconds(self, value):
+        """Validate reply delay is reasonable"""
+        if value < 0:
+            raise serializers.ValidationError("Reply delay cannot be negative")
+        if value > 3600:  # 1 hour max
+            raise serializers.ValidationError("Reply delay cannot exceed 1 hour")
+        return value
+
+
+class CommentAutomationSettingsCreateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for creating/updating comment automation settings.
+    """
+    connection_id = serializers.IntegerField(write_only=True)
+    
+    class Meta:
+        model = CommentAutomationSettings
+        fields = [
+            'is_enabled',
+            'default_reply',
+            'reply_delay_seconds',
+            'connection_id'
+        ]
+    
+    def validate_connection_id(self, value):
+        """Validate that connection belongs to the user"""
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            try:
+                connection = SocialMediaConnection.objects.get(
+                    id=value,
+                    user=request.user,
+                    platform__name='facebook',
+                    is_active=True
+                )
+                return value
+            except SocialMediaConnection.DoesNotExist:
+                raise serializers.ValidationError(
+                    "Invalid connection ID or connection not found"
+                )
+        return value
+    
+    def create(self, validated_data):
+        """Create or update settings"""
+        connection_id = validated_data.pop('connection_id')
+        connection = SocialMediaConnection.objects.get(id=connection_id)
+        user = self.context['request'].user
+        
+        # Use get_or_create to handle existing settings
+        settings, created = CommentAutomationSettings.objects.get_or_create(
+            user=user,
+            connection=connection,
+            defaults=validated_data
+        )
+        
+        # If not created, update with new values
+        if not created:
+            for attr, value in validated_data.items():
+                setattr(settings, attr, value)
+            settings.save()
+        
+        return settings
+
+
+class CommentReplySerializer(serializers.ModelSerializer):
+    """
+    Serializer for automated comment replies.
+    """
+    comment_message = serializers.CharField(source='comment.message', read_only=True)
+    comment_from = serializers.CharField(source='comment.from_user_name', read_only=True)
+    rule_name = serializers.CharField(source='rule.rule_name', read_only=True)
+    
+    class Meta:
+        model = CommentReply
+        fields = [
+            'id',
+            'reply_text',
+            'facebook_reply_id',
+            'status',
+            'sent_at',
+            'error_message',
+            'comment_message',
+            'comment_from',
+            'rule_name'
+        ]
+        read_only_fields = ['id', 'sent_at']
+
+
+class CommentReplyListSerializer(serializers.ModelSerializer):
+    """
+    Simplified serializer for listing comment replies.
+    """
+    rule_name = serializers.CharField(source='rule.rule_name', read_only=True)
+    
+    class Meta:
+        model = CommentReply
+        fields = [
+            'id',
+            'reply_text',
+            'status',
+            'sent_at',
+            'rule_name'
+        ]

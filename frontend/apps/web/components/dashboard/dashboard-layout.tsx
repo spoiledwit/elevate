@@ -15,14 +15,10 @@ import {
   PlusCircle,
   FolderOpen,
   Share2,
-  Palette,
-  HardDrive,
   Bot,
   MessageSquare,
-  FileText,
   Settings2,
   CreditCard,
-  Users,
   HelpCircle,
   Zap,
   ChevronRight,
@@ -70,18 +66,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         return { itemId: 'content-library', sectionId: 'content' }
       case '/social-accounts':
         return { itemId: 'social-accounts', sectionId: 'content' }
-      case '/canva':
-        return { itemId: 'canva', sectionId: 'integrations' }
-      case '/google-drive':
-        return { itemId: 'google-drive', sectionId: 'integrations' }
       case '/ai-assistant':
-        return { itemId: 'ai-assistant', sectionId: 'integrations' }
-      case '/auto-messaging':
-        return { itemId: 'auto-messaging', sectionId: 'automation' }
-      case '/message-templates':
-        return { itemId: 'message-templates', sectionId: 'automation' }
+        return { itemId: 'ai-assistant', sectionId: 'ai-tools' }
+      case '/comments':
+        return { itemId: 'comments', sectionId: 'automation' }
       case '/automation-rules':
         return { itemId: 'automation-rules', sectionId: 'automation' }
+      case '/automation-settings':
+        return { itemId: 'automation-settings', sectionId: 'automation' }
+      case '/reply-analytics':
+        return { itemId: 'reply-analytics', sectionId: 'automation' }
       case '/subscription':
         return { itemId: 'subscription', sectionId: 'business' }
       case '/settings':
@@ -125,6 +119,21 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       case 'ai-assistant':
         router.push('/ai-assistant')
         break
+      case 'comments':
+        router.push('/comments')
+        break
+      case 'automation-rules':
+        router.push('/automation-rules')
+        break
+      case 'automation-settings':
+        router.push('/automation-settings')
+        break
+      case 'reply-analytics':
+        router.push('/reply-analytics')
+        break
+      case 'analytics':
+        router.push('/analytics')
+        break
       case 'post-creator':
         router.push('/post-creator')
         break
@@ -149,6 +158,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       icon: Home,
       items: [
         { id: 'dashboard', label: 'Dashboard', icon: Home },
+        { id: 'analytics', label: 'Analytics', icon: BarChart3 },
       ]
     },
     {
@@ -173,23 +183,22 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       ]
     },
     {
-      id: 'integrations',
-      title: 'Integrations',
-      icon: Palette,
-      items: [
-        { id: 'canva', label: 'Canva Integration', icon: Palette },
-        { id: 'google-drive', label: 'Google Drive', icon: HardDrive },
-        { id: 'ai-assistant', label: 'AI Assistant', icon: Bot },
-      ]
-    },
-    {
       id: 'automation',
       title: 'Automation',
       icon: Zap,
       items: [
-        { id: 'auto-messaging', label: 'Auto Messaging', icon: MessageSquare },
-        { id: 'message-templates', label: 'Message Templates', icon: FileText },
+        { id: 'comments', label: 'Comments', icon: MessageSquare },
         { id: 'automation-rules', label: 'Automation Rules', icon: Zap },
+        { id: 'automation-settings', label: 'Automation Settings', icon: Settings2 },
+        { id: 'reply-analytics', label: 'Reply Analytics', icon: BarChart3 },
+      ]
+    },
+    {
+      id: 'ai-tools',
+      title: 'AI & Tools',
+      icon: Bot,
+      items: [
+        { id: 'ai-assistant', label: 'AI Assistant', icon: Bot },
       ]
     },
     {
@@ -198,7 +207,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       icon: CreditCard,
       items: [
         { id: 'subscription', label: 'Subscription', icon: CreditCard },
-
       ]
     },
     {

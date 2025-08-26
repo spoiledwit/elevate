@@ -157,6 +157,47 @@ def get_post_comments(request):
         )
 
 
+@extend_schema(
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {
+                'comment_id': {'type': 'string', 'description': 'Facebook comment ID to reply to'},
+                'message': {'type': 'string', 'description': 'Reply message text'},
+                'page_id': {'type': 'string', 'description': 'Facebook page ID'}
+            },
+            'required': ['comment_id', 'message', 'page_id']
+        }
+    },
+    responses={
+        200: {
+            'type': 'object',
+            'properties': {
+                'success': {'type': 'boolean'},
+                'message': {'type': 'string'},
+                'reply_id': {'type': 'string', 'description': 'Facebook reply ID'}
+            }
+        },
+        400: {
+            'type': 'object',
+            'properties': {
+                'error': {'type': 'string'}
+            }
+        },
+        404: {
+            'type': 'object',
+            'properties': {
+                'error': {'type': 'string'}
+            }
+        },
+        500: {
+            'type': 'object',
+            'properties': {
+                'error': {'type': 'string'}
+            }
+        }
+    }
+)
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
 def reply_to_comment(request):
@@ -193,6 +234,7 @@ def reply_to_comment(request):
         result = meta_service.reply_to_comment(comment_id, message, connection)
         
         if result.get('success'):
+            # DO NOT save manual replies to database - only send to Facebook
             return Response({
                 'success': True,
                 'message': 'Reply sent successfully',
@@ -389,6 +431,46 @@ class CommentAutomationSettingsListView(generics.ListAPIView):
         ).select_related('connection')
 
 
+@extend_schema(
+    methods=['POST'],
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {
+                'is_enabled': {'type': 'boolean', 'default': True, 'description': 'Enable or disable automation'},
+                'default_reply': {'type': 'string', 'description': 'Default reply message'},
+                'reply_delay_seconds': {'type': 'integer', 'default': 5, 'minimum': 1, 'maximum': 300, 'description': 'Delay in seconds before replying'}
+            },
+            'required': ['is_enabled']
+        }
+    },
+    responses={
+        201: {
+            'type': 'object',
+            'properties': {
+                'success': {'type': 'boolean'},
+                'message': {'type': 'string'},
+                'settings': {
+                    'type': 'object',
+                    'properties': {
+                        'id': {'type': 'integer'},
+                        'is_enabled': {'type': 'boolean'},
+                        'default_reply': {'type': 'string'},
+                        'reply_delay_seconds': {'type': 'integer'},
+                        'connection_id': {'type': 'integer'}
+                    }
+                }
+            }
+        },
+        400: {
+            'type': 'object',
+            'properties': {
+                'success': {'type': 'boolean'},
+                'errors': {'type': 'object'}
+            }
+        }
+    }
+)
 @api_view(['GET', 'POST'])
 @permission_classes([permissions.IsAuthenticated])
 def automation_settings_by_connection(request, connection_id):
@@ -584,6 +666,50 @@ def automation_stats(request):
         )
 
 
+@extend_schema(
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {
+                'is_enabled': {'type': 'boolean', 'description': 'Enable or disable automation'},
+                'default_reply': {'type': 'string', 'description': 'Default reply message'},
+                'reply_delay_seconds': {'type': 'integer', 'minimum': 1, 'maximum': 300, 'description': 'Delay in seconds before replying'}
+            }
+        }
+    },
+    responses={
+        200: {
+            'type': 'object',
+            'properties': {
+                'success': {'type': 'boolean'},
+                'message': {'type': 'string'},
+                'settings': {
+                    'type': 'object',
+                    'properties': {
+                        'id': {'type': 'integer'},
+                        'is_enabled': {'type': 'boolean'},
+                        'default_reply': {'type': 'string'},
+                        'reply_delay_seconds': {'type': 'integer'},
+                        'connection_id': {'type': 'integer'}
+                    }
+                }
+            }
+        },
+        400: {
+            'type': 'object',
+            'properties': {
+                'success': {'type': 'boolean'},
+                'errors': {'type': 'object'}
+            }
+        },
+        404: {
+            'type': 'object',
+            'properties': {
+                'error': {'type': 'string'}
+            }
+        }
+    }
+)
 @api_view(['PATCH'])
 @permission_classes([permissions.IsAuthenticated])
 def update_automation_settings(request, settings_id):

@@ -131,9 +131,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       case 'reply-analytics':
         router.push('/reply-analytics')
         break
-      case 'analytics':
-        router.push('/analytics')
-        break
       case 'post-creator':
         router.push('/post-creator')
         break
@@ -158,7 +155,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       icon: Home,
       items: [
         { id: 'dashboard', label: 'Dashboard', icon: Home },
-        { id: 'analytics', label: 'Analytics', icon: BarChart3 },
       ]
     },
     {

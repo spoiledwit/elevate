@@ -44,18 +44,45 @@ export class AutomationSettingsService {
     /**
      * Get or create/update automation settings for a specific connection.
      * @param connectionId
-     * @returns any No response body
+     * @param requestBody
+     * @returns any
      * @throws ApiError
      */
     public automationSettingsCreate(
         connectionId: number,
-    ): CancelablePromise<any> {
+        requestBody?: {
+            /**
+             * Enable or disable automation
+             */
+            is_enabled: boolean;
+            /**
+             * Default reply message
+             */
+            default_reply?: string;
+            /**
+             * Delay in seconds before replying
+             */
+            reply_delay_seconds?: number;
+        },
+    ): CancelablePromise<{
+        success?: boolean;
+        message?: string;
+        settings?: {
+            id?: number;
+            is_enabled?: boolean;
+            default_reply?: string;
+            reply_delay_seconds?: number;
+            connection_id?: number;
+        };
+    }> {
         return this.httpRequest.request({
             method: 'POST',
             url: '/api/automation-settings/{connection_id}/',
             path: {
                 'connection_id': connectionId,
             },
+            body: requestBody,
+            mediaType: 'application/json',
         });
     }
     /**
@@ -95,18 +122,45 @@ export class AutomationSettingsService {
     /**
      * Update automation settings by ID.
      * @param settingsId
-     * @returns any No response body
+     * @param requestBody
+     * @returns any
      * @throws ApiError
      */
     public automationSettingsUpdatePartialUpdate(
         settingsId: number,
-    ): CancelablePromise<any> {
+        requestBody?: {
+            /**
+             * Enable or disable automation
+             */
+            is_enabled?: boolean;
+            /**
+             * Default reply message
+             */
+            default_reply?: string;
+            /**
+             * Delay in seconds before replying
+             */
+            reply_delay_seconds?: number;
+        },
+    ): CancelablePromise<{
+        success?: boolean;
+        message?: string;
+        settings?: {
+            id?: number;
+            is_enabled?: boolean;
+            default_reply?: string;
+            reply_delay_seconds?: number;
+            connection_id?: number;
+        };
+    }> {
         return this.httpRequest.request({
             method: 'PATCH',
             url: '/api/automation-settings/{settings_id}/update/',
             path: {
                 'settings_id': settingsId,
             },
+            body: requestBody,
+            mediaType: 'application/json',
         });
     }
 }

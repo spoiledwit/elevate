@@ -83,13 +83,38 @@ export class CommentsService {
     }
     /**
      * Reply to a Facebook comment manually.
-     * @returns any No response body
+     * @param requestBody
+     * @returns any
      * @throws ApiError
      */
-    public commentsReplyCreate(): CancelablePromise<any> {
+    public commentsReplyCreate(
+        requestBody?: {
+            /**
+             * Facebook comment ID to reply to
+             */
+            comment_id: string;
+            /**
+             * Reply message text
+             */
+            message: string;
+            /**
+             * Facebook page ID
+             */
+            page_id: string;
+        },
+    ): CancelablePromise<{
+        success?: boolean;
+        message?: string;
+        /**
+         * Facebook reply ID
+         */
+        reply_id?: string;
+    }> {
         return this.httpRequest.request({
             method: 'POST',
             url: '/api/comments/reply/',
+            body: requestBody,
+            mediaType: 'application/json',
         });
     }
     /**

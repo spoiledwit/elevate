@@ -983,6 +983,7 @@ class CommentSerializer(serializers.ModelSerializer):
     """
     connection_name = serializers.CharField(source='connection.facebook_page_name', read_only=True)
     platform_name = serializers.CharField(source='connection.platform.display_name', read_only=True)
+    facebook_page_id = serializers.CharField(source='connection.facebook_page_id', read_only=True)
     
     class Meta:
         model = Comment
@@ -991,6 +992,7 @@ class CommentSerializer(serializers.ModelSerializer):
             'comment_id',
             'post_id',
             'page_id',
+            'facebook_page_id',
             'from_user_name',
             'from_user_id',
             'message',
@@ -1008,6 +1010,7 @@ class CommentListSerializer(serializers.ModelSerializer):
     Simplified serializer for listing comments.
     """
     connection_name = serializers.CharField(source='connection.facebook_page_name', read_only=True)
+    facebook_page_id = serializers.CharField(source='connection.facebook_page_id', read_only=True)
     replies_count = serializers.SerializerMethodField()
     
     class Meta:
@@ -1019,6 +1022,7 @@ class CommentListSerializer(serializers.ModelSerializer):
             'message',
             'status',
             'connection_name',
+            'facebook_page_id',
             'created_time',
             'replies_count'
         ]
@@ -1240,7 +1244,6 @@ class CommentReplySerializer(serializers.ModelSerializer):
             'facebook_reply_id',
             'status',
             'sent_at',
-            'error_message',
             'comment_message',
             'comment_from',
             'rule_name'
@@ -1253,6 +1256,9 @@ class CommentReplyListSerializer(serializers.ModelSerializer):
     Simplified serializer for listing comment replies.
     """
     rule_name = serializers.CharField(source='rule.rule_name', read_only=True)
+    comment_message = serializers.CharField(source='comment.message', read_only=True)
+    comment_from_user = serializers.CharField(source='comment.from_user_name', read_only=True)
+    page_name = serializers.CharField(source='comment.connection.facebook_page_name', read_only=True)
     
     class Meta:
         model = CommentReply
@@ -1261,5 +1267,8 @@ class CommentReplyListSerializer(serializers.ModelSerializer):
             'reply_text',
             'status',
             'sent_at',
-            'rule_name'
+            'rule_name',
+            'comment_message',
+            'comment_from_user',
+            'page_name'
         ]

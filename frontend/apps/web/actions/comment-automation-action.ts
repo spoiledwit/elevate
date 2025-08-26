@@ -574,7 +574,11 @@ export async function replyToCommentAction(commentId: string, message: string, p
 
   try {
     const apiClient = await getApiClient(session)
-    const response = await apiClient.comments.commentsReplyCreate()
+    const response = await apiClient.comments.commentsReplyCreate({
+      comment_id: commentId,
+      message: message,
+      page_id: pageId
+    })
     
     return response
   } catch (error) {

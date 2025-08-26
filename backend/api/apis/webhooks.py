@@ -190,6 +190,11 @@ class FacebookWebhookView(APIView):
                 logger.info(f"Ignoring comment event with verb: {verb}")
                 return
             
+            # Skip comments from the page itself to prevent replying to own comments
+            if from_user_id == page_id:
+                logger.info(f"Skipping comment from page itself: {from_user_name} (page_id: {page_id})")
+                return
+            
             # Find the Facebook connection for this page
             try:
                 connection = SocialMediaConnection.objects.get(

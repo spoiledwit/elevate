@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   X,
   User,
@@ -20,6 +20,7 @@ interface CommentDetailsProps {
   comment: any
   onClose: () => void
   onRefresh: () => void
+  currentPage?: any // Add current page info to get page_id
 }
 
 export function CommentDetails({ comment, onClose, onRefresh }: CommentDetailsProps) {
@@ -27,11 +28,6 @@ export function CommentDetails({ comment, onClose, onRefresh }: CommentDetailsPr
   const [loadingReplies, setLoadingReplies] = useState(false)
   const [replyText, setReplyText] = useState('')
   const [sendingReply, setSendingReply] = useState(false)
-
-  // Load replies when component mounts
-  useState(() => {
-    loadReplies()
-  })
 
   const loadReplies = async () => {
     setLoadingReplies(true)
@@ -47,12 +43,19 @@ export function CommentDetails({ comment, onClose, onRefresh }: CommentDetailsPr
     }
   }
 
+  // Load replies when component mounts
+  useEffect(() => {
+    loadReplies()
+  }, [])
+
   const handleSendReply = async () => {
     if (!replyText.trim()) return
     
+    const pageId = comment.facebook_page_id || comment.page_id
+    
     setSendingReply(true)
     try {
-      const result = await replyToCommentAction(comment.comment_id, replyText, comment.page_id)
+      const result = await replyToCommentAction(comment.comment_id, replyText, pageId)
       if (!('error' in result)) {
         setReplyText('')
         loadReplies()

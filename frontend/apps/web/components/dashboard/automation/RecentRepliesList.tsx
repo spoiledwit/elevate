@@ -78,21 +78,29 @@ export function RecentRepliesList({ replies, loading }: RecentRepliesListProps) 
   }
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr)
-    const now = new Date()
-    const diff = now.getTime() - date.getTime()
-    const minutes = Math.floor(diff / (1000 * 60))
-    const hours = Math.floor(diff / (1000 * 60 * 60))
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+    if (!dateStr) return 'Unknown date'
+    
+    try {
+      const date = new Date(dateStr)
+      if (isNaN(date.getTime())) return 'Invalid date'
+      
+      const now = new Date()
+      const diff = now.getTime() - date.getTime()
+      const minutes = Math.floor(diff / (1000 * 60))
+      const hours = Math.floor(diff / (1000 * 60 * 60))
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24))
 
-    if (minutes < 60) {
-      return `${minutes}m ago`
-    } else if (hours < 24) {
-      return `${hours}h ago`
-    } else if (days < 7) {
-      return `${days}d ago`
-    } else {
-      return date.toLocaleDateString()
+      if (minutes < 60) {
+        return `${minutes}m ago`
+      } else if (hours < 24) {
+        return `${hours}h ago`
+      } else if (days < 7) {
+        return `${days}d ago`
+      } else {
+        return date.toLocaleDateString()
+      }
+    } catch (error) {
+      return 'Invalid date'
     }
   }
 
@@ -113,14 +121,14 @@ export function RecentRepliesList({ replies, loading }: RecentRepliesListProps) 
                   {reply.status?.charAt(0).toUpperCase() + reply.status?.slice(1)}
                 </span>
                 <span className="text-sm text-gray-500">
-                  {formatDate(reply.created_at)}
+                  {formatDate(reply.sent_at)}
                 </span>
               </div>
 
               {/* Reply Message */}
               <div className="mb-3">
                 <p className="text-sm text-gray-900 line-clamp-2">
-                  {reply.reply_message || 'Reply message not available'}
+                  {reply.reply_text || 'Reply message not available'}
                 </p>
               </div>
 
@@ -130,7 +138,7 @@ export function RecentRepliesList({ replies, loading }: RecentRepliesListProps) 
                   <User className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm text-gray-600 line-clamp-2">
-                      {reply.comment?.message || 'Original comment not available'}
+                      <strong>{reply.comment_from_user}:</strong> {reply.comment_message || 'Original comment not available'}
                     </p>
                   </div>
                 </div>
@@ -140,17 +148,11 @@ export function RecentRepliesList({ replies, loading }: RecentRepliesListProps) 
               <div className="flex items-center gap-4 text-xs text-gray-500">
                 <div className="flex items-center gap-1">
                   <MessageSquare className="w-3 h-3" />
-                  <span>Page: {reply.comment?.page_name || 'Unknown'}</span>
+                  <span>Page: {reply.page_name || 'Unknown'}</span>
                 </div>
-                {reply.automation_rule_name && (
+                {reply.rule_name && (
                   <div className="flex items-center gap-1">
-                    <span>Rule: {reply.automation_rule_name}</span>
-                  </div>
-                )}
-                {reply.response_time && (
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    <span>{reply.response_time}s</span>
+                    <span>Rule: {reply.rule_name}</span>
                   </div>
                 )}
               </div>

@@ -311,31 +311,66 @@ def publish_now(request, post_id):
     """
     Immediately publish a draft or scheduled post
     """
-    post = get_object_or_404(
-        SocialMediaPost,
-        id=post_id,
-        user=request.user
-    )
+    import logging
+    logger = logging.getLogger(__name__)
     
-    if post.status not in ['draft', 'scheduled']:
-        return Response(
-            {'error': 'Only draft or scheduled posts can be published'},
-            status=status.HTTP_400_BAD_REQUEST
+    logger.info(f"publish_now called - post_id: {post_id}, user: {request.user.username}")
+    
+    try:
+        post = get_object_or_404(
+            SocialMediaPost,
+            id=post_id,
+            user=request.user
         )
-    
-    # Trigger immediate background processing
-    from ..tasks import publish_scheduled_post
-    
-    # Mark as sending
-    post.status = 'sending'
-    post.save()
-    
-    # Queue the task immediately (fire-and-forget)
-    publish_scheduled_post.apply_async(args=[post.id], ignore_result=True)
-    
-    serialized_post = SocialMediaPostSerializer(post)
-    return Response({
-        'success': True,
-        'post': serialized_post.data,
-        'message': 'Post queued for immediate publishing'
-    })
+        logger.info(f"Post found - status: {post.status}, connection: {post.connection.id if post.connection else 'None'}")
+        
+        if post.status not in ['draft', 'scheduled']:
+            logger.warning(f"Invalid post status for publishing: {post.status}")
+            return Response(
+                {'error': 'Only draft or scheduled posts can be published'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Trigger immediate background processing
+        logger.info("Importing publish_scheduled_post task...")
+        from ..tasks import publish_scheduled_post
+        
+        # Mark as sending
+        logger.info("Updating post status to 'sending'...")
+        post.status = 'sending'
+        post.save()
+        logger.info(f"Post status updated successfully - new status: {post.status}")
+        
+        # Queue the task immediately (fire-and-forget)
+        logger.info(f"Queueing Celery task for post {post.id}...")
+        try:
+            result = publish_scheduled_post.apply_async(args=[post.id], ignore_result=True)
+            logger.info(f"Celery task queued successfully - task_id: {result.id if hasattr(result, 'id') else 'N/A'}")
+        except Exception as celery_error:
+            logger.error(f"Failed to queue Celery task: {str(celery_error)}", exc_info=True)
+            # Don't fail the request if Celery is down, just log it
+            post.status = 'failed'
+            post.error_message = f"Failed to queue for publishing: {str(celery_error)}"
+            post.save()
+            return Response({
+                'error': f'Failed to queue post for publishing: {str(celery_error)}',
+                'post_id': post.id
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        logger.info("Serializing post for response...")
+        serialized_post = SocialMediaPostSerializer(post)
+        
+        response_data = {
+            'success': True,
+            'post': serialized_post.data,
+            'message': 'Post queued for immediate publishing'
+        }
+        logger.info(f"Returning success response for post {post.id}")
+        return Response(response_data)
+        
+    except Exception as e:
+        logger.error(f"Unexpected error in publish_now for post {post_id}: {str(e)}", exc_info=True)
+        return Response({
+            'error': f'Internal server error: {str(e)}',
+            'post_id': post_id
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

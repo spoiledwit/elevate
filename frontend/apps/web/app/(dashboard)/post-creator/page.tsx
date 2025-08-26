@@ -13,6 +13,7 @@ interface PlatformConnection {
   platform_display_name?: string
   facebook_page_name?: string
   instagram_username?: string
+  platform_profile_url?: string
   pinterest_user_id?: string
   is_verified?: boolean
 }

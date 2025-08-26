@@ -77,6 +77,7 @@ export type { UserProfilePublic } from './models/UserProfilePublic';
 
 export { AiService } from './services/AiService';
 export { AuthService } from './services/AuthService';
+export { CommentsService } from './services/CommentsService';
 export { IntegrationsService } from './services/IntegrationsService';
 export { MediaService } from './services/MediaService';
 export { PlansService } from './services/PlansService';

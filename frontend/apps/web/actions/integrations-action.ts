@@ -343,7 +343,6 @@ export async function getPlatformStatusAction(): Promise<{
   try {
     const apiClient = await getApiClient(session)
     const response = await apiClient.integrations.integrationsPlatformsStatusRetrieve()
-    
     return {
       platforms: response.platforms?.map(platform => ({
         name: platform.name || '',

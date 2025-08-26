@@ -1,25 +1,38 @@
 'use client'
 
-import { Facebook, Instagram, Linkedin, Youtube, Twitter, Calendar, Clock, Eye, Heart, MessageCircle, Send, Bookmark, ThumbsUp, Share2, MoreHorizontal } from 'lucide-react'
+import { Linkedin, Calendar, Clock, Eye, Heart, MessageCircle, Send, Bookmark, ThumbsUp, Share2, MoreHorizontal } from 'lucide-react'
+import { FaFacebook, FaInstagram, FaYoutube, FaTiktok } from 'react-icons/fa6'
 import { cn } from '@/lib/utils'
+
+interface PlatformConnection {
+  id: number
+  platform_username?: string
+  platform_display_name?: string
+  facebook_page_name?: string
+  instagram_username?: string
+  platform_profile_url?: string
+  pinterest_user_id?: string
+  is_verified?: boolean
+}
 
 interface PostPreviewProps {
   content: string
   mediaFiles: File[]
   selectedPlatforms: string[]
+  selectedConnections: PlatformConnection[]
   scheduledDate: Date | null
   isScheduled: boolean
 }
 
 const platformConfig = {
   facebook: {
-    icon: Facebook,
+    icon: FaFacebook,
     name: 'Facebook',
     color: 'bg-blue-600',
     maxChars: 63206
   },
   instagram: {
-    icon: Instagram,
+    icon: FaInstagram,
     name: 'Instagram',
     color: 'bg-gradient-to-br from-purple-600 to-pink-600',
     maxChars: 2200
@@ -31,27 +44,30 @@ const platformConfig = {
     maxChars: 3000
   },
   youtube: {
-    icon: Youtube,
+    icon: FaYoutube,
     name: 'YouTube',
     color: 'bg-red-600',
     maxChars: 5000
   },
   tiktok: {
-    icon: Twitter, // Using Twitter as placeholder
+    icon: FaTiktok,
     name: 'TikTok',
     color: 'bg-gray-900',
     maxChars: 2200
   }
 }
 
-export function PostPreview({ 
-  content, 
-  mediaFiles, 
-  selectedPlatforms, 
-  scheduledDate, 
-  isScheduled 
+export function PostPreview({
+  content,
+  mediaFiles,
+  selectedPlatforms,
+  selectedConnections,
+  scheduledDate,
+  isScheduled
 }: PostPreviewProps) {
-  
+
+  console.log(selectedConnections)
+
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('en-US', {
       month: 'short',
@@ -67,121 +83,156 @@ export function PostPreview({
     return text.substring(0, limit - 3) + '...'
   }
 
+  // Get connection data for each platform
+  const getConnectionData = (platform: string) => {
+    return selectedConnections.find(c => {
+      if (platform === 'facebook') return c.facebook_page_name
+      if (platform === 'instagram') return c.instagram_username
+      return false
+    })
+  }
+
   // Generate preview for Instagram style
-  const InstagramPreview = () => (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center gap-3 p-3 border-b border-gray-100">
-        <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full"></div>
-        <div className="flex-1">
-          <p className="text-sm font-semibold">@elevatesocial</p>
-        </div>
-        <button className="text-gray-600">
-          <MoreHorizontal className="w-5 h-5" />
-        </button>
-      </div>
+  const InstagramPreview = () => {
+    const instagramConnection = getConnectionData('instagram')
+    const username = instagramConnection?.instagram_username || 'elevatesocial'
 
-      {/* Media */}
-      {mediaFiles.length > 0 && (
-        <div className="aspect-square bg-gray-100 relative">
-          {mediaFiles[0] && mediaFiles[0].type.startsWith('image/') && (
-            <img 
-              src={URL.createObjectURL(mediaFiles[0])} 
-              alt="Preview" 
-              className="w-full h-full object-cover"
+    return (
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center gap-3 p-3 border-b border-gray-100">
+          {instagramConnection?.platform_profile_url ? (
+            <img
+              src={instagramConnection.platform_profile_url}
+              alt="Profile"
+              className="w-8 h-8 rounded-full object-cover"
             />
+          ) : (
+            <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full"></div>
           )}
-          {mediaFiles.length > 1 && (
-            <div className="absolute top-2 right-2 bg-black/60 text-white px-2 py-1 rounded text-xs">
-              1/{mediaFiles.length}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Engagement */}
-      <div className="p-3">
-        <div className="flex items-center gap-4 mb-2">
-          <button className="hover:opacity-70 transition-opacity">
-            <Heart className="w-6 h-6" />
-          </button>
-          <button className="hover:opacity-70 transition-opacity">
-            <MessageCircle className="w-6 h-6" />
-          </button>
-          <button className="hover:opacity-70 transition-opacity">
-            <Send className="w-6 h-6" />
-          </button>
-          <div className="flex-1"></div>
-          <button className="hover:opacity-70 transition-opacity">
-            <Bookmark className="w-6 h-6" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold">@{username}</p>
+          </div>
+          <button className="text-gray-600">
+            <MoreHorizontal className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Caption */}
-        {content && (
-          <div className="text-sm">
-            <span className="font-semibold mr-2">elevatesocial</span>
-            <span>{truncateContent(content, 125)}</span>
-            {content.length > 125 && (
-              <button className="text-gray-500 ml-1">more</button>
+        {/* Media */}
+        {mediaFiles.length > 0 && (
+          <div className="aspect-square bg-gray-100 relative">
+            {mediaFiles[0] && mediaFiles[0].type.startsWith('image/') && (
+              <img
+                src={URL.createObjectURL(mediaFiles[0])}
+                alt="Preview"
+                className="w-full h-full object-cover"
+              />
+            )}
+            {mediaFiles.length > 1 && (
+              <div className="absolute top-2 right-2 bg-black/60 text-white px-2 py-1 rounded text-xs">
+                1/{mediaFiles.length}
+              </div>
             )}
           </div>
         )}
-      </div>
-    </div>
-  )
 
-  // Generate preview for Facebook style
-  const FacebookPreview = () => (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center gap-3 p-4">
-        <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-          <Facebook className="w-6 h-6 text-white" />
-        </div>
-        <div className="flex-1">
-          <p className="text-sm font-semibold">Elevate Social</p>
-          <p className="text-xs text-gray-500">Just now · 🌐</p>
-        </div>
-      </div>
+        {/* Engagement */}
+        <div className="p-3">
+          <div className="flex items-center gap-4 mb-2">
+            <button className="hover:opacity-70 transition-opacity">
+              <Heart className="w-6 h-6" />
+            </button>
+            <button className="hover:opacity-70 transition-opacity">
+              <MessageCircle className="w-6 h-6" />
+            </button>
+            <button className="hover:opacity-70 transition-opacity">
+              <Send className="w-6 h-6" />
+            </button>
+            <div className="flex-1"></div>
+            <button className="hover:opacity-70 transition-opacity">
+              <Bookmark className="w-6 h-6" />
+            </button>
+          </div>
 
-      {/* Content */}
-      {content && (
-        <div className="px-4 pb-3">
-          <p className="text-sm text-gray-800">{truncateContent(content, 500)}</p>
-        </div>
-      )}
-
-      {/* Media */}
-      {mediaFiles.length > 0 && (
-        <div className="bg-gray-100">
-          {mediaFiles[0] && mediaFiles[0].type.startsWith('image/') && (
-            <img 
-              src={URL.createObjectURL(mediaFiles[0])} 
-              alt="Preview" 
-              className="w-full object-cover"
-            />
+          {/* Caption */}
+          {content && (
+            <div className="text-sm">
+              <span className="font-semibold mr-2">{username}</span>
+              <span>{truncateContent(content, 125)}</span>
+              {content.length > 125 && (
+                <button className="text-gray-500 ml-1">more</button>
+              )}
+            </div>
           )}
         </div>
-      )}
-
-      {/* Engagement */}
-      <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-around text-gray-600">
-        <button className="flex items-center gap-2 hover:bg-gray-100 px-3 py-1 rounded">
-          <ThumbsUp className="w-5 h-5" />
-          <span className="text-sm">Like</span>
-        </button>
-        <button className="flex items-center gap-2 hover:bg-gray-100 px-3 py-1 rounded">
-          <MessageCircle className="w-5 h-5" />
-          <span className="text-sm">Comment</span>
-        </button>
-        <button className="flex items-center gap-2 hover:bg-gray-100 px-3 py-1 rounded">
-          <Share2 className="w-5 h-5" />
-          <span className="text-sm">Share</span>
-        </button>
       </div>
-    </div>
-  )
+    )
+  }
+
+  // Generate preview for Facebook style
+  const FacebookPreview = () => {
+    const facebookConnection = getConnectionData('facebook')
+    const pageName = facebookConnection?.facebook_page_name || 'Elevate Social'
+
+    return (
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center gap-3 p-4">
+          {facebookConnection?.platform_profile_url ? (
+            <img
+              src={facebookConnection.platform_profile_url}
+              alt="Profile"
+              className="w-10 h-10 rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+              <FaFacebook className="w-6 h-6 text-white" />
+            </div>
+          )}
+          <div className="flex-1">
+            <p className="text-sm font-semibold">{pageName}</p>
+            <p className="text-xs text-gray-500">Just now · 🌐</p>
+          </div>
+        </div>
+
+        {/* Content */}
+        {content && (
+          <div className="px-4 pb-3">
+            <p className="text-sm text-gray-800">{truncateContent(content, 500)}</p>
+          </div>
+        )}
+
+        {/* Media */}
+        {mediaFiles.length > 0 && (
+          <div className="bg-gray-100">
+            {mediaFiles[0] && mediaFiles[0].type.startsWith('image/') && (
+              <img
+                src={URL.createObjectURL(mediaFiles[0])}
+                alt="Preview"
+                className="w-full object-cover"
+              />
+            )}
+          </div>
+        )}
+
+        {/* Engagement */}
+        <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-around text-gray-600">
+          <button className="flex items-center gap-2 hover:bg-gray-100 px-3 py-1 rounded">
+            <ThumbsUp className="w-5 h-5" />
+            <span className="text-sm">Like</span>
+          </button>
+          <button className="flex items-center gap-2 hover:bg-gray-100 px-3 py-1 rounded">
+            <MessageCircle className="w-5 h-5" />
+            <span className="text-sm">Comment</span>
+          </button>
+          <button className="flex items-center gap-2 hover:bg-gray-100 px-3 py-1 rounded">
+            <Share2 className="w-5 h-5" />
+            <span className="text-sm">Share</span>
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -245,7 +296,7 @@ export function PostPreview({
               <InstagramPreview />
             </div>
           )}
-          
+
           {selectedPlatforms.includes('facebook') && (
             <div>
               <p className="text-sm font-medium text-gray-700 mb-2">Facebook Preview</p>

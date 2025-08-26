@@ -6,12 +6,12 @@ import { MediaUploader } from '@/components/dashboard/post-creator/media-uploade
 import { PlatformSelector } from '@/components/dashboard/post-creator/platform-selector'
 import { PostScheduler } from '@/components/dashboard/post-creator/post-scheduler'
 import { PostPreview } from '@/components/dashboard/post-creator/post-preview'
-import { 
+import {
   saveAsDraftAction,
   schedulePostAction,
   publishPostNowAction,
   bulkCreatePostsAction,
-  type CreatePostData 
+  type CreatePostData
 } from '@/actions'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -21,6 +21,7 @@ interface PlatformConnection {
   platform_username?: string
   platform_display_name?: string
   facebook_page_name?: string
+  platform_profile_url?: string
   instagram_username?: string
   pinterest_user_id?: string
   is_verified?: boolean
@@ -60,12 +61,12 @@ export function PostCreatorManager({ initialPlatforms }: PostCreatorManagerProps
   // Helper function to create posts (single or bulk based on connection count)
   const createPosts = async (postData: CreatePostData, status: 'draft' | 'scheduled') => {
     const dataWithStatus = { ...postData, status }
-    
+
     // Use bulk creation if multiple connections, otherwise use single creation
     if (selectedConnections.length > 1) {
       return await bulkCreatePostsAction(dataWithStatus)
     } else {
-      return status === 'draft' 
+      return status === 'draft'
         ? await saveAsDraftAction(dataWithStatus)
         : await schedulePostAction(dataWithStatus as CreatePostData & { scheduled_at: string })
     }
@@ -79,14 +80,14 @@ export function PostCreatorManager({ initialPlatforms }: PostCreatorManagerProps
     try {
       const postData = preparePostData()
       const result = await createPosts(postData, 'draft')
-      
+
       if ('error' in result) {
         toast.error(`Failed to save draft: ${result.error}`)
         return
       }
-      
+
       // Show success message and redirect
-      const message = selectedConnections.length > 1 
+      const message = selectedConnections.length > 1
         ? `${result.posts?.length || selectedConnections.length} posts saved as draft successfully!`
         : 'Post saved as draft successfully!'
       toast.success(message)
@@ -106,25 +107,25 @@ export function PostCreatorManager({ initialPlatforms }: PostCreatorManagerProps
     setIsSubmitting(true)
     try {
       const postData = preparePostData()
-      
+
       if (selectedConnections.length > 1) {
         // For multiple connections, create drafts first then publish each one
         const createResult = await createPosts(postData, 'draft')
-        
+
         if ('error' in createResult) {
           toast.error(`Failed to create posts: ${createResult.error}`)
           return
         }
-        
+
         // Publish each created post (fire-and-forget)
         if (createResult.posts && Array.isArray(createResult.posts)) {
           // Queue all posts for background publishing without waiting
           createResult.posts.forEach((post: any) => {
-            publishPostNowAction(post.id).catch(error => 
+            publishPostNowAction(post.id).catch(error =>
               console.error(`Background publish failed for post ${post.id}:`, error)
             )
           })
-          
+
           toast.success(`${createResult.posts.length} posts queued for publishing!`)
         } else {
           toast.error('Unexpected response format from post creation')
@@ -133,22 +134,22 @@ export function PostCreatorManager({ initialPlatforms }: PostCreatorManagerProps
       } else {
         // Single connection - use existing flow
         const createResult = await saveAsDraftAction(postData)
-        
+
         if ('error' in createResult) {
           toast.error(`Failed to create post: ${createResult.error}`)
           return
         }
-        
+
         const publishResult = await publishPostNowAction(createResult.id)
-        
+
         if ('error' in publishResult) {
           toast.error(`Failed to publish post: ${publishResult.error}`)
           return
         }
-        
+
         toast.success('Post published successfully!')
       }
-      
+
       router.push('/calendar')
     } catch (error) {
       console.error('Failed to publish post:', error)
@@ -168,16 +169,16 @@ export function PostCreatorManager({ initialPlatforms }: PostCreatorManagerProps
         ...preparePostData(),
         scheduled_at: scheduledDate.toISOString()
       }
-      
+
       const result = selectedConnections.length > 1
         ? await bulkCreatePostsAction({ ...postData, status: 'scheduled' } as any)
         : await schedulePostAction(postData)
-      
+
       if ('error' in result) {
         toast.error(`Failed to schedule post: ${result.error}`)
         return
       }
-      
+
       const message = selectedConnections.length > 1
         ? `${result.posts?.length || selectedConnections.length} posts scheduled successfully!`
         : 'Post scheduled successfully!'
@@ -213,7 +214,7 @@ export function PostCreatorManager({ initialPlatforms }: PostCreatorManagerProps
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <button 
+              <button
                 onClick={handleSaveAsDraft}
                 disabled={!content || selectedConnections.length === 0 || isSubmitting}
                 className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -288,6 +289,9 @@ export function PostCreatorManager({ initialPlatforms }: PostCreatorManagerProps
                   selectedPlatforms={platforms.filter(p =>
                     p.connections.some(c => selectedConnections.includes(c.id))
                   ).map(p => p.name)}
+                  selectedConnections={platforms.flatMap(p =>
+                    p.connections.filter(c => selectedConnections.includes(c.id))
+                  )}
                   scheduledDate={scheduledDate}
                   isScheduled={isScheduled}
                 />

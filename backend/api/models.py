@@ -271,7 +271,7 @@ class SocialMediaConnection(models.Model):
     platform_user_id = models.CharField(_("platform user id"), max_length=255, blank=True)
     platform_username = models.CharField(_("platform username"), max_length=255, blank=True)
     platform_display_name = models.CharField(_("platform display name"), max_length=255, blank=True)
-    platform_profile_url = models.URLField(_("platform profile url"), blank=True, max_length=500)
+    platform_profile_url = models.URLField(_("platform profile url"), blank=True, max_length=1000)
     
     # Meta-specific fields
     instagram_business_id = models.CharField(_("Instagram Business ID"), max_length=255, blank=True)

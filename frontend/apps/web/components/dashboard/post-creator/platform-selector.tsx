@@ -164,7 +164,7 @@ export function PlatformSelector({
                   <Icon className={cn("w-5 h-5", config.color)} />
                   <div>
                     <div className="text-sm font-medium text-gray-900">
-                      {platform.display_name}
+                      {platform.name.charAt(0).toUpperCase() + platform.name.slice(1)}
                     </div>
                     <div className="text-xs text-gray-500">
                       @{displayName}
@@ -194,10 +194,10 @@ export function PlatformSelector({
                   <Icon className={cn("w-5 h-5", config.color)} />
                   <div className="text-left">
                     <div className="text-sm font-medium text-gray-900">
-                      {platform.display_name}
+                      {platform.name.charAt(0).toUpperCase() + platform.name.slice(1)} ({platform.connections.length})
                     </div>
                     <div className="text-xs text-gray-500">
-                      {platform.connections.length} accounts • {selectedCount} selected
+                      {selectedCount} of {platform.connections.length} selected
                     </div>
                   </div>
                 </div>

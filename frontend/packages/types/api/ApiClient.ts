@@ -7,6 +7,7 @@ import type { OpenAPIConfig } from './core/OpenAPI';
 import { FetchHttpRequest } from './core/FetchHttpRequest';
 import { AiService } from './services/AiService';
 import { AuthService } from './services/AuthService';
+import { CommentsService } from './services/CommentsService';
 import { IntegrationsService } from './services/IntegrationsService';
 import { MediaService } from './services/MediaService';
 import { PlansService } from './services/PlansService';
@@ -22,6 +23,7 @@ type HttpRequestConstructor = new (config: OpenAPIConfig) => BaseHttpRequest;
 export class ApiClient {
     public readonly ai: AiService;
     public readonly auth: AuthService;
+    public readonly comments: CommentsService;
     public readonly integrations: IntegrationsService;
     public readonly media: MediaService;
     public readonly plans: PlansService;
@@ -48,6 +50,7 @@ export class ApiClient {
         });
         this.ai = new AiService(this.request);
         this.auth = new AuthService(this.request);
+        this.comments = new CommentsService(this.request);
         this.integrations = new IntegrationsService(this.request);
         this.media = new MediaService(this.request);
         this.plans = new PlansService(this.request);

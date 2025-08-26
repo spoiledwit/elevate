@@ -666,11 +666,30 @@ class MetaService(BaseIntegrationService):
         
         # Create or update connection using the new constraint fields
         # Important: Don't set instagram_business_id to empty string to avoid constraint conflicts
+        # Fetch Facebook page profile picture
+        profile_picture_url = ''
+        try:
+            picture_response = requests.get(
+                f"{self.graph_api_base}/{page_data['id']}/picture",
+                params={
+                    'type': 'large',  # Get large profile picture
+                    'redirect': 'false',  # Get JSON response with URL instead of redirect
+                    'access_token': page_data['access_token']
+                }
+            )
+            if picture_response.ok:
+                picture_data = picture_response.json()
+                profile_picture_url = picture_data.get('data', {}).get('url', '')
+                print(f"Facebook page profile picture URL: {profile_picture_url}")
+        except Exception as e:
+            print(f"Failed to fetch Facebook page profile picture: {e}")
+
         defaults = {
             'access_token': page_data['access_token'],  # Use page token, not user token
             'platform_user_id': page_data['id'],
             'platform_username': page_data['name'],
             'platform_display_name': page_data['name'],
+            'platform_profile_url': profile_picture_url,
             'facebook_page_name': page_data['name'],
             'is_active': True,
             'is_verified': True

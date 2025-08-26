@@ -422,6 +422,7 @@ class PlatformStatusView(APIView):
                         'id': conn.id,
                         'platform_username': conn.platform_username,
                         'platform_display_name': conn.platform_display_name,
+                        'platform_profile_url': conn.platform_profile_url,
                         'is_verified': conn.is_verified,
                         'last_used_at': conn.last_used_at,
                         'created_at': conn.created_at

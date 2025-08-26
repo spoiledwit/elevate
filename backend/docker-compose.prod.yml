@@ -37,6 +37,7 @@ services:
       - SECRET_KEY=${SECRET_KEY}
     depends_on:
       - redis
+    command: ["celery", "-A", "api", "worker", "--loglevel=debug"]
 
   celery-beat:
     build:

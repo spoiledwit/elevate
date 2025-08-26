@@ -762,6 +762,10 @@ class MetaService(BaseIntegrationService):
         }
         
         container_response = requests.post(container_url, data=container_data)
+        if not container_response.ok:
+            logger.error(f"Instagram API error: {container_response.status_code}")
+            logger.error(f"Response: {container_response.text}")
+            logger.error(f"Request data: {container_data}")
         container_response.raise_for_status()
         container_result = container_response.json()
         

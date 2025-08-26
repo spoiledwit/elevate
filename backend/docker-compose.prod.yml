@@ -16,7 +16,7 @@ services:
       dockerfile: Dockerfile.prod
     restart: unless-stopped
     ports:
-      - "8001:8000"
+      - "8001:8001"
     env_file:
       - .env
     depends_on:

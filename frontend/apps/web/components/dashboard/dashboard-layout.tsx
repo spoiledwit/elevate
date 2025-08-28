@@ -105,7 +105,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       }, 200)
       return () => clearTimeout(timer)
     }
-  }, [hasSeenOnboarding, pathname, startOnboarding])
+  }, [hasSeenOnboarding, pathname]) // Removed startOnboarding from dependencies
 
   const handleItemClick = (itemId: string, sectionId: string) => {
     // Auto-expand this section and close others

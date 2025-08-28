@@ -2,6 +2,8 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { PasswordResetConfirm } from '../models/PasswordResetConfirm';
+import type { PasswordResetRequest } from '../models/PasswordResetRequest';
 import type { PatchedUserCurrent } from '../models/PatchedUserCurrent';
 import type { UserChangePassword } from '../models/UserChangePassword';
 import type { UserCreate } from '../models/UserCreate';
@@ -106,6 +108,41 @@ export class UsersService {
         return this.httpRequest.request({
             method: 'PATCH',
             url: '/api/users/me/',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Confirm password reset using uid and token and set new password.
+     * @param requestBody
+     * @returns any No response body
+     * @throws ApiError
+     */
+    public usersPasswordResetConfirmCreate(
+        requestBody: PasswordResetConfirm,
+    ): CancelablePromise<any> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/api/users/password-reset/confirm/',
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: `No response body`,
+            },
+        });
+    }
+    /**
+     * Send password reset email if the username exists. Always returns 200.
+     * @param requestBody
+     * @returns any No response body
+     * @throws ApiError
+     */
+    public usersPasswordResetRequestCreate(
+        requestBody: PasswordResetRequest,
+    ): CancelablePromise<any> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/api/users/password-reset/request/',
             body: requestBody,
             mediaType: 'application/json',
         });

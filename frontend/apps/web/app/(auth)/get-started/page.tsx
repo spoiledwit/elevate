@@ -11,29 +11,31 @@ export const metadata: Metadata = {
 
 export default function GetStarted() {
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className="min-h-screen flex flex-col lg:h-screen lg:overflow-hidden bg-white">
       {/* Top left logo */}
-      <div className="absolute top-6 left-6 z-10">
+      <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-10">
         <a href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <img src={logo.src} alt="Elevate Social" className="h-8" />
-          <span className="font-semibold text-gray-700">elevate.social</span>
+          <img src={logo.src} alt="Elevate Social" className="h-6 sm:h-8" />
+          <span className="font-semibold text-gray-700 text-sm sm:text-base">elevate.social</span>
         </a>
       </div>
 
-      <div className="flex-1 flex w-full justify-between items-center">
+      <div className="flex-1 flex flex-col lg:flex-row w-full">
         {/* Left side - Form */}
-        <div className='flex-1 p-8 flex items-center justify-center'>
-          <Suspense fallback={<div>Loading...</div>}>
-            <MultiStepRegisterForm onSubmitHandler={registerAction} />
-          </Suspense>
+        <div className='flex-1 p-4 sm:p-6 lg:p-8 flex items-center justify-center min-h-screen lg:min-h-0'>
+          <div className="w-full max-w-md pt-12 sm:pt-16 lg:pt-0">
+            <Suspense fallback={<div className="text-center">Loading...</div>}>
+              <MultiStepRegisterForm onSubmitHandler={registerAction} />
+            </Suspense>
+          </div>
         </div>
 
         {/* Right side - Image */}
-        <div className="hidden max-h-screen lg:flex items-center justify-center">
+        <div className="hidden lg:flex lg:flex-1 items-center justify-center max-h-screen">
           <img
             src={registerImage.src}
             alt="Dashboard preview"
-            className='h-screen'
+            className='h-full w-full object-cover max-h-screen'
           />
         </div>
       </div>

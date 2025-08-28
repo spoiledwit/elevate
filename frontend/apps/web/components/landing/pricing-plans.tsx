@@ -100,40 +100,40 @@ export function PricingPlans({
   }) || []
 
   return (
-    <section className="pb-20 px-8">
+    <section className="pb-12 sm:pb-16 lg:pb-20 px-4 sm:px-6 lg:px-8">
       <div className={`max-w-6xl ${isDashboard ? '' : 'mx-auto'}`}>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {plans.map((plan) => (
             <div key={plan.name} className="relative">
               {plan.popular && !plan.isCurrentPlan && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
-                  <span className="bg-purple-500 text-white px-4 py-1 rounded-full text-sm font-medium">
+                  <span className="bg-purple-500 text-white px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-medium">
                     Popular
                   </span>
                 </div>
               )}
               {plan.isCurrentPlan && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
-                  <span className="bg-green-500 text-white px-4 py-1 rounded-full text-sm font-medium">
+                  <span className="bg-green-500 text-white px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-medium">
                     Current Plan
                   </span>
                 </div>
               )}
 
-              <div className={`bg-white rounded-3xl border border-gray-600 p-8 h-full flex flex-col`}>
-                <div className="mb-6">
-                  <h3 className="text-2xl font-bold text-black mb-4">{plan.name}</h3>
+              <div className={`bg-white rounded-3xl border border-gray-600 p-4 sm:p-6 lg:p-8 h-full flex flex-col`}>
+                <div className="mb-4 sm:mb-6">
+                  <h3 className="text-xl sm:text-2xl font-bold text-black mb-3 sm:mb-4">{plan.name}</h3>
 
                   <div className="flex items-baseline mb-2">
-                    <span className="text-5xl font-bold text-black">{plan.price}</span>
-                    <span className="ml-2 text-gray-600">{plan.period}</span>
+                    <span className="text-3xl sm:text-4xl lg:text-5xl font-bold text-black">{plan.price}</span>
+                    <span className="ml-2 text-gray-600 text-sm sm:text-base">{plan.period}</span>
                   </div>
 
-                  <p className="text-gray-600 text-sm">{plan.billing}</p>
+                  <p className="text-gray-600 text-xs sm:text-sm">{plan.billing}</p>
                 </div>
 
                 <button
-                  className={`w-full py-3 rounded-lg font-semibold text-lg mb-8 transition-all ${plan.isCurrentPlan
+                  className={`w-full py-2.5 sm:py-3 rounded-lg font-semibold text-sm sm:text-base lg:text-lg mb-6 sm:mb-8 transition-all ${plan.isCurrentPlan
                     ? 'bg-green-500 text-white cursor-default'
                     : loadingPlanId === plan.id
                       ? 'bg-gray-400 text-white cursor-not-allowed'
@@ -149,13 +149,13 @@ export function PricingPlans({
                 </button>
 
                 <div className="flex-1">
-                  <h4 className="text-lg font-semibold text-black mb-6">Includes</h4>
+                  <h4 className="text-base sm:text-lg font-semibold text-black mb-4 sm:mb-6">Includes</h4>
 
-                  <ul className="space-y-4">
+                  <ul className="space-y-3 sm:space-y-4">
                     {plan.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-start gap-3">
+                      <li key={featureIndex} className="flex items-start gap-2 sm:gap-3">
                         <svg
-                          className={`w-5 h-5 ${plan.popular ? 'text-purple-900' : 'text-gray-500'} mt-0.5 flex-shrink-0`}
+                          className={`w-4 h-4 sm:w-5 sm:h-5 ${plan.popular ? 'text-purple-900' : 'text-gray-500'} mt-0.5 flex-shrink-0`}
                           fill="currentColor"
                           viewBox="0 0 20 20"
                         >
@@ -165,7 +165,7 @@ export function PricingPlans({
                             clipRule="evenodd"
                           />
                         </svg>
-                        <span className={`text-sm ${plan.popular ? 'text-purple-900' : 'text-gray-700'} leading-relaxed`}>
+                        <span className={`text-xs sm:text-sm ${plan.popular ? 'text-purple-900' : 'text-gray-700'} leading-relaxed`}>
                           {feature}
                         </span>
                       </li>

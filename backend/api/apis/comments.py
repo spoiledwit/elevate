@@ -9,12 +9,13 @@ from rest_framework.decorators import api_view, permission_classes
 from drf_spectacular.utils import extend_schema
 from drf_spectacular.types import OpenApiTypes
 
-from ..models import SocialMediaConnection, Comment, CommentAutomationRule, CommentAutomationSettings, CommentReply
+from ..models import SocialMediaConnection, Comment, CommentAutomationRule, CommentAutomationSettings, CommentReply, AutomationSettings
 from ..serializers import (
     CommentSerializer, CommentListSerializer, 
     CommentAutomationRuleSerializer, CommentAutomationRuleCreateSerializer,
     CommentAutomationSettingsSerializer, CommentAutomationSettingsCreateSerializer,
-    CommentReplySerializer, CommentReplyListSerializer
+    CommentReplySerializer, CommentReplyListSerializer,
+    AutomationSettingsSerializer, AutomationSettingsCreateSerializer
 )
 from ..services.integrations.meta_service import MetaService
 
@@ -420,11 +421,11 @@ class CommentAutomationSettingsListView(generics.ListAPIView):
     List automation settings for user's Facebook connections.
     """
     permission_classes = [permissions.IsAuthenticated]
-    serializer_class = CommentAutomationSettingsSerializer
+    serializer_class = AutomationSettingsSerializer
     
     def get_queryset(self):
         """Return settings for user's Facebook connections"""
-        return CommentAutomationSettings.objects.filter(
+        return AutomationSettings.objects.filter(
             user=self.request.user,
             connection__platform__name='facebook',
             connection__is_active=True
@@ -489,16 +490,16 @@ def automation_settings_by_connection(request, connection_id):
         
         if request.method == 'GET':
             try:
-                settings = CommentAutomationSettings.objects.get(
+                settings = AutomationSettings.objects.get(
                     user=request.user,
                     connection=connection
                 )
-                serializer = CommentAutomationSettingsSerializer(settings)
+                serializer = AutomationSettingsSerializer(settings)
                 return Response({
                     'success': True,
                     'settings': serializer.data
                 })
-            except CommentAutomationSettings.DoesNotExist:
+            except AutomationSettings.DoesNotExist:
                 return Response({
                     'success': True,
                     'settings': None,
@@ -510,14 +511,14 @@ def automation_settings_by_connection(request, connection_id):
             data = request.data.copy()
             data['connection_id'] = connection_id
             
-            serializer = CommentAutomationSettingsCreateSerializer(
+            serializer = AutomationSettingsCreateSerializer(
                 data=data, 
                 context={'request': request}
             )
             
             if serializer.is_valid():
                 settings = serializer.save()
-                response_serializer = CommentAutomationSettingsSerializer(settings)
+                response_serializer = AutomationSettingsSerializer(settings)
                 return Response({
                     'success': True,
                     'settings': response_serializer.data,
@@ -719,13 +720,13 @@ def update_automation_settings(request, settings_id):
     try:
         # Get settings that belongs to user
         settings = get_object_or_404(
-            CommentAutomationSettings,
+            AutomationSettings,
             id=settings_id,
             user=request.user
         )
         
         # Update settings with partial data
-        serializer = CommentAutomationSettingsSerializer(
+        serializer = AutomationSettingsSerializer(
             settings, 
             data=request.data,
             partial=True,
@@ -762,7 +763,7 @@ def delete_automation_settings(request, settings_id):
     try:
         # Get settings that belongs to user
         settings = get_object_or_404(
-            CommentAutomationSettings,
+            AutomationSettings,
             id=settings_id,
             user=request.user
         )
@@ -802,7 +803,7 @@ def toggle_automation_settings(request, settings_id):
     try:
         # Get settings that belongs to user
         settings = get_object_or_404(
-            CommentAutomationSettings,
+            AutomationSettings,
             id=settings_id,
             user=request.user
         )
@@ -831,7 +832,7 @@ def toggle_automation_settings(request, settings_id):
                 if not webhook_result.get('success'):
                     logger.warning(f"Failed to unsubscribe page {connection.facebook_page_id} from webhooks: {webhook_result.get('error')}")
         
-        serializer = CommentAutomationSettingsSerializer(settings)
+        serializer = AutomationSettingsSerializer(settings)
         
         return Response({
             'success': True,

@@ -3,7 +3,8 @@ import { getAutomationSettingsAction, getFacebookPagesAction } from '@/actions'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Automation Settings - Elevate Social'
+  title: 'Message Automation Settings - Elevate Social',
+  description: 'Configure automation settings for comments and direct messages'
 }
 
 export default async function AutomationSettingsPage() {

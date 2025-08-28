@@ -1,7 +1,5 @@
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { AnalyticsOverview } from '@/components/dashboard/analytics-overview'
-import { StartGuide } from '@/components/dashboard/start-guide'
-import { ConnectPromoBanner } from '@/components/dashboard/connect-promo-banner'
 import { getDashboardStatsAction } from '@/actions'
 import type { Metadata } from 'next'
 
@@ -20,7 +18,6 @@ export default async function Dashboard() {
 
       <div className="p-6">
         <div className="max-w-7xl mx-auto space-y-6">
-          <StartGuide />
           <AnalyticsOverview initialStats={dashboardStats} />
         </div>
       </div>

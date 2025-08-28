@@ -13,6 +13,7 @@ export type CommentList = {
     message: string;
     status?: StatusC26Enum;
     readonly connection_name: string;
+    readonly facebook_page_id: string;
     created_time: string;
     readonly replies_count: string;
 };

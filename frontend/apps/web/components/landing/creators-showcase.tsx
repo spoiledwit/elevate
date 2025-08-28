@@ -26,7 +26,13 @@ export function CreatorsShowcase() {
 
     let scrollAmount = 0
     const speed = 1 // pixels per frame
-    const imageWidth = 48 * 4 + 32 // 48*4 for w-48 + 32 for gap-8 (8*4)
+    // Responsive image width calculation
+    const getImageWidth = () => {
+      if (window.innerWidth < 640) return 32 * 4 + 16 // w-32 + gap-4 (4*4)
+      if (window.innerWidth < 768) return 40 * 4 + 24 // w-40 + gap-6 (6*4) 
+      return 48 * 4 + 32 // w-48 + gap-8 (8*4)
+    }
+    const imageWidth = getImageWidth()
     const totalWidth = imageWidth * creators.length
 
     const scroll = () => {
@@ -46,10 +52,10 @@ export function CreatorsShowcase() {
   const repeatedCreators = Array(20).fill(creators).flat()
 
   return (
-    <div className="relative w-full overflow-hidden py-8">
+    <div className="relative w-full overflow-hidden py-4 sm:py-6 lg:py-8">
       <div 
         ref={scrollRef}
-        className="flex gap-8"
+        className="flex gap-4 md:gap-6 lg:gap-8"
         style={{ width: 'fit-content' }}
       >
         {repeatedCreators.map((creator, index) => (
@@ -57,7 +63,7 @@ export function CreatorsShowcase() {
             key={index}
             src={creator.img.src}
             alt={creator.alt}
-            className="h-48 w-48 rounded-lg object-cover flex-shrink-0"
+            className="h-32 w-32 sm:h-40 sm:w-40 lg:h-48 lg:w-48 rounded-lg object-cover flex-shrink-0"
           />
         ))}
       </div>

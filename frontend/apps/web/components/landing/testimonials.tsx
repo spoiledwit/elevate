@@ -33,38 +33,38 @@ export function Testimonials() {
   )
 
   return (
-    <section className="pb-20 px-8 bg-gray-50">
+    <section className="pb-12 sm:pb-16 lg:pb-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h2 className="text-4xl font-bold text-black mb-4">
+        <div className="mb-8 sm:mb-12 lg:mb-16 text-center lg:text-left">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-black mb-3 sm:mb-4">
             Customer testimonials
           </h2>
-          <p className="text-lg text-gray-700 max-w-2xl">
+          <p className="text-base sm:text-lg text-gray-700 max-w-2xl mx-auto lg:mx-0">
             Hear how others are transforming their wellness journey with personalized support from our platform.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {testimonials.map((testimonial) => (
-            <div key={testimonial.id} className="bg-white rounded-2xl p-8 shadow-sm">
-              <div className="flex gap-1 mb-6">
+            <div key={testimonial.id} className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm">
+              <div className="flex gap-1 mb-4 sm:mb-6">
                 {Array.from({ length: testimonial.rating }).map((_, index) => (
                   <StarIcon key={index} />
                 ))}
               </div>
 
-              <blockquote className="text-gray-800 text-lg leading-relaxed mb-8 font-medium">
+              <blockquote className="text-gray-800 text-base sm:text-lg leading-relaxed mb-6 sm:mb-8 font-medium">
                 "{testimonial.testimonial}"
               </blockquote>
 
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 sm:gap-4">
                 <img
                   src={testimonial.image}
                   alt={testimonial.name}
-                  className="w-12 h-12 rounded-full object-cover"
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover"
                 />
                 <div>
-                  <h4 className="font-semibold text-black text-lg">
+                  <h4 className="font-semibold text-black text-base sm:text-lg">
                     {testimonial.name}
                   </h4>
                   <p className="text-gray-600 text-sm">

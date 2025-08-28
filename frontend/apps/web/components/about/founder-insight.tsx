@@ -23,16 +23,15 @@ export function FounderInsight() {
   }, [])
 
   return (
-    <section className="py-24 px-8 bg-white">
+    <section className="py-12 sm:py-16 lg:py-24 px-4 sm:px-6 lg:px-8 bg-white">
       <div className="max-w-7xl mx-auto">
         <div className="relative">
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center">
             {/* Founder Images Carousel */}
             <div className="relative">
-              <div className="relative w-full max-w-lg mx-auto">
+              <div className="relative w-full max-w-xs sm:max-w-sm lg:max-w-lg mx-auto">
                 {/* Main image container with smooth transitions */}
-                <div className="relative rounded-2xl overflow-hidden shadow-2xl h-[500px]">
+                <div className="relative rounded-2xl overflow-hidden shadow-2xl h-[300px] sm:h-[400px] lg:h-[500px]">
                   {/* Image stack with smooth transitions */}
                   {founderImages.map((image, index) => (
                     <div
@@ -55,7 +54,7 @@ export function FounderInsight() {
                 </div>
 
                 {/* Image indicators with smooth transitions */}
-                <div className="flex justify-center gap-3 mt-6">
+                <div className="flex justify-center gap-2 sm:gap-3 mt-4 sm:mt-6">
                   {founderImages.map((_, index) => (
                     <button
                       key={index}
@@ -70,7 +69,7 @@ export function FounderInsight() {
                       aria-label={`Go to image ${index + 1}`}
                     >
                       <div className={`h-2 rounded-full transition-all duration-500 ease-out ${index === currentImageIndex
-                        ? 'w-12 bg-purple-500'
+                        ? 'w-8 sm:w-12 bg-purple-500'
                         : 'w-2 bg-gray-300 group-hover:bg-gray-400'
                         }`}></div>
                       {/* Progress bar for active indicator */}
@@ -86,17 +85,17 @@ export function FounderInsight() {
             </div>
 
             {/* Text Content */}
-            <div className="relative">
+            <div className="relative text-center lg:text-left">
               <div className="relative z-10">
-                <div className="mb-6">
-                  <span className="text-purple-500 font-semibold text-sm uppercase tracking-wider">THE REALIZATION</span>
+                <div className="mb-4 sm:mb-6">
+                  <span className="text-purple-500 font-semibold text-xs sm:text-sm uppercase tracking-wider">THE REALIZATION</span>
                 </div>
 
-                <p className="text-2xl md:text-3xl font-semibold text-black leading-relaxed">
+                <p className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-semibold text-black leading-relaxed">
                   Despite offering nearly <span className="text-purple-500">done-for-you</span> solutions, I noticed many beginners still felt lost and overloaded by all the options.
                 </p>
 
-                <p className="text-xl md:text-2xl text-gray-700 mt-6 leading-relaxed">
+                <p className="text-base sm:text-lg lg:text-xl xl:text-2xl text-gray-700 mt-4 sm:mt-6 leading-relaxed">
                   Even with everything set up, they craved something <span className="font-bold text-purple-500">even easier</span>.
                 </p>
               </div>

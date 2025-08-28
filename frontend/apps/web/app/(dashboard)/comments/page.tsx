@@ -3,7 +3,8 @@ import { getCommentsAction, getFacebookPagesAction } from '@/actions'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Comments - Elevate Social'
+  title: 'Facebook Comments - Elevate Social',
+  description: 'Manage and respond to Facebook post comments'
 }
 
 export default async function CommentsPage() {

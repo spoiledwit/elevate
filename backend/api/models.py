@@ -2,6 +2,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.utils.text import slugify
+from django.utils import timezone
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from cloudinary.models import CloudinaryField
@@ -186,40 +187,6 @@ class CTABanner(models.Model):
 
     def __str__(self):
         return f"{self.user_profile.user.username} - {self.text}"
-
-class TriggerRule(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='trigger_rules')
-    trigger_word = models.CharField(_("trigger word"), max_length=255)
-    message_template = models.TextField(_("message template"))
-    redirect_link = models.URLField(_("redirect link"), blank=True)
-    is_active = models.BooleanField(_("is active"), default=True)
-    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
-    modified_at = models.DateTimeField(_("modified at"), auto_now=True)
-
-    class Meta:
-        db_table = "trigger_rules"
-        verbose_name = _("trigger rule")
-        verbose_name_plural = _("trigger rules")
-
-    def __str__(self):
-        return f"{self.user.username} - {self.trigger_word}"
-
-
-class AIChatHistory(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='ai_chat_history')
-    input_text = models.TextField(_("input text"))
-    output_text = models.TextField(_("output text"))
-    context = models.CharField(_("context"), max_length=255, blank=True)
-    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
-    is_active = models.BooleanField(_("is active"), default=True)
-
-    class Meta:
-        db_table = "ai_chat_history"
-        verbose_name = _("AI chat history")
-        verbose_name_plural = _("AI chat history")
-
-    def __str__(self):
-        return f"{self.user.username} - {self.input_text[:50]}"
 
 
 class SocialMediaPlatform(models.Model):
@@ -457,12 +424,19 @@ class Comment(models.Model):
         return f"Comment by {self.from_user_name}: {self.message[:50]}"
 
 
-class CommentAutomationRule(models.Model):
-    """User-defined automation rules for comment replies"""
+class AutomationRule(models.Model):
+    """User-defined automation rules for message replies (comments and DMs)"""
+    MESSAGE_TYPE_CHOICES = [
+        ('comment', 'Comment'),
+        ('dm', 'Direct Message'),
+        ('both', 'Both'),
+    ]
+    
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='automation_rules')
     connection = models.ForeignKey(SocialMediaConnection, on_delete=models.CASCADE, related_name='automation_rules')
     
     rule_name = models.CharField("Rule name", max_length=100)
+    message_type = models.CharField("Message type", max_length=10, choices=MESSAGE_TYPE_CHOICES, default='comment')
     keywords = models.JSONField("Keywords", default=list)
     reply_template = models.TextField("Reply template")
     
@@ -473,37 +447,51 @@ class CommentAutomationRule(models.Model):
     created_at = models.DateTimeField("Created at", auto_now_add=True)
     
     class Meta:
-        db_table = 'comment_automation_rules'
+        db_table = 'automation_rules'
         ordering = ['connection', '-priority']
-        unique_together = [['user', 'connection', 'rule_name']]
+        unique_together = [['user', 'connection', 'rule_name', 'message_type']]
 
     def __str__(self):
-        return f"{self.rule_name} ({self.connection.facebook_page_name})"
+        return f"{self.rule_name} [{self.message_type}] ({self.connection.facebook_page_name})"
 
 
-class CommentAutomationSettings(models.Model):
+# Backwards compatibility alias
+CommentAutomationRule = AutomationRule
+
+
+class AutomationSettings(models.Model):
     """Global automation settings per connection"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='automation_settings')
     connection = models.ForeignKey(SocialMediaConnection, on_delete=models.CASCADE, related_name='automation_settings', unique=True)
     
-    is_enabled = models.BooleanField("Automation enabled", default=True)
-    default_reply = models.TextField("Default reply", blank=True)
-    reply_delay_seconds = models.IntegerField("Reply delay (seconds)", default=5)
+    # Comment automation settings
+    is_enabled = models.BooleanField("Comment automation enabled", default=True)
+    default_reply = models.TextField("Default comment reply", blank=True)
+    reply_delay_seconds = models.IntegerField("Comment reply delay (seconds)", default=5)
+    
+    # DM automation settings
+    enable_dm_automation = models.BooleanField("DM automation enabled", default=False)
+    dm_default_reply = models.TextField("Default DM reply", blank=True)
+    dm_reply_delay_seconds = models.IntegerField("DM reply delay (seconds)", default=10)
     
     created_at = models.DateTimeField("Created at", auto_now_add=True)
     updated_at = models.DateTimeField("Updated at", auto_now=True)
     
     class Meta:
-        db_table = 'comment_automation_settings'
+        db_table = 'automation_settings'
 
     def __str__(self):
         return f"Settings for {self.connection.facebook_page_name}"
 
 
+# Backwards compatibility alias
+CommentAutomationSettings = AutomationSettings
+
+
 class CommentReply(models.Model):
     """Track automated replies sent"""
     comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='replies')
-    rule = models.ForeignKey(CommentAutomationRule, on_delete=models.SET_NULL, null=True, blank=True, related_name='replies')
+    rule = models.ForeignKey(AutomationRule, on_delete=models.SET_NULL, null=True, blank=True, related_name='comment_replies')
     
     reply_text = models.TextField("Reply text")
     facebook_reply_id = models.CharField("Facebook reply ID", max_length=255, blank=True)
@@ -522,6 +510,75 @@ class CommentReply(models.Model):
 
     def __str__(self):
         return f"Reply to {self.comment.comment_id}"
+
+
+# DIRECT MESSAGE AUTOMATION MODELS #
+
+class DirectMessage(models.Model):
+    """Store Facebook/Instagram direct messages from webhooks"""
+    PLATFORM_CHOICES = [
+        ('facebook', 'Facebook Messenger'),
+        ('instagram', 'Instagram DM'),
+    ]
+    
+    message_id = models.CharField("Message ID", max_length=255, unique=True)
+    conversation_id = models.CharField("Conversation ID", max_length=255)
+    platform = models.CharField("Platform", max_length=20, choices=PLATFORM_CHOICES)
+    
+    sender_id = models.CharField("Sender ID", max_length=255)
+    sender_name = models.CharField("Sender name", max_length=255, blank=True)
+    message_text = models.TextField("Message text", blank=True)
+    message_attachments = models.JSONField("Attachments", default=list, blank=True)
+    
+    connection = models.ForeignKey(SocialMediaConnection, on_delete=models.CASCADE, related_name='direct_messages')
+    
+    status = models.CharField("Status", max_length=20, default='new', choices=[
+        ('new', 'New'),
+        ('replied', 'Replied'),
+        ('ignored', 'Ignored'),
+        ('error', 'Error')
+    ])
+    
+    is_echo = models.BooleanField("Is echo", default=False, help_text="Message sent by the page itself")
+    created_time = models.DateTimeField("Platform created time")
+    received_at = models.DateTimeField("Received at", auto_now_add=True)
+    
+    class Meta:
+        db_table = 'direct_messages'
+        ordering = ['-created_time']
+        indexes = [
+            models.Index(fields=['platform', 'conversation_id']),
+            models.Index(fields=['connection', 'status']),
+        ]
+
+    def __str__(self):
+        return f"{self.platform.title()} DM from {self.sender_name}: {self.message_text[:50]}"
+
+
+class DirectMessageReply(models.Model):
+    """Track automated DM replies sent"""
+    direct_message = models.ForeignKey(DirectMessage, on_delete=models.CASCADE, related_name='replies')
+    rule = models.ForeignKey('AutomationRule', on_delete=models.SET_NULL, null=True, blank=True, related_name='dm_replies')
+    
+    reply_text = models.TextField("Reply text")
+    platform_reply_id = models.CharField("Platform reply ID", max_length=255, blank=True)
+    
+    status = models.CharField("Status", max_length=20, default='sent', choices=[
+        ('pending', 'Pending'),
+        ('sent', 'Sent'),
+        ('failed', 'Failed'),
+        ('error', 'Error')
+    ])
+    
+    error_message = models.TextField("Error message", blank=True)
+    sent_at = models.DateTimeField("Sent at", auto_now_add=True)
+    
+    class Meta:
+        db_table = 'direct_message_replies'
+        ordering = ['-sent_at']
+
+    def __str__(self):
+        return f"Reply to {self.direct_message.message_id}"
 
 
 # STRIPE PLANS #
@@ -787,4 +844,127 @@ class BannerClick(models.Model):
 
     def __str__(self):
         return f"{self.banner.user_profile.user.username} - Banner Click - {self.timestamp}"
+
+
+class AIConfiguration(models.Model):
+    """
+    Global AI configuration model for customizing system prompts and settings
+    for different AI capabilities. Configured by admin, applied to all users.
+    """
+    
+    # Capability choices
+    CAPABILITY_CHOICES = [
+        ('text_generation', 'Text Generation'),
+        ('image_generation', 'Image Generation'),
+        ('social_content', 'Social Media Content'),
+        ('content_improvement', 'Content Improvement'),
+        ('image_analysis', 'Image Analysis'),
+    ]
+    
+    capability = models.CharField(_("AI capability"), max_length=50, choices=CAPABILITY_CHOICES, unique=True)
+    
+    # System prompt configuration
+    system_prompt = models.TextField(
+        _("system prompt"), 
+        help_text="Custom system prompt for this AI capability",
+        blank=True
+    )
+    
+    # Model settings
+    text_generation_model = models.CharField(
+        _("text generation model"), 
+        max_length=100,
+        default='gpt-4',
+        help_text="Model to use for text generation capabilities"
+    )
+    
+    vision_model = models.CharField(
+        _("vision model"), 
+        max_length=100,
+        default='gpt-4-vision-preview',
+        help_text="Model to use for image analysis capabilities"
+    )
+    
+    # General settings
+    is_active = models.BooleanField(_("is active"), default=True)
+    
+    # Global usage tracking
+    total_usage_count = models.PositiveBigIntegerField(_("total usage count"), default=0)
+    total_tokens_used = models.PositiveBigIntegerField(_("total tokens used"), default=0)
+    last_used_at = models.DateTimeField(_("last used at"), null=True, blank=True)
+    
+    # Timestamps
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("updated at"), auto_now=True)
+    
+    class Meta:
+        db_table = "ai_configurations"
+        verbose_name = _("AI configuration")
+        verbose_name_plural = _("AI configurations")
+        indexes = [
+            models.Index(fields=['capability']),
+            models.Index(fields=['is_active']),
+            models.Index(fields=['last_used_at']),
+        ]
+    
+    def __str__(self):
+        return f"Global AI Config - {self.get_capability_display()}"
+    
+    def increment_usage(self, tokens_used: int = 0):
+        """Increment global usage statistics"""
+        self.total_usage_count += 1
+        self.total_tokens_used += tokens_used
+        self.last_used_at = timezone.now()
+        self.save(update_fields=['total_usage_count', 'total_tokens_used', 'last_used_at'])
+    
+    def get_system_prompt_or_default(self) -> str:
+        """Get custom system prompt or return capability-specific default"""
+        if self.system_prompt.strip():
+            return self.system_prompt
+        
+        # Return default system prompts for each capability
+        defaults = {
+            'text_generation': "You are a helpful AI assistant that generates high-quality content based on user prompts.",
+            'image_generation': "You are an AI image generation assistant. Generate detailed, creative image descriptions.",
+            'social_content': "You are a social media content specialist. Create engaging, platform-appropriate content that drives interaction.",
+            'content_improvement': "You are a professional content editor. Enhance content while maintaining the original voice and message.",
+            'image_analysis': "You are an expert image analyst. Provide detailed, accurate descriptions and insights about images."
+        }
+        
+        return defaults.get(self.capability, "You are a helpful AI assistant.")
+    
+    def get_model_for_capability(self) -> str:
+        """Get the appropriate model for this capability"""
+        if self.default_model:
+            return self.default_model
+            
+        # Return default models for each capability
+        defaults = {
+            'text_generation': 'gpt-4',
+            'image_generation': 'dall-e-3', 
+            'social_content': 'gpt-4',
+            'content_improvement': 'gpt-4',
+            'image_analysis': 'gpt-4-vision-preview'
+        }
+        
+        return defaults.get(self.capability, 'gpt-4')
+    
+    @classmethod
+    def get_for_capability(cls, capability: str) -> 'AIConfiguration':
+        """Get global AI configuration for capability"""
+        try:
+            return cls.objects.get(capability=capability)
+        except cls.DoesNotExist:
+            return None
+    
+    @classmethod 
+    def create_default_configs(cls):
+        """Create default configurations for all capabilities (admin only)"""
+        for capability_key, capability_name in cls.CAPABILITY_CHOICES:
+            cls.objects.get_or_create(
+                capability=capability_key,
+                defaults={
+                    'is_active': True,
+                }
+            )
 

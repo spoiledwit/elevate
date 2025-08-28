@@ -2,11 +2,11 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { CommentAutomationSettings } from './CommentAutomationSettings';
-export type PaginatedCommentAutomationSettingsList = {
+import type { AutomationSettings } from './AutomationSettings';
+export type PaginatedAutomationSettingsList = {
     count: number;
     next?: string | null;
     previous?: string | null;
-    results: Array<CommentAutomationSettings>;
+    results: Array<AutomationSettings>;
 };
 

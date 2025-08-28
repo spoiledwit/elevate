@@ -4,12 +4,9 @@ import { getApiClient } from '@/lib/api'
 import { authOptions } from '@/lib/auth'
 import { 
   ApiError,
-  type Comment,
-  type CommentAutomationRule,
-  type CommentAutomationRuleCreate,
-  type CommentAutomationSettings,
-  type CommentReplyList,
-  type PatchedCommentAutomationRule
+  type PatchedCommentAutomationRule,
+  type AutomationRuleCreate,
+  MessageTypeEnum,
 } from '@frontend/types/api'
 import { getServerSession } from 'next-auth'
 
@@ -36,12 +33,18 @@ export interface CommentAutomationSettingsCreateData {
   default_reply?: string
   reply_delay_seconds?: number
   connection_id: number
+  enable_dm_automation?: boolean
+  dm_reply_delay_seconds?: number
+  dm_default_reply?: string
 }
 
 export interface CommentAutomationSettingsUpdateData {
   is_enabled?: boolean
   default_reply?: string
   reply_delay_seconds?: number
+  enable_dm_automation?: boolean
+  dm_reply_delay_seconds?: number
+  dm_default_reply?: string
 }
 
 export interface CommentFilters {
@@ -59,6 +62,60 @@ export interface CommentReplyFilters {
   connection_id?: number
   status?: 'pending' | 'sent' | 'failed'
   page?: number
+}
+
+// =============================================================================
+// DIRECT MESSAGE TYPE DEFINITIONS
+// =============================================================================
+
+export interface DirectMessageFilters {
+  connection_id?: number
+  platform?: 'facebook' | 'instagram'
+  status?: 'new' | 'replied' | 'ignored' | 'error'
+  page?: number
+}
+
+export interface DMReplyData {
+  message_id: string
+  message: string
+  connection_id: number
+}
+
+export interface DMAutomationRuleCreateData {
+  rule_name: string
+  message_type: MessageTypeEnum.DM | MessageTypeEnum.BOTH
+  keywords: string[]
+  reply_template: string
+  is_active?: boolean
+  priority?: number
+  connection_id: number
+}
+
+export interface DMAutomationRuleUpdateData {
+  rule_name?: string
+  message_type?: MessageTypeEnum.DM | MessageTypeEnum.BOTH
+  keywords?: string[]
+  reply_template?: string
+  is_active?: boolean
+  priority?: number
+}
+
+export interface DMReplyFilters {
+  connection_id?: number
+  platform?: 'facebook' | 'instagram'
+  status?: 'pending' | 'sent' | 'failed' | 'error'
+  page?: number
+}
+
+export interface AutomationSettingsUpdateData {
+  // Comment automation settings
+  is_enabled?: boolean
+  default_reply?: string
+  reply_delay_seconds?: number
+  // DM automation settings
+  enable_dm_automation?: boolean
+  dm_default_reply?: string
+  dm_reply_delay_seconds?: number
 }
 
 // =============================================================================
@@ -168,7 +225,7 @@ export async function getAutomationRulesAction(filters?: AutomationRuleFilters) 
 /**
  * Create a new automation rule
  */
-export async function createAutomationRuleAction(data: CommentAutomationRuleCreateData) {
+export async function createAutomationRuleAction(data: CommentAutomationRuleCreateData | DMAutomationRuleCreateData) {
   const session = await getServerSession(authOptions)
 
   if (!session) {
@@ -178,8 +235,9 @@ export async function createAutomationRuleAction(data: CommentAutomationRuleCrea
   try {
     const apiClient = await getApiClient(session)
     
-    const requestData: CommentAutomationRuleCreate = {
+    const requestData: AutomationRuleCreate = {
       rule_name: data.rule_name,
+      message_type: 'message_type' in data ? data.message_type : MessageTypeEnum.COMMENT,
       keywords: data.keywords,
       reply_template: data.reply_template,
       is_active: data.is_active ?? true,
@@ -359,7 +417,7 @@ export async function getAutomationSettingsByConnectionAction(connectionId: numb
 /**
  * Create or update automation settings for a specific connection
  */
-export async function createOrUpdateAutomationSettingsAction(connectionId: number, data: CommentAutomationSettingsCreateData) {
+export async function createOrUpdateAutomationSettingsAction(connectionId: number, data: CommentAutomationSettingsCreateData | AutomationSettingsUpdateData) {
   const session = await getServerSession(authOptions)
 
   if (!session) {
@@ -368,7 +426,12 @@ export async function createOrUpdateAutomationSettingsAction(connectionId: numbe
 
   try {
     const apiClient = await getApiClient(session)
-    const response = await apiClient.automationSettings.automationSettingsCreate(connectionId)
+    
+    // Extract connection_id from data if present, otherwise use connectionId parameter
+    const { connection_id, ...requestBody } = data as any
+    const actualConnectionId = connection_id || connectionId
+    
+    const response = await apiClient.automationSettings.automationSettingsCreate(actualConnectionId, requestBody)
     
     return response
   } catch (error) {
@@ -383,7 +446,7 @@ export async function createOrUpdateAutomationSettingsAction(connectionId: numbe
 /**
  * Update automation settings for a specific setting ID
  */
-export async function updateAutomationSettingsAction(settingId: number, data: any) {
+export async function updateAutomationSettingsAction(settingId: number, data: AutomationSettingsUpdateData) {
   const session = await getServerSession(authOptions)
 
   if (!session) {
@@ -392,7 +455,7 @@ export async function updateAutomationSettingsAction(settingId: number, data: an
 
   try {
     const apiClient = await getApiClient(session)
-    const response = await apiClient.automationSettings.automationSettingsUpdatePartialUpdate(settingId)
+    const response = await apiClient.automationSettings.automationSettingsUpdatePartialUpdate(settingId, data)
     
     return response
   } catch (error) {
@@ -587,5 +650,168 @@ export async function replyToCommentAction(commentId: string, message: string, p
       return { error: error.message }
     }
     return { error: 'Failed to reply to comment' }
+  }
+}
+
+// =============================================================================
+// DIRECT MESSAGE ACTIONS
+// =============================================================================
+
+/**
+ * Get all direct messages for user's Facebook/Instagram connections
+ */
+export async function getDirectMessagesAction(filters?: DirectMessageFilters) {
+  const session = await getServerSession(authOptions)
+
+  if (!session) {
+    return { error: 'Authentication required' }
+  }
+
+  try {
+    const apiClient = await getApiClient(session)
+    const response = await apiClient.directMessages.directMessagesList(filters?.page)
+    
+    return response
+  } catch (error) {
+    console.error('Error fetching direct messages:', error)
+    if (error instanceof ApiError) {
+      return { error: error.message }
+    }
+    return { error: 'Failed to fetch direct messages' }
+  }
+}
+
+/**
+ * Get a specific direct message by ID
+ */
+export async function getDirectMessageAction(id: number) {
+  const session = await getServerSession(authOptions)
+
+  if (!session) {
+    return { error: 'Authentication required' }
+  }
+
+  try {
+    const apiClient = await getApiClient(session)
+    const response = await apiClient.directMessages.directMessagesRetrieve(id)
+    
+    return response
+  } catch (error) {
+    console.error('Error fetching direct message:', error)
+    if (error instanceof ApiError) {
+      return { error: error.message }
+    }
+    return { error: 'Failed to fetch direct message' }
+  }
+}
+
+/**
+ * Reply to a Facebook/Instagram direct message manually
+ */
+export async function replyToDirectMessageAction(data: DMReplyData) {
+  const session = await getServerSession(authOptions)
+
+  if (!session) {
+    return { error: 'Authentication required' }
+  }
+
+  try {
+    const apiClient = await getApiClient(session)
+    const response = await apiClient.directMessages.directMessagesReplyCreate({
+      message_id: data.message_id,
+      message: data.message,
+      connection_id: data.connection_id
+    })
+    
+    return response
+  } catch (error) {
+    console.error('Error replying to direct message:', error)
+    if (error instanceof ApiError) {
+      return { error: error.message }
+    }
+    return { error: 'Failed to reply to direct message' }
+  }
+}
+
+/**
+ * Get replies for a specific direct message
+ */
+export async function getDMRepliesForMessageAction(messageId: number) {
+  const session = await getServerSession(authOptions)
+
+  if (!session) {
+    return { error: 'Authentication required' }
+  }
+
+  try {
+    const apiClient = await getApiClient(session)
+    const response = await apiClient.directMessages.directMessagesRepliesRetrieve(messageId)
+    
+    return response
+  } catch (error) {
+    console.error('Error fetching DM replies:', error)
+    if (error instanceof ApiError) {
+      return { error: error.message }
+    }
+    return { error: 'Failed to fetch DM replies' }
+  }
+}
+
+// Note: DM automation rules are now unified with comment automation rules
+// Use getAutomationRulesAction() and createAutomationRuleAction() with appropriate message_type
+
+// =============================================================================
+// DM REPLY ACTIONS
+// =============================================================================
+
+/**
+ * Get all DM replies for user's messages
+ */
+export async function getDMRepliesAction(filters?: DMReplyFilters) {
+  const session = await getServerSession(authOptions)
+
+  if (!session) {
+    return { error: 'Authentication required' }
+  }
+
+  try {
+    const apiClient = await getApiClient(session)
+    const response = await apiClient.dmReplies.dmRepliesList(filters?.page)
+    
+    return response
+  } catch (error) {
+    console.error('Error fetching DM replies:', error)
+    if (error instanceof ApiError) {
+      return { error: error.message }
+    }
+    return { error: 'Failed to fetch DM replies' }
+  }
+}
+
+// =============================================================================
+// DM AUTOMATION STATS ACTIONS
+// =============================================================================
+
+/**
+ * Get DM automation statistics
+ */
+export async function getDMAutomationStatsAction() {
+  const session = await getServerSession(authOptions)
+
+  if (!session) {
+    return { error: 'Authentication required' }
+  }
+
+  try {
+    const apiClient = await getApiClient(session)
+    const response = await apiClient.dmAutomationStats.dmAutomationStatsRetrieve()
+    
+    return response
+  } catch (error) {
+    console.error('Error fetching DM automation stats:', error)
+    if (error instanceof ApiError) {
+      return { error: error.message }
+    }
+    return { error: 'Failed to fetch DM automation stats' }
   }
 }

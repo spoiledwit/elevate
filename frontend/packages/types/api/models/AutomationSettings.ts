@@ -3,14 +3,19 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * Serializer for comment automation settings.
+ * Serializer for automation settings.
  */
-export type CommentAutomationSettings = {
+export type AutomationSettings = {
     readonly id: number;
+    connection: number;
+    readonly connection_name: string;
+    readonly platform_name: string;
     is_enabled?: boolean;
     default_reply?: string;
     reply_delay_seconds?: number;
-    readonly connection_name: string;
+    enable_dm_automation?: boolean;
+    dm_default_reply?: string;
+    dm_reply_delay_seconds?: number;
     readonly created_at: string;
     readonly updated_at: string;
 };

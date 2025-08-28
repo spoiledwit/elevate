@@ -5,6 +5,12 @@ from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.conf import settings
 
 from ..models import UserProfile
 from ..serializers import (
@@ -16,6 +22,8 @@ from ..serializers import (
     UserCurrentSerializer,
     UserProfileSerializer,
     UserProfilePublicSerializer,
+    PasswordResetRequestSerializer,
+    PasswordResetConfirmSerializer,
 )
 
 User = get_user_model()
@@ -34,6 +42,10 @@ class UserViewSet(
 
     def get_permissions(self):
         if self.action == "create" or self.action == "check_username":
+            return [AllowAny()]
+
+        # Allow unauthenticated access to password reset endpoints
+        if self.action in ("password_reset_request", "password_reset_confirm"):
             return [AllowAny()]
 
         return super().get_permissions()
@@ -98,6 +110,75 @@ class UserViewSet(
         self.request.user.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @extend_schema(
+        request=PasswordResetRequestSerializer,
+        responses={200: None}
+    )
+    @action(["post"], url_path="password-reset/request", detail=False)
+    def password_reset_request(self, request, *args, **kwargs):
+        """Send password reset email if the username exists. Always returns 200."""
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        username = serializer.validated_data["username"].strip().lower()
+        try:
+            user = User.objects.get(username__iexact=username)
+        except User.DoesNotExist:
+            # Don't reveal whether the username exists
+            return Response({"detail": "If an account with that username exists, a reset email has been sent."}, status=status.HTTP_200_OK)
+
+        # Build uid and token
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+
+        # Construct reset link for frontend to consume
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+        reset_path = f"/auth/reset-password/?uid={uid}&token={token}"
+        reset_url = frontend_url.rstrip("/") + reset_path
+
+        # Render email body (simple plaintext)
+        subject = "Reset your Elevate password"
+        message = render_to_string("registration/password_reset_email.html", {
+            'protocol': 'https' if not settings.DEBUG else 'http',
+            'domain': request.get_host(),
+            'uid': uid,
+            'token': token,
+            'reset_url': reset_url,
+            'user': user,
+        })
+
+        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=True)
+
+        return Response({"detail": "If an account with that username exists, a reset email has been sent."}, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        request=PasswordResetConfirmSerializer,
+        responses={200: None, 400: None}
+    )
+    @action(["post"], url_path="password-reset/confirm", detail=False)
+    def password_reset_confirm(self, request, *args, **kwargs):
+        """Confirm password reset using uid and token and set new password."""
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        uid = serializer.validated_data["uid"]
+        token = serializer.validated_data["token"]
+
+        try:
+            uid_decoded = force_str(urlsafe_base64_decode(uid))
+            user = User.objects.get(pk=uid_decoded)
+        except Exception:
+            return Response({"detail": "Invalid uid/token."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not default_token_generator.check_token(user, token):
+            return Response({"detail": "Invalid or expired token."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # All good - set password
+        user.set_password(serializer.validated_data["password"])
+        user.save()
+
+        return Response({"detail": "Password has been reset."}, status=status.HTTP_200_OK)
 
     @action(["delete"], url_path="delete-account", detail=False)
     def delete_account(self, request, *args, **kwargs):

@@ -17,7 +17,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 
-from ..models import SocialMediaConnection, Comment, CommentAutomationRule, CommentAutomationSettings, CommentReply
+from ..models import SocialMediaConnection, Comment, AutomationSettings, CommentReply, DirectMessage, AutomationRule
 from ..services.integrations.meta_service import MetaService
 from django.utils.dateparse import parse_datetime
 from django.utils import timezone
@@ -139,9 +139,11 @@ class FacebookWebhookView(APIView):
             for entry in entries:
                 page_id = entry.get('id')
                 changes = entry.get('changes', [])
+                messaging = entry.get('messaging', [])
                 
-                logger.info(f"Processing entry for page {page_id} with {len(changes)} changes")
+                logger.info(f"Processing entry for page {page_id} with {len(changes)} changes and {len(messaging)} messages")
                 
+                # Handle page changes (comments, etc.)
                 for change in changes:
                     field = change.get('field')
                     value = change.get('value', {})
@@ -154,6 +156,10 @@ class FacebookWebhookView(APIView):
                         self._handle_comment_event(page_id, value)
                     else:
                         logger.info(f"Unhandled webhook field: {field}")
+                
+                # Handle messaging events (Facebook Messenger)
+                for message_event in messaging:
+                    self._handle_messaging_event(page_id, message_event)
             
             # Always return 200 OK to acknowledge receipt
             return JsonResponse({'status': 'success'})
@@ -238,9 +244,9 @@ class FacebookWebhookView(APIView):
                 
                 # Get delay from settings if exists
                 try:
-                    settings = CommentAutomationSettings.objects.get(connection=connection)
+                    settings = AutomationSettings.objects.get(connection=connection)
                     delay = settings.reply_delay_seconds
-                except CommentAutomationSettings.DoesNotExist:
+                except AutomationSettings.DoesNotExist:
                     delay = 5  # Default delay
                 
                 # Queue the task
@@ -251,3 +257,107 @@ class FacebookWebhookView(APIView):
             
         except Exception as e:
             logger.error(f"Error handling comment event: {e}")
+    
+    def _handle_messaging_event(self, page_id: str, message_event: Dict[str, Any]):
+        """
+        Handle messaging webhook events (Facebook Messenger).
+        
+        Args:
+            page_id: Facebook page ID
+            message_event: Message event data from webhook
+        """
+        try:
+            sender = message_event.get('sender', {})
+            recipient = message_event.get('recipient', {})
+            message = message_event.get('message', {})
+            timestamp = message_event.get('timestamp')
+            
+            sender_id = sender.get('id', '')
+            recipient_id = recipient.get('id', '')
+            message_id = message.get('mid', '')
+            message_text = message.get('text', '')
+            attachments = message.get('attachments', [])
+            is_echo = message.get('is_echo', False)
+            
+            logger.info(f"Messenger event: message {message_id}")
+            logger.info(f"From: {sender_id}, To: {recipient_id}")
+            logger.info(f"Text: {message_text}")
+            logger.info(f"Is echo: {is_echo}")
+            
+            # Skip echo messages (sent by the page)
+            if is_echo:
+                logger.info(f"Skipping echo message: {message_id}")
+                return
+            
+            # Skip if no message text and no attachments
+            if not message_text and not attachments:
+                logger.info(f"Skipping message with no text or attachments: {message_id}")
+                return
+            
+            # Find the Facebook connection for this page
+            try:
+                connection = SocialMediaConnection.objects.get(
+                    platform__name='facebook',
+                    facebook_page_id=page_id,
+                    is_active=True
+                )
+                logger.info(f"Found connection for page {page_id}: {connection.id}")
+            except SocialMediaConnection.DoesNotExist:
+                logger.warning(f"No active Facebook connection found for page {page_id}")
+                return
+            
+            # Parse timestamp
+            message_created_time = timezone.now()
+            if timestamp:
+                try:
+                    message_created_time = timezone.datetime.fromtimestamp(timestamp / 1000, tz=timezone.utc)
+                except:
+                    pass
+            
+            # Get sender name (we might need to fetch this from Facebook API)
+            sender_name = f"User {sender_id}"  # Default, could be enhanced to fetch real name
+            
+            # Create conversation ID (Facebook Messenger uses sender ID as conversation ID)
+            conversation_id = sender_id
+            
+            # Save direct message to database
+            dm, created = DirectMessage.objects.get_or_create(
+                message_id=message_id,
+                defaults={
+                    'conversation_id': conversation_id,
+                    'platform': 'facebook',
+                    'sender_id': sender_id,
+                    'sender_name': sender_name,
+                    'message_text': message_text,
+                    'message_attachments': attachments,
+                    'connection': connection,
+                    'created_time': message_created_time,
+                    'status': 'new',
+                    'is_echo': is_echo
+                }
+            )
+            
+            if created:
+                logger.info(f"Saved new Facebook DM {message_id} to database")
+                
+                # Queue Celery task for DM automation processing
+                from ..tasks import process_dm_automation
+                
+                # Get delay from settings if exists
+                try:
+                    settings = AutomationSettings.objects.get(connection=connection)
+                    delay = settings.dm_reply_delay_seconds if settings.enable_dm_automation else None
+                except AutomationSettings.DoesNotExist:
+                    delay = None
+                
+                if delay is not None:
+                    # Queue the task
+                    process_dm_automation.delay(dm.id, delay_seconds=delay)
+                    logger.info(f"Queued DM automation task for message {message_id} with {delay}s delay")
+                else:
+                    logger.info(f"DM automation disabled for connection {connection.id}")
+            else:
+                logger.info(f"Facebook DM {message_id} already exists in database")
+            
+        except Exception as e:
+            logger.error(f"Error handling messaging event: {e}")

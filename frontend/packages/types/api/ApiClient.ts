@@ -12,6 +12,10 @@ import { AutomationSettingsService } from './services/AutomationSettingsService'
 import { AutomationStatsService } from './services/AutomationStatsService';
 import { CommentRepliesService } from './services/CommentRepliesService';
 import { CommentsService } from './services/CommentsService';
+import { DirectMessagesService } from './services/DirectMessagesService';
+import { DmAutomationRulesService } from './services/DmAutomationRulesService';
+import { DmAutomationStatsService } from './services/DmAutomationStatsService';
+import { DmRepliesService } from './services/DmRepliesService';
 import { IntegrationsService } from './services/IntegrationsService';
 import { MediaService } from './services/MediaService';
 import { PlansService } from './services/PlansService';
@@ -32,6 +36,10 @@ export class ApiClient {
     public readonly automationStats: AutomationStatsService;
     public readonly commentReplies: CommentRepliesService;
     public readonly comments: CommentsService;
+    public readonly directMessages: DirectMessagesService;
+    public readonly dmAutomationRules: DmAutomationRulesService;
+    public readonly dmAutomationStats: DmAutomationStatsService;
+    public readonly dmReplies: DmRepliesService;
     public readonly integrations: IntegrationsService;
     public readonly media: MediaService;
     public readonly plans: PlansService;
@@ -63,6 +71,10 @@ export class ApiClient {
         this.automationStats = new AutomationStatsService(this.request);
         this.commentReplies = new CommentRepliesService(this.request);
         this.comments = new CommentsService(this.request);
+        this.directMessages = new DirectMessagesService(this.request);
+        this.dmAutomationRules = new DmAutomationRulesService(this.request);
+        this.dmAutomationStats = new DmAutomationStatsService(this.request);
+        this.dmReplies = new DmRepliesService(this.request);
         this.integrations = new IntegrationsService(this.request);
         this.media = new MediaService(this.request);
         this.plans = new PlansService(this.request);

@@ -33,25 +33,25 @@ export function FAQ() {
   }
 
   return (
-    <section className="py-20 px-8 bg-white" data-faq-section>
+    <section className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 bg-white" data-faq-section>
       <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-black mb-6">
+        <div className="text-center mb-10 sm:mb-12 lg:mb-16">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-black mb-4 sm:mb-6">
             FAQs
           </h2>
-          <p className="text-gray-600 text-lg">
+          <p className="text-gray-600 text-base sm:text-lg">
             Find answers to your questions about Elevate Social and how it can benefit you.
           </p>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {faqs.map((faq, index) => (
             <div
               key={index}
               className="border border-gray-200 rounded-lg overflow-hidden transition-all duration-300 hover:shadow-md"
             >
               <div
-                className="w-full px-6 py-6 text-left flex justify-between items-center cursor-pointer hover:bg-gray-50 transition-all duration-200"
+                className="w-full px-4 sm:px-6 py-4 sm:py-6 text-left flex justify-between items-center cursor-pointer hover:bg-gray-50 transition-all duration-200"
                 onClick={() => toggleFAQ(index)}
                 role="tab"
                 aria-expanded={openIndex === index}
@@ -63,11 +63,11 @@ export function FAQ() {
                   }
                 }}
               >
-                <span className="text-lg font-semibold text-black">
+                <span className="text-base sm:text-lg font-semibold text-black pr-4">
                   {faq.question}
                 </span>
                 <ChevronDown
-                  className={`w-5 h-5 text-gray-500 transition-all duration-300 ease-in-out ${
+                  className={`w-4 h-4 sm:w-5 sm:h-5 text-gray-500 transition-all duration-300 ease-in-out flex-shrink-0 ${
                     openIndex === index ? 'rotate-180 text-purple-500' : ''
                   }`}
                 />
@@ -78,9 +78,9 @@ export function FAQ() {
                   openIndex === index ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
                 }`}
               >
-                <div className="px-6 pb-6 border-t border-gray-200">
-                  <div className="pt-4 transform transition-transform duration-300 ease-in-out">
-                    <p className="text-gray-700 leading-relaxed">
+                <div className="px-4 sm:px-6 pb-4 sm:pb-6 border-t border-gray-200">
+                  <div className="pt-3 sm:pt-4 transform transition-transform duration-300 ease-in-out">
+                    <p className="text-gray-700 leading-relaxed text-sm sm:text-base">
                       {faq.answer}
                     </p>
                   </div>

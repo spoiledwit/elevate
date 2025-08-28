@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSession, signOut } from 'next-auth/react'
+import { useSession } from 'next-auth/react'
 import { useRouter, usePathname } from 'next/navigation'
+import { useOnboarding } from '@/hooks/useOnboarding'
+import { OnboardingTrigger } from './onboarding-trigger'
+import '@/styles/driver-theme.css'
 import {
-  Crown,
-  LogOut,
   Home,
   BarChart3,
   Store,
@@ -36,6 +37,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { data: session } = useSession()
   const pathname = usePathname()
   const router = useRouter()
+  const { hasSeenOnboarding, startOnboarding } = useOnboarding((sectionId: string) => {
+    setExpandedSections([sectionId])
+  })
 
   const toggleSection = (sectionId: string) => {
     setExpandedSections(prev =>
@@ -80,8 +84,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         return { itemId: 'subscription', sectionId: 'business' }
       case '/settings':
         return { itemId: 'settings', sectionId: 'account' }
-      case '/support':
-        return { itemId: 'support', sectionId: 'account' }
       default:
         return { itemId: 'dashboard', sectionId: 'overview' }
     }
@@ -93,6 +95,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     setActiveItem(itemId)
     setExpandedSections([sectionId])
   }, [pathname])
+
+  // Start onboarding for first-time users
+  useEffect(() => {
+    if (!hasSeenOnboarding && pathname === '/dashboard') {
+      // Small delay to ensure DOM elements are rendered
+      const timer = setTimeout(() => {
+        startOnboarding()
+      }, 200)
+      return () => clearTimeout(timer)
+    }
+  }, [hasSeenOnboarding, pathname, startOnboarding])
 
   const handleItemClick = (itemId: string, sectionId: string) => {
     // Auto-expand this section and close others
@@ -142,6 +155,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         break
       case 'social-accounts':
         router.push('/social-accounts')
+        break
+      case 'settings':
+        router.push('/settings')
         break
       default:
         break
@@ -211,7 +227,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       icon: Settings2,
       items: [
         { id: 'settings', label: 'Settings', icon: Settings2 },
-        { id: 'support', label: 'Support', icon: HelpCircle },
       ]
     }
   ]
@@ -221,7 +236,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Fixed Sidebar */}
       <div className="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 flex flex-col z-50">
         {/* Logo */}
-        <div className="flex-shrink-0 p-6 border-b border-gray-200">
+        <div
+          onClick={() => {
+            router.push('/dashboard')
+          }}
+          className="flex-shrink-0 p-6 border-b border-gray-200 cursor-pointer">
           <div className="flex items-center gap-2">
             <img src={logo.src} alt="Elevate Social" className="h-10" />
             <span className="font-semibold text-lg text-gray-900">Elevate Social</span>
@@ -236,6 +255,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 {/* Section Header - Clickable */}
                 <button
                   onClick={() => toggleSection(section.id)}
+                  data-tour={`${section.id}-section`}
                   className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
                 >
                   <div className="flex items-center gap-3">
@@ -260,7 +280,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <button
                       key={item.id}
                       onClick={() => handleItemClick(item.id, section.id)}
-                      className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 transform hover:scale-[1.02] border ${activeItem === item.id
+                      data-tour={item.id}
+                      className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 transform border ${activeItem === item.id
                         ? 'bg-purple-50 text-purple-700 border-purple-200 shadow-sm'
                         : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-transparent'
                         }`}
@@ -276,8 +297,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </nav>
 
         {/* Bottom section - User profile */}
-        <div className="flex-shrink-0 p-4 border-t border-gray-200">
-          <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+        <div
+          onClick={() => {
+            router.push('/settings')
+          }}
+          className="flex-shrink-0 p-4 border-t border-gray-200">
+          <div data-tour="user-profile" className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
             <div className="w-9 h-9 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center">
               <span className="text-sm font-semibold text-white">
                 {session?.user?.username?.[0]?.toUpperCase() || 'U'}
@@ -287,9 +312,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <p className="text-sm font-medium text-gray-900 truncate">
                 @{session?.user?.username || 'username'}
               </p>
-              <p className="text-xs text-gray-500 truncate">
-                {session?.user?.email || 'user@example.com'}
-              </p>
+
             </div>
             <ChevronRight className="w-4 h-4 text-gray-400" />
           </div>
@@ -300,6 +323,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className="ml-64 flex-1">
         {children}
       </div>
+
+      {/* Onboarding help trigger */}
+      <OnboardingTrigger expandSection={(sectionId: string) => setExpandedSections([sectionId])} />
     </div>
   )
 }

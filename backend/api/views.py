@@ -5,9 +5,10 @@ from django.db.models import Sum, Count, Q
 
 from .models import (
     User, UserProfile, SocialIcon, CustomLink, CTABanner, 
-    Subscription, TriggerRule, AIChatHistory,
+    Subscription,
     SocialMediaPlatform, SocialMediaConnection, 
-    SocialMediaPost, SocialMediaPostTemplate
+    SocialMediaPost, SocialMediaPostTemplate,
+    Comment, DirectMessage, AIConfiguration
 )
 
 
@@ -92,16 +93,23 @@ def dashboard_callback(request, context):
             SocialMediaPost.objects.filter(created_at__date=date).count()
         )
         
-        # Count AI chats per day
-        recent_ai_chats.append(
-            AIChatHistory.objects.filter(created_at__date=date).count()
-        )
+        # Count AI activity (comments + DMs processed)
+        comments_count = Comment.objects.filter(received_at__date=date).count()
+        dm_count = DirectMessage.objects.filter(received_at__date=date).count()
+        recent_ai_chats.append(comments_count + dm_count)
     
     # Get profile component stats
     total_custom_links = CustomLink.objects.filter(is_active=True).count()
     total_social_icons = SocialIcon.objects.filter(is_active=True).count()
     total_cta_banners = CTABanner.objects.filter(is_active=True).count()
-    total_trigger_rules = TriggerRule.objects.filter(is_active=True).count()
+    
+    # Additional stats
+    total_users = user_count
+    total_posts = SocialMediaPost.objects.count()
+    total_connections = SocialMediaConnection.objects.count()
+    total_comments_processed = Comment.objects.count()
+    total_dm_processed = DirectMessage.objects.count()
+    ai_configurations_count = AIConfiguration.objects.count()
     
     # Get top platforms by connections
     top_platforms = SocialMediaConnection.objects.filter(
@@ -125,7 +133,6 @@ def dashboard_callback(request, context):
         'total_custom_links': total_custom_links,
         'total_social_icons': total_social_icons,
         'total_cta_banners': total_cta_banners,
-        'total_trigger_rules': total_trigger_rules,
         
         # JSON data for charts
         'dates_json': json.dumps(dates),
@@ -143,6 +150,14 @@ def dashboard_callback(request, context):
         'recent_ai_chats_json': json.dumps(recent_ai_chats),
         'top_platform_names_json': json.dumps(top_platform_names),
         'top_platform_counts_json': json.dumps(top_platform_counts),
+        
+        # Additional stats for cards
+        'total_users': total_users,
+        'total_posts': total_posts,
+        'total_connections': total_connections,
+        'total_comments_processed': total_comments_processed,
+        'total_dm_processed': total_dm_processed,
+        'ai_configurations_count': ai_configurations_count,
     })
 
     return context

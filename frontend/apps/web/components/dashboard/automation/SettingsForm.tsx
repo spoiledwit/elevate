@@ -23,9 +23,14 @@ export function SettingsForm({ setting, facebookPages, pagesWithoutSettings, onC
   const isEditing = !!setting
   const [formData, setFormData] = useState({
     connection_id: setting?.connection?.id || (pagesWithoutSettings?.[0]?.connection_id || ''),
+    // Comment automation settings
     is_enabled: setting?.is_enabled ?? true,
     reply_delay_seconds: setting?.reply_delay_seconds || 5,
-    default_reply: setting?.default_reply || ''
+    default_reply: setting?.default_reply || '',
+    // DM automation settings
+    enable_dm_automation: setting?.enable_dm_automation ?? false,
+    dm_reply_delay_seconds: setting?.dm_reply_delay_seconds || 10,
+    dm_default_reply: setting?.dm_default_reply || ''
   })
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<any>({})
@@ -51,6 +56,10 @@ export function SettingsForm({ setting, facebookPages, pagesWithoutSettings, onC
       newErrors.reply_delay_seconds = 'Delay must be between 0 and 300 seconds'
     }
 
+    if (formData.dm_reply_delay_seconds < 0 || formData.dm_reply_delay_seconds > 300) {
+      newErrors.dm_reply_delay_seconds = 'DM delay must be between 0 and 300 seconds'
+    }
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -69,7 +78,10 @@ export function SettingsForm({ setting, facebookPages, pagesWithoutSettings, onC
           is_enabled: formData.is_enabled,
           reply_delay_seconds: parseInt(formData.reply_delay_seconds.toString()),
           default_reply: formData.default_reply.trim() || undefined,
-          connection_id: parseInt(formData.connection_id)
+          connection_id: parseInt(formData.connection_id),
+          enable_dm_automation: formData.enable_dm_automation,
+          dm_reply_delay_seconds: parseInt(formData.dm_reply_delay_seconds.toString()),
+          dm_default_reply: formData.dm_default_reply.trim() || undefined
         }
       )
 
@@ -105,7 +117,7 @@ export function SettingsForm({ setting, facebookPages, pagesWithoutSettings, onC
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-lg w-full max-h-[90vh] overflow-hidden">
+      <div className="bg-white rounded-lg max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
@@ -123,7 +135,8 @@ export function SettingsForm({ setting, facebookPages, pagesWithoutSettings, onC
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto">
+          <form id="settings-form" onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Page Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -224,7 +237,7 @@ export function SettingsForm({ setting, facebookPages, pagesWithoutSettings, onC
             <div className="flex items-center gap-2 mb-2">
               <MessageSquare className="w-4 h-4 text-gray-500" />
               <label className="block text-sm font-medium text-gray-700">
-                Default Reply Message
+                Default Reply Message (Comments)
               </label>
             </div>
             <textarea
@@ -239,6 +252,89 @@ export function SettingsForm({ setting, facebookPages, pagesWithoutSettings, onC
             </p>
           </div>
 
+          {/* DM Automation Section */}
+          <div className="border-t border-gray-200 pt-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Direct Message Automation</h3>
+            
+            {/* Enable DM Automation Toggle - Disabled */}
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg mb-4 opacity-60">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <ToggleLeft className="w-5 h-5 text-gray-500" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-900">Auto-reply to DMs</h4>
+                  <p className="text-sm text-gray-600">
+                    Coming soon - requires Facebook app review
+                  </p>
+                </div>
+              </div>
+              <label className="relative inline-flex items-center cursor-not-allowed">
+                <input
+                  type="checkbox"
+                  checked={false}
+                  disabled={true}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 rounded-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+              </label>
+            </div>
+
+            {/* DM Reply Delay - Disabled */}
+            <div className="mb-4 opacity-60">
+              <div className="flex items-center gap-2 mb-2">
+                <Clock className="w-4 h-4 text-gray-500" />
+                <label className="block text-sm font-medium text-gray-700">
+                  DM Reply Delay (seconds)
+                </label>
+              </div>
+              <div className="flex items-center gap-4">
+                <input
+                  type="range"
+                  min="0"
+                  max="60"
+                  value={10}
+                  disabled={true}
+                  className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-not-allowed slider"
+                />
+                <div className="flex items-center gap-1 min-w-[60px]">
+                  <input
+                    type="number"
+                    min="0"
+                    max="300"
+                    value={10}
+                    disabled={true}
+                    className="w-14 px-2 py-1 border border-gray-300 rounded text-sm text-center bg-gray-100 cursor-not-allowed"
+                  />
+                  <span className="text-sm text-gray-500">s</span>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Available after Facebook app review
+              </p>
+            </div>
+
+            {/* DM Default Reply - Disabled */}
+            <div className="opacity-60">
+              <div className="flex items-center gap-2 mb-2">
+                <MessageSquare className="w-4 h-4 text-gray-500" />
+                <label className="block text-sm font-medium text-gray-700">
+                  Default Reply Message (DMs)
+                </label>
+              </div>
+              <textarea
+                value=""
+                disabled={true}
+                placeholder="Available after Facebook app review..."
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed resize-none"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Available after Facebook app review
+              </p>
+            </div>
+          </div>
+
           {/* Submit Error */}
           {errors.submit && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -246,34 +342,37 @@ export function SettingsForm({ setting, facebookPages, pagesWithoutSettings, onC
             </div>
           )}
 
-          {/* Footer */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  {isEditing ? 'Updating...' : 'Setting up...'}
-                </>
-              ) : (
-                <>
-                  <Settings2 className="w-4 h-4" />
-                  {isEditing ? 'Update Settings' : 'Setup Automation'}
-                </>
-              )}
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            form="settings-form"
+            disabled={loading}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {loading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                {isEditing ? 'Updating...' : 'Setting up...'}
+              </>
+            ) : (
+              <>
+                <Settings2 className="w-4 h-4" />
+                {isEditing ? 'Update Settings' : 'Setup Automation'}
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   )

@@ -422,14 +422,9 @@ UNFOLD = {
                 "separator": True,
                 "items": [
                     {
-                        "title": _("Trigger Rules"),
-                        "icon": "rule",
-                        "link": reverse_lazy("admin:api_triggerrule_changelist"),
-                    },
-                    {
-                        "title": _("AI Chat History"),
-                        "icon": "chat",
-                        "link": reverse_lazy("admin:api_aichathistory_changelist"),
+                        "title": _("AI Configuration"),
+                        "icon": "settings_suggest",
+                        "link": reverse_lazy("admin:api_aiconfiguration_changelist"),
                     },
                 ],
             },
@@ -486,7 +481,7 @@ UNFOLD = {
                 ],
             },
             {
-                "title": _("Comment Automation"),
+                "title": _("Message Automation"),
                 "separator": True,
                 "items": [
                     {
@@ -495,19 +490,29 @@ UNFOLD = {
                         "link": reverse_lazy("admin:api_comment_changelist"),
                     },
                     {
+                        "title": _("Direct Messages"),
+                        "icon": "message",
+                        "link": reverse_lazy("admin:api_directmessage_changelist"),
+                    },
+                    {
                         "title": _("Automation Rules"),
                         "icon": "auto_awesome",
-                        "link": reverse_lazy("admin:api_commentautomationrule_changelist"),
+                        "link": reverse_lazy("admin:api_automationrule_changelist"),
                     },
                     {
                         "title": _("Automation Settings"),
                         "icon": "settings",
-                        "link": reverse_lazy("admin:api_commentautomationsettings_changelist"),
+                        "link": reverse_lazy("admin:api_automationsettings_changelist"),
                     },
                     {
                         "title": _("Comment Replies"),
                         "icon": "reply",
                         "link": reverse_lazy("admin:api_commentreply_changelist"),
+                    },
+                    {
+                        "title": _("DM Replies"),
+                        "icon": "reply_all",
+                        "link": reverse_lazy("admin:api_directmessagereply_changelist"),
                     },
                 ],
             },

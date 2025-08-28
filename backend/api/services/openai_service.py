@@ -25,6 +25,15 @@ class OpenAIService:
         self.default_text_model = "gpt-4"
         self.default_image_model = "dall-e-3"
     
+    def _get_ai_config(self, capability: str):
+        """Get AI configuration for capability"""
+        try:
+            from ..models import AIConfiguration
+            return AIConfiguration.get_for_capability(capability)
+        except Exception as e:
+            logger.warning(f"Could not get AI config for {capability}: {e}")
+            return None
+    
     def generate_text(
         self,
         prompt: str,
@@ -39,7 +48,7 @@ class OpenAIService:
         
         Args:
             prompt: The user prompt/question
-            model: Model to use (defaults to gpt-4)
+            model: Model to use (defaults to configured model)
             max_tokens: Maximum tokens to generate
             temperature: Creativity level (0-2)
             system_message: System instructions for the model
@@ -49,6 +58,17 @@ class OpenAIService:
             Dictionary containing the generated text and metadata
         """
         try:
+            # Get AI configuration
+            config = self._get_ai_config('text_generation')
+            
+            # Use configured system prompt if not provided
+            if not system_message and config and config.system_prompt.strip():
+                system_message = config.system_prompt
+            
+            # Use configured model if not provided
+            if not model:
+                model = config.text_generation_model if config else self.default_text_model
+            
             messages = []
             
             if system_message:
@@ -63,7 +83,7 @@ class OpenAIService:
             })
             
             completion_kwargs = {
-                "model": model or self.default_text_model,
+                "model": model,
                 "messages": messages,
                 "temperature": temperature,
                 **kwargs
@@ -73,6 +93,10 @@ class OpenAIService:
                 completion_kwargs["max_tokens"] = max_tokens
             
             response = self.client.chat.completions.create(**completion_kwargs)
+            
+            # Track usage
+            if config:
+                config.increment_usage(response.usage.total_tokens)
             
             return {
                 "success": True,
@@ -107,7 +131,7 @@ class OpenAIService:
         
         Args:
             prompt: The user prompt/question
-            model: Model to use (defaults to gpt-4)
+            model: Model to use (defaults to configured model)
             max_tokens: Maximum tokens to generate
             temperature: Creativity level (0-2)
             system_message: System instructions for the model
@@ -117,6 +141,17 @@ class OpenAIService:
             Dictionary containing streaming text chunks and metadata
         """
         try:
+            # Get AI configuration
+            config = self._get_ai_config('text_generation')
+            
+            # Use configured system prompt if not provided
+            if not system_message and config and config.system_prompt.strip():
+                system_message = config.system_prompt
+            
+            # Use configured model if not provided
+            if not model:
+                model = config.text_generation_model if config else self.default_text_model
+            
             messages = []
             
             if system_message:
@@ -131,7 +166,7 @@ class OpenAIService:
             })
             
             completion_kwargs = {
-                "model": model or self.default_text_model,
+                "model": model,
                 "messages": messages,
                 "temperature": temperature,
                 "stream": True,
@@ -151,6 +186,10 @@ class OpenAIService:
                         "model": chunk.model,
                         "finish_reason": chunk.choices[0].finish_reason
                     }
+            
+            # Track usage (approximate for streaming)
+            if config:
+                config.increment_usage(0)  # Can't track tokens for streaming easily
                     
         except Exception as e:
             logger.error(f"Error generating streaming text: {str(e)}")
@@ -185,9 +224,17 @@ class OpenAIService:
             Dictionary containing the generated image data and metadata
         """
         try:
+            # Get AI configuration
+            config = self._get_ai_config('image_generation')
+            
+            # Use configured system prompt to enhance the prompt if available
+            enhanced_prompt = prompt
+            if config and config.system_prompt.strip():
+                enhanced_prompt = f"{config.system_prompt}\n\nUser request: {prompt}"
+            
             generation_kwargs = {
                 "model": model or self.default_image_model,
-                "prompt": prompt,
+                "prompt": enhanced_prompt,
                 "size": size,
                 "n": n,
                 "response_format": "b64_json",  # Return as base64
@@ -209,6 +256,10 @@ class OpenAIService:
                     "revised_prompt": getattr(image_data, 'revised_prompt', None)
                 })
             
+            # Track usage
+            if config:
+                config.increment_usage(0)  # Image generation doesn't have token usage
+            
             return {
                 "success": True,
                 "images": images,
@@ -227,7 +278,7 @@ class OpenAIService:
         self,
         image_data: Union[str, bytes],
         prompt: str = "What's in this image?",
-        model: str = "gpt-4-vision-preview",
+        model: Optional[str] = None,
         max_tokens: Optional[int] = None,
         detail: str = "auto",
         **kwargs
@@ -238,7 +289,7 @@ class OpenAIService:
         Args:
             image_data: Base64 encoded image data or bytes
             prompt: Question about the image
-            model: Vision model to use
+            model: Vision model to use (defaults to configured model)
             max_tokens: Maximum tokens to generate
             detail: Level of detail (low, high, auto)
             **kwargs: Additional parameters for the API
@@ -247,6 +298,18 @@ class OpenAIService:
             Dictionary containing the image analysis results
         """
         try:
+            # Get AI configuration
+            config = self._get_ai_config('image_analysis')
+            
+            # Use configured model if not provided
+            if not model:
+                model = config.vision_model if config else "gpt-4-vision-preview"
+            
+            # Use configured system prompt to enhance the prompt if available
+            enhanced_prompt = prompt
+            if config and config.system_prompt.strip():
+                enhanced_prompt = f"{config.system_prompt}\n\nUser request: {prompt}"
+            
             # Convert bytes to base64 if needed
             if isinstance(image_data, bytes):
                 image_data = base64.b64encode(image_data).decode('utf-8')
@@ -261,7 +324,7 @@ class OpenAIService:
                     "content": [
                         {
                             "type": "text",
-                            "text": prompt
+                            "text": enhanced_prompt
                         },
                         {
                             "type": "image_url",
@@ -284,6 +347,10 @@ class OpenAIService:
                 completion_kwargs["max_tokens"] = max_tokens
             
             response = self.client.chat.completions.create(**completion_kwargs)
+            
+            # Track usage
+            if config:
+                config.increment_usage(response.usage.total_tokens)
             
             return {
                 "success": True,
@@ -326,6 +393,9 @@ class OpenAIService:
         Returns:
             Dictionary containing the generated content
         """
+        # Get AI configuration
+        config = self._get_ai_config('social_content')
+        
         platform_guidelines = {
             "twitter": "280 characters max, engaging and concise",
             "facebook": "engaging and conversational, can be longer form",
@@ -337,23 +407,37 @@ class OpenAIService:
         
         guideline = platform_guidelines.get(platform.lower(), "engaging social media content")
         
-        system_message = f"""You are a social media content creator specialist. 
-        Create {tone} content for {platform} about {topic}.
-        
-        Platform guidelines: {guideline}
-        {'Include relevant hashtags at the end.' if include_hashtags else 'Do not include hashtags.'}
-        {f'Keep content under {max_length} characters.' if max_length else ''}
-        
-        Make the content engaging, relevant, and platform-appropriate."""
+        # Use configured system prompt if available, otherwise use default
+        if config and config.system_prompt.strip():
+            system_message = config.system_prompt
+        else:
+            system_message = f"""You are a social media content creator specialist. 
+            Create {tone} content for {platform} about {topic}.
+            
+            Platform guidelines: {guideline}
+            {'Include relevant hashtags at the end.' if include_hashtags else 'Do not include hashtags.'}
+            {f'Keep content under {max_length} characters.' if max_length else ''}
+            
+            Make the content engaging, relevant, and platform-appropriate."""
         
         prompt = f"Create a {tone} {platform} post about {topic}."
         
-        return self.generate_text(
+        # Use configured model
+        model = config.text_generation_model if config else None
+        
+        result = self.generate_text(
             prompt=prompt,
             system_message=system_message,
+            model=model,
             temperature=0.8,  # More creative for social content
             **kwargs
         )
+        
+        # Track usage specifically for social content
+        if config and result.get('success') and result.get('usage'):
+            config.increment_usage(result['usage']['total_tokens'])
+        
+        return result
     
     def improve_content(
         self,
@@ -374,6 +458,9 @@ class OpenAIService:
         Returns:
             Dictionary containing the improved content
         """
+        # Get AI configuration
+        config = self._get_ai_config('content_improvement')
+        
         improvement_prompts = {
             "grammar": "Fix grammar, spelling, and punctuation errors while maintaining the original meaning and tone.",
             "clarity": "Improve clarity and readability while keeping the same message and tone.",
@@ -384,19 +471,33 @@ class OpenAIService:
         
         base_prompt = improvement_prompts.get(improvement_type, "Improve this content")
         
-        system_message = f"""You are a professional content editor. {base_prompt}
-        {f'The target audience is: {target_audience}' if target_audience else ''}
-        
-        Return only the improved content without any explanations or comments."""
+        # Use configured system prompt if available, otherwise use default
+        if config and config.system_prompt.strip():
+            system_message = config.system_prompt
+        else:
+            system_message = f"""You are a professional content editor. {base_prompt}
+            {f'The target audience is: {target_audience}' if target_audience else ''}
+            
+            Return only the improved content without any explanations or comments."""
         
         prompt = f"Improve this content:\n\n{content}"
         
-        return self.generate_text(
+        # Use configured model
+        model = config.text_generation_model if config else None
+        
+        result = self.generate_text(
             prompt=prompt,
             system_message=system_message,
+            model=model,
             temperature=0.3,  # Less creative for improvements
             **kwargs
         )
+        
+        # Track usage specifically for content improvement
+        if config and result.get('success') and result.get('usage'):
+            config.increment_usage(result['usage']['total_tokens'])
+        
+        return result
 
 
 # Utility functions for Django views

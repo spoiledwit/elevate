@@ -261,7 +261,7 @@ class OpenAIViewSet(viewsets.GenericViewSet):
                 "properties": {
                     "image": {"type": "string", "format": "binary", "description": "Image file to analyze"},
                     "prompt": {"type": "string", "description": "Question about the image", "default": "What's in this image?"},
-                    "model": {"type": "string", "description": "Vision model to use", "default": "gpt-4-vision-preview"},
+                    "model": {"type": "string", "description": "Vision model to use (uses configured model if not specified)"},
                     "max_tokens": {"type": "integer", "description": "Maximum tokens to generate"},
                     "detail": {"type": "string", "description": "Level of detail (low, high, auto)", "default": "auto"}
                 },
@@ -305,7 +305,7 @@ class OpenAIViewSet(viewsets.GenericViewSet):
                 image_file = request.FILES['image']
                 image_data = base64.b64encode(image_file.read()).decode('utf-8')
                 prompt = request.data.get('prompt', "What's in this image?")
-                model = request.data.get('model', 'gpt-4-vision-preview')
+                model = request.data.get('model')
                 max_tokens = request.data.get('max_tokens')
                 detail = request.data.get('detail', 'auto')
             else:
@@ -319,7 +319,7 @@ class OpenAIViewSet(viewsets.GenericViewSet):
                 
                 image_data = data['image_data']
                 prompt = data.get('prompt', "What's in this image?")
-                model = data.get('model', 'gpt-4-vision-preview')
+                model = data.get('model')
                 max_tokens = data.get('max_tokens')
                 detail = data.get('detail', 'auto')
             

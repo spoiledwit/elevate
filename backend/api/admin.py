@@ -10,10 +10,14 @@ from django.contrib import messages
 
 from .models import (
     User, UserProfile, UserSocialLinks, SocialIcon, CustomLink, CTABanner, Subscription,
-    TriggerRule, AIChatHistory, ProfileView, LinkClick, BannerClick,
+    ProfileView, LinkClick, BannerClick,
     SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, PaymentEvent, Plan, PlanFeature, StripeCustomer,
-    Folder, Media, Comment, CommentAutomationRule, CommentAutomationSettings, CommentReply
+    Folder, Media, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply, AIConfiguration
 )
+
+# Backwards compatibility aliases
+CommentAutomationRule = AutomationRule
+CommentAutomationSettings = AutomationSettings
 
 admin.site.unregister(Group)
 
@@ -172,49 +176,6 @@ class CTABannerAdmin(ModelAdmin):
 
 
 
-
-@admin.register(TriggerRule)
-class TriggerRuleAdmin(ModelAdmin):
-    list_display = ['user', 'trigger_word', 'is_active', 'created_at']
-    list_filter = ['is_active', 'created_at']
-    search_fields = ['user__username', 'user__email', 'trigger_word']
-    readonly_fields = ['created_at', 'modified_at']
-    fieldsets = (
-        ('Rule Information', {
-            'fields': ('user', 'trigger_word', 'message_template', 'redirect_link')
-        }),
-        ('Status', {
-            'fields': ('is_active',)
-        }),
-        ('Timestamps', {
-            'fields': ('created_at', 'modified_at'),
-            'classes': ('collapse',)
-        }),
-    )
-
-
-@admin.register(AIChatHistory)
-class AIChatHistoryAdmin(ModelAdmin):
-    list_display = ['user', 'input_preview', 'context', 'is_active', 'created_at']
-    list_filter = ['is_active', 'created_at']
-    search_fields = ['user__username', 'user__email', 'input_text', 'context']
-    readonly_fields = ['created_at']
-    fieldsets = (
-        ('Chat Information', {
-            'fields': ('user', 'input_text', 'output_text', 'context')
-        }),
-        ('Status', {
-            'fields': ('is_active',)
-        }),
-        ('Timestamps', {
-            'fields': ('created_at',),
-            'classes': ('collapse',)
-        }),
-    )
-
-    def input_preview(self, obj):
-        return obj.input_text[:50] + '...' if len(obj.input_text) > 50 else obj.input_text
-    input_preview.short_description = 'Input Preview'
 
 
 # Social Media OAuth Admin
@@ -676,16 +637,16 @@ class CommentAdmin(ModelAdmin):
         return super().get_queryset(request).select_related('connection')
 
 
-@admin.register(CommentAutomationRule)
-class CommentAutomationRuleAdmin(ModelAdmin):
-    list_display = ['rule_name', 'user', 'connection_page', 'keywords_preview', 'is_active', 'priority', 'times_triggered', 'created_at']
-    list_filter = ['is_active', 'connection__platform', 'created_at', 'priority']
+@admin.register(AutomationRule)
+class AutomationRuleAdmin(ModelAdmin):
+    list_display = ['rule_name', 'user', 'connection_page', 'message_type', 'keywords_preview', 'is_active', 'priority', 'times_triggered', 'created_at']
+    list_filter = ['message_type', 'is_active', 'connection__platform', 'created_at', 'priority']
     search_fields = ['rule_name', 'user__username', 'connection__facebook_page_name', 'reply_template']
     readonly_fields = ['times_triggered', 'created_at']
     
     fieldsets = (
         ('Rule Information', {
-            'fields': ('user', 'connection', 'rule_name', 'is_active', 'priority')
+            'fields': ('user', 'connection', 'rule_name', 'message_type', 'is_active', 'priority')
         }),
         ('Automation Logic', {
             'fields': ('keywords', 'reply_template')
@@ -716,19 +677,22 @@ class CommentAutomationRuleAdmin(ModelAdmin):
         return super().get_queryset(request).select_related('user', 'connection')
 
 
-@admin.register(CommentAutomationSettings)
-class CommentAutomationSettingsAdmin(ModelAdmin):
-    list_display = ['user', 'connection_page', 'is_enabled', 'reply_delay_seconds', 'has_default_reply', 'created_at']
-    list_filter = ['is_enabled', 'connection__platform', 'created_at']
-    search_fields = ['user__username', 'connection__facebook_page_name', 'default_reply']
+@admin.register(AutomationSettings)
+class AutomationSettingsAdmin(ModelAdmin):
+    list_display = ['user', 'connection_page', 'is_enabled', 'enable_dm_automation', 'reply_delay_seconds', 'dm_reply_delay_seconds', 'has_default_reply', 'created_at']
+    list_filter = ['is_enabled', 'enable_dm_automation', 'connection__platform', 'created_at']
+    search_fields = ['user__username', 'connection__facebook_page_name', 'default_reply', 'dm_default_reply']
     readonly_fields = ['created_at', 'updated_at']
     
     fieldsets = (
         ('Settings', {
-            'fields': ('user', 'connection', 'is_enabled')
+            'fields': ('user', 'connection')
         }),
-        ('Reply Configuration', {
-            'fields': ('default_reply', 'reply_delay_seconds')
+        ('Comment Automation', {
+            'fields': ('is_enabled', 'default_reply', 'reply_delay_seconds')
+        }),
+        ('DM Automation', {
+            'fields': ('enable_dm_automation', 'dm_default_reply', 'dm_reply_delay_seconds')
         }),
         ('Timestamps', {
             'fields': ('created_at', 'updated_at'),
@@ -783,3 +747,166 @@ class CommentReplyAdmin(ModelAdmin):
     
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('comment', 'rule')
+
+
+# Direct Message Automation Admin
+@admin.register(DirectMessage)
+class DirectMessageAdmin(ModelAdmin):
+    list_display = ['message_id', 'platform', 'sender_name', 'message_preview', 'connection_page', 'status', 'is_echo', 'created_time']
+    list_filter = ['platform', 'status', 'is_echo', 'connection__platform', 'created_time', 'received_at']
+    search_fields = ['message_id', 'sender_name', 'message_text', 'conversation_id', 'connection__facebook_page_name']
+    readonly_fields = ['message_id', 'conversation_id', 'platform', 'sender_id', 'sender_name', 'message_text', 'message_attachments', 'is_echo', 'created_time', 'received_at']
+    
+    fieldsets = (
+        ('Message Data', {
+            'fields': ('message_id', 'conversation_id', 'platform', 'sender_id', 'sender_name')
+        }),
+        ('Message Content', {
+            'fields': ('message_text', 'message_attachments', 'status', 'is_echo')
+        }),
+        ('Connection', {
+            'fields': ('connection',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_time', 'received_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def message_preview(self, obj):
+        if obj.message_text:
+            return obj.message_text[:50] + '...' if len(obj.message_text) > 50 else obj.message_text
+        return '[No text content]'
+    message_preview.short_description = 'Message Preview'
+    
+    def connection_page(self, obj):
+        return obj.connection.facebook_page_name or 'Unknown Page'
+    connection_page.short_description = 'Page/Account'
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('connection')
+
+
+@admin.register(DirectMessageReply)
+class DirectMessageReplyAdmin(ModelAdmin):
+    list_display = ['direct_message', 'sender_name', 'platform', 'reply_preview', 'rule_used', 'status', 'sent_at']
+    list_filter = ['status', 'direct_message__platform', 'sent_at', 'rule__rule_name']
+    search_fields = ['direct_message__message_id', 'direct_message__sender_name', 'reply_text', 'platform_reply_id']
+    readonly_fields = ['direct_message', 'rule', 'reply_text', 'platform_reply_id', 'error_message', 'sent_at']
+    
+    fieldsets = (
+        ('Reply Information', {
+            'fields': ('direct_message', 'rule', 'reply_text', 'status')
+        }),
+        ('Platform Data', {
+            'fields': ('platform_reply_id', 'error_message')
+        }),
+        ('Timestamps', {
+            'fields': ('sent_at',),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def sender_name(self, obj):
+        return obj.direct_message.sender_name
+    sender_name.short_description = 'Original Sender'
+    
+    def platform(self, obj):
+        return obj.direct_message.get_platform_display()
+    platform.short_description = 'Platform'
+    
+    def reply_preview(self, obj):
+        return obj.reply_text[:50] + '...' if len(obj.reply_text) > 50 else obj.reply_text
+    reply_preview.short_description = 'Reply Preview'
+    
+    def rule_used(self, obj):
+        return obj.rule.rule_name if obj.rule else 'Default Reply'
+    rule_used.short_description = 'Rule Used'
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('direct_message', 'rule')
+
+
+# AI Configuration Admin
+@admin.register(AIConfiguration)
+class AIConfigurationAdmin(ModelAdmin):
+    """
+    Admin interface for global AI configurations.
+    Only one configuration per capability can exist.
+    """
+    list_display = ['capability', 'text_generation_model', 'vision_model', 'is_active', 'total_usage_count', 'last_used_at']
+    list_filter = ['capability', 'is_active', 'last_used_at']
+    search_fields = ['capability', 'system_prompt', 'text_generation_model', 'vision_model']
+    readonly_fields = ['total_usage_count', 'total_tokens_used', 'last_used_at', 'created_at', 'updated_at']
+    
+    fieldsets = (
+        ('AI Capability', {
+            'fields': ('capability', 'is_active')
+        }),
+        ('System Prompt', {
+            'fields': ('system_prompt',),
+            'description': 'Custom system prompt for this AI capability'
+        }),
+        ('Model Settings', {
+            'fields': ('text_generation_model', 'vision_model'),
+            'description': 'AI models to use for different tasks'
+        }),
+        ('Usage Statistics', {
+            'fields': ('total_usage_count', 'total_tokens_used', 'last_used_at'),
+            'classes': ('collapse',),
+            'description': 'Global usage tracking for this capability'
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def has_add_permission(self, request):
+        """Only allow adding if not all capabilities have configs"""
+        existing_capabilities = set(AIConfiguration.objects.values_list('capability', flat=True))
+        all_capabilities = set([choice[0] for choice in AIConfiguration.CAPABILITY_CHOICES])
+        return len(existing_capabilities) < len(all_capabilities)
+    
+    def has_delete_permission(self, request, obj=None):
+        """Prevent deletion of AI configurations"""
+        return False
+    
+    def get_form(self, request, obj=None, **kwargs):
+        """Customize form based on capability"""
+        form = super().get_form(request, obj, **kwargs)
+        
+        if obj:  # Editing existing config
+            # Hide capability field for existing configs (read-only)
+            if 'capability' in form.base_fields:
+                form.base_fields['capability'].widget.attrs['readonly'] = True
+        else:  # Adding new config
+            # Only show capabilities that don't have configs yet
+            existing_capabilities = set(AIConfiguration.objects.values_list('capability', flat=True))
+            available_choices = [
+                (key, value) for key, value in AIConfiguration.CAPABILITY_CHOICES 
+                if key not in existing_capabilities
+            ]
+            if 'capability' in form.base_fields:
+                form.base_fields['capability'].choices = available_choices
+        
+        return form
+    
+    def save_model(self, request, obj, form, change):
+        """Override to prevent duplicate capability configs"""
+        if not change:  # New object
+            existing = AIConfiguration.objects.filter(capability=obj.capability).first()
+            if existing:
+                from django.contrib import messages
+                messages.error(
+                    request,
+                    f"AI Configuration for '{obj.get_capability_display()}' already exists. "
+                    f"Only one configuration per capability is allowed. "
+                    f"Please edit the existing configuration instead."
+                )
+                return
+        super().save_model(request, obj, form, change)
+
+
+# Backward compatibility aliases are already registered via the @admin.register decorators above
+# since CommentAutomationRule = AutomationRule and CommentAutomationSettings = AutomationSettings

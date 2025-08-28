@@ -89,6 +89,15 @@ from .apis.comments import (
     comment_replies_for_comment,
     automation_stats,
 )
+from .apis.direct_messages import (
+    DirectMessageListView,
+    DirectMessageDetailView,
+    reply_to_direct_message,
+    DMAutomationRuleListCreateView,
+    DirectMessageReplyListView,
+    dm_replies_for_message,
+    dm_automation_stats,
+)
 
 router = routers.DefaultRouter()
 router.register("users", UserViewSet, basename="api-users")
@@ -213,6 +222,21 @@ urlpatterns = [
     
     # Statistics URLs
     path("api/automation-stats/", automation_stats, name="automation_stats"),
+    
+    # Direct Message URLs
+    path("api/direct-messages/", DirectMessageListView.as_view(), name="direct_messages_list"),
+    path("api/direct-messages/<int:pk>/", DirectMessageDetailView.as_view(), name="direct_messages_detail"),
+    path("api/direct-messages/reply/", reply_to_direct_message, name="direct_messages_reply"),
+    path("api/direct-messages/<int:message_id>/replies/", dm_replies_for_message, name="direct_messages_replies"),
+    
+    # DM Automation Rules URLs
+    path("api/dm-automation-rules/", DMAutomationRuleListCreateView.as_view(), name="dm_automation_rules_list_create"),
+    
+    # DM Replies URLs
+    path("api/dm-replies/", DirectMessageReplyListView.as_view(), name="dm_replies_list"),
+    
+    # DM Statistics URLs
+    path("api/dm-automation-stats/", dm_automation_stats, name="dm_automation_stats"),
     
     path("admin/", admin.site.urls),
     

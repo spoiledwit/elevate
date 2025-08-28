@@ -57,10 +57,30 @@ const changePasswordFormSchema = z
     path: ['passwordRetype']
   })
 
+const forgotPasswordSchema = z.object({
+  username: z.string().min(3, 'Please enter your username')
+})
+
+const resetPasswordSchema = z
+  .object({
+    uid: z.string(),
+    token: z.string(),
+    password: z.string().min(8),
+    passwordRetype: z.string().min(8)
+  })
+  .refine((data) => data.password === data.passwordRetype, {
+    message: 'Passwords are not matching',
+    path: ['passwordRetype']
+  })
+
 export {
   changePasswordFormSchema,
   deleteAccountFormSchema,
   loginFormSchema,
   profileFormSchema,
-  registerFormSchema
+  registerFormSchema,
+  resetPasswordSchema,
+  forgotPasswordSchema
 }
+
+

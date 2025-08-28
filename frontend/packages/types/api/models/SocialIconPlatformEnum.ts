@@ -14,7 +14,7 @@
  * * `github` - GitHub
  * * `website` - Website
  */
-export enum PlatformEnum {
+export enum SocialIconPlatformEnum {
     INSTAGRAM = 'instagram',
     FACEBOOK = 'facebook',
     TWITTER = 'twitter',

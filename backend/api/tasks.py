@@ -403,3 +403,166 @@ def _send_comment_reply(comment, reply_text, rule=None):
     except Exception as e:
         logger.error(f"Error sending reply to comment {comment.comment_id}: {str(e)}")
         return {'success': False, 'error': str(e)}
+
+
+# =============================================================================
+# DIRECT MESSAGE AUTOMATION TASKS
+# =============================================================================
+
+@shared_task
+def process_dm_automation(dm_id, delay_seconds=0):
+    """Process direct message automation with optional delay"""
+    logger.info(f"Processing DM automation for message {dm_id}")
+    
+    if delay_seconds > 0:
+        logger.info(f"Delaying DM reply by {delay_seconds} seconds")
+        time.sleep(delay_seconds)
+    
+    try:
+        from .models import DirectMessage, AutomationRule, AutomationSettings, DirectMessageReply
+        
+        dm = DirectMessage.objects.get(id=dm_id)
+        logger.info(f"Processing DM {dm.message_id} from {dm.sender_name}")
+        
+        # Skip if DM is from the page itself (echo messages should already be filtered)
+        if dm.is_echo:
+            logger.info(f"DM {dm_id} is an echo message, skipping automation")
+            dm.status = 'ignored'
+            dm.save()
+            return {'success': True, 'message': 'Echo message, ignored'}
+        
+        # Skip if already replied
+        if dm.status == 'replied':
+            logger.info(f"DM {dm_id} already replied to")
+            return {'success': True, 'message': 'Already replied'}
+        
+        # Check if DM automation is enabled for this connection
+        try:
+            settings = AutomationSettings.objects.get(connection=dm.connection)
+            if not settings.enable_dm_automation:
+                logger.info(f"DM automation disabled for connection {dm.connection.id}")
+                dm.status = 'ignored'
+                dm.save()
+                return {'success': True, 'message': 'DM automation disabled'}
+        except AutomationSettings.DoesNotExist:
+            # No settings found, skip automation
+            logger.info(f"No automation settings found for connection {dm.connection.id}")
+            dm.status = 'ignored'
+            dm.save()
+            return {'success': True, 'message': 'No automation settings'}
+        
+        # Get matching rules for DMs
+        rules = AutomationRule.objects.filter(
+            connection=dm.connection,
+            is_active=True,
+            message_type__in=['dm', 'both']
+        ).order_by('-priority')
+        
+        logger.info(f"Found {rules.count()} active DM automation rules")
+        
+        matched_rule = None
+        reply_text = None
+        
+        # Check each rule for keyword matches
+        for rule in rules:
+            if _does_dm_match_rule(dm, rule):
+                logger.info(f"DM matches rule: {rule.rule_name}")
+                matched_rule = rule
+                reply_text = rule.reply_template
+                break
+        
+        # If no rule matched, use default reply if available
+        if not reply_text and settings.dm_default_reply:
+            logger.info("No rules matched, using default DM reply")
+            reply_text = settings.dm_default_reply
+        
+        if reply_text:
+            # Send the reply
+            result = _send_dm_reply(dm, reply_text, matched_rule)
+            
+            if result.get('success'):
+                dm.status = 'replied'
+                dm.save()
+                
+                # Update rule trigger count
+                if matched_rule:
+                    matched_rule.times_triggered += 1
+                    matched_rule.save()
+                
+                logger.info(f"Successfully processed DM automation for {dm_id}")
+                return {'success': True, 'message': 'Reply sent'}
+            else:
+                dm.status = 'error'
+                dm.save()
+                return result
+        else:
+            logger.info(f"No matching rules or default reply for DM {dm_id}")
+            dm.status = 'ignored'
+            dm.save()
+            return {'success': True, 'message': 'No matching rules'}
+            
+    except DirectMessage.DoesNotExist:
+        logger.error(f"DirectMessage {dm_id} not found")
+        return {'success': False, 'error': 'Direct message not found'}
+    except Exception as e:
+        logger.error(f"Error processing DM automation for {dm_id}: {str(e)}")
+        return {'success': False, 'error': str(e)}
+
+
+def _does_dm_match_rule(dm, rule):
+    """Check if direct message matches a rule's conditions"""
+    message = dm.message_text.lower() if dm.message_text else ""
+    keywords = rule.keywords
+    
+    if not keywords or not message:
+        return False
+    
+    matches = []
+    for keyword in keywords:
+        keyword_check = keyword.lower()
+        matches.append(keyword_check in message)
+    
+    # Return True if any keyword matches (OR logic)
+    return any(matches)
+
+
+def _send_dm_reply(dm, reply_text, rule=None):
+    """Send reply to a direct message"""
+    try:
+        # Use Meta service to send DM reply
+        meta_service = MetaService(dm.connection)
+        
+        if dm.platform == 'facebook':
+            result = meta_service.reply_to_facebook_dm(dm.conversation_id, reply_text, dm.connection)
+        elif dm.platform == 'instagram':
+            result = meta_service.reply_to_instagram_dm(dm.conversation_id, reply_text, dm.connection)
+        else:
+            return {'success': False, 'error': f'Unsupported platform: {dm.platform}'}
+        
+        if result.get('success'):
+            # Save the reply to database
+            DirectMessageReply.objects.create(
+                direct_message=dm,
+                rule=rule,
+                reply_text=reply_text,
+                platform_reply_id=result.get('reply_id', ''),
+                status='sent'
+            )
+            
+            logger.info(f"DM reply sent successfully for {dm.message_id}")
+            return {'success': True}
+        else:
+            # Save failed reply to database
+            DirectMessageReply.objects.create(
+                direct_message=dm,
+                rule=rule,
+                reply_text=reply_text,
+                status='failed',
+                error_message=result.get('error', 'Unknown error')
+            )
+            
+            return {'success': False, 'error': result.get('error', 'Unknown error')}
+    
+    except Exception as e:
+        logger.error(f"Error sending DM reply to {dm.message_id}: {str(e)}")
+        return {'success': False, 'error': str(e)}

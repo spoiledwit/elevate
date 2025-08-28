@@ -371,9 +371,30 @@ class MetaService(BaseIntegrationService):
             Dict containing subscription result
         """
         try:
+            # Check if DM automation is enabled for this connection
+            from ...models import AutomationSettings
+            dm_automation_enabled = False
+            try:
+                settings = AutomationSettings.objects.get(connection=connection)
+                dm_automation_enabled = settings.enable_dm_automation
+            except AutomationSettings.DoesNotExist:
+                pass
+            
+            # Build webhook fields based on automation settings
+            webhook_fields = ['feed', 'mention']  # Always include comment-related fields
+            
+            if dm_automation_enabled:
+                # Add DM-related fields when DM automation is enabled
+                webhook_fields.extend(['messages', 'messaging_postbacks', 'messaging_optins'])
+                self.log_info(f"DM automation enabled for connection {connection.id}, including messaging fields")
+            else:
+                self.log_info(f"DM automation disabled for connection {connection.id}, excluding messaging fields")
+            
+            subscribed_fields = ','.join(webhook_fields)
+            
             url = f"{self.graph_api_base}/{page_id}/subscribed_apps"
             data = {
-                'subscribed_fields': 'feed,mention',
+                'subscribed_fields': subscribed_fields,
                 'access_token': connection.access_token
             }
             
@@ -805,3 +826,237 @@ class MetaService(BaseIntegrationService):
             'post_url': f"https://www.instagram.com/p/{publish_result['id']}/",
             'success': True
         }
+    
+    # =============================================================================
+    # DIRECT MESSAGE METHODS
+    # =============================================================================
+    
+    def reply_to_facebook_dm(self, conversation_id: str, message: str, connection: SocialMediaConnection) -> Dict[str, Any]:
+        """
+        Reply to a Facebook Messenger conversation.
+        
+        Args:
+            conversation_id: The Facebook user ID (PSID) of the conversation
+            message: Message text to send
+            connection: Social media connection instance
+            
+        Returns:
+            Dict with success status and reply details
+        """
+        try:
+            url = f"{self.graph_api_base}/me/messages"
+            data = {
+                'recipient': {'id': conversation_id},
+                'message': {'text': message},
+                'access_token': connection.access_token
+            }
+            
+            self.log_info(f"Sending Facebook DM to conversation {conversation_id}")
+            self.log_debug(f"Message content: {message}")
+            
+            response = requests.post(url, json=data)
+            
+            if response.status_code != 200:
+                error_msg = f"Facebook Messenger API error: {response.status_code}"
+                self.log_error(f"{error_msg} - {response.text}")
+                return {
+                    'success': False,
+                    'error': error_msg,
+                    'details': response.text
+                }
+            
+            result = response.json()
+            reply_id = result.get('message_id', '')
+            
+            self.log_info(f"Facebook DM reply sent successfully: {reply_id}")
+            
+            return {
+                'success': True,
+                'reply_id': reply_id,
+                'message': message,
+                'platform': 'facebook'
+            }
+            
+        except requests.exceptions.RequestException as e:
+            error_msg = f"Network error sending Facebook DM: {str(e)}"
+            self.log_error(error_msg)
+            return {'success': False, 'error': error_msg}
+        except Exception as e:
+            error_msg = f"Unexpected error sending Facebook DM: {str(e)}"
+            self.log_error(error_msg)
+            return {'success': False, 'error': error_msg}
+    
+    def reply_to_instagram_dm(self, conversation_id: str, message: str, connection: SocialMediaConnection) -> Dict[str, Any]:
+        """
+        Reply to an Instagram DM conversation.
+        
+        Args:
+            conversation_id: The Instagram user ID (IGSID) of the conversation
+            message: Message text to send
+            connection: Social media connection instance
+            
+        Returns:
+            Dict with success status and reply details
+        """
+        try:
+            # Instagram DMs use the same Messenger API but with Instagram-specific endpoints
+            url = f"{self.graph_api_base}/me/messages"
+            data = {
+                'recipient': {'id': conversation_id},
+                'message': {'text': message},
+                'messaging_type': 'RESPONSE',  # Required for Instagram
+                'access_token': connection.access_token
+            }
+            
+            self.log_info(f"Sending Instagram DM to conversation {conversation_id}")
+            self.log_debug(f"Message content: {message}")
+            
+            response = requests.post(url, json=data)
+            
+            if response.status_code != 200:
+                error_msg = f"Instagram Messaging API error: {response.status_code}"
+                self.log_error(f"{error_msg} - {response.text}")
+                return {
+                    'success': False,
+                    'error': error_msg,
+                    'details': response.text
+                }
+            
+            result = response.json()
+            reply_id = result.get('message_id', '')
+            
+            self.log_info(f"Instagram DM reply sent successfully: {reply_id}")
+            
+            return {
+                'success': True,
+                'reply_id': reply_id,
+                'message': message,
+                'platform': 'instagram'
+            }
+            
+        except requests.exceptions.RequestException as e:
+            error_msg = f"Network error sending Instagram DM: {str(e)}"
+            self.log_error(error_msg)
+            return {'success': False, 'error': error_msg}
+        except Exception as e:
+            error_msg = f"Unexpected error sending Instagram DM: {str(e)}"
+            self.log_error(error_msg)
+            return {'success': False, 'error': error_msg}
+    
+    def get_conversation_details(self, conversation_id: str, connection: SocialMediaConnection, platform: str = 'facebook') -> Dict[str, Any]:
+        """
+        Get details about a conversation (user info, etc.).
+        
+        Args:
+            conversation_id: Conversation ID (user PSID/IGSID)
+            connection: Social media connection instance
+            platform: Platform type ('facebook' or 'instagram')
+            
+        Returns:
+            Dict with conversation details
+        """
+        try:
+            # Get basic user info
+            fields = 'first_name,last_name,profile_pic'
+            url = f"{self.graph_api_base}/{conversation_id}"
+            
+            params = {
+                'fields': fields,
+                'access_token': connection.access_token
+            }
+            
+            response = requests.get(url, params=params)
+            
+            if response.status_code != 200:
+                self.log_warning(f"Could not fetch conversation details: {response.status_code}")
+                return {
+                    'success': False,
+                    'error': f'API error: {response.status_code}',
+                    'user_id': conversation_id,
+                    'platform': platform
+                }
+            
+            result = response.json()
+            
+            return {
+                'success': True,
+                'user_id': conversation_id,
+                'first_name': result.get('first_name', ''),
+                'last_name': result.get('last_name', ''),
+                'profile_pic': result.get('profile_pic', ''),
+                'display_name': f"{result.get('first_name', '')} {result.get('last_name', '')}".strip(),
+                'platform': platform
+            }
+            
+        except requests.exceptions.RequestException as e:
+            error_msg = f"Network error fetching conversation details: {str(e)}"
+            self.log_error(error_msg)
+            return {'success': False, 'error': error_msg, 'user_id': conversation_id, 'platform': platform}
+        except Exception as e:
+            error_msg = f"Unexpected error fetching conversation details: {str(e)}"
+            self.log_error(error_msg)
+            return {'success': False, 'error': error_msg, 'user_id': conversation_id, 'platform': platform}
+    
+    def subscribe_to_messaging_webhooks(self, connection: SocialMediaConnection, platform: str = 'facebook') -> Dict[str, Any]:
+        """
+        Subscribe to messaging webhooks for DM automation.
+        
+        Args:
+            connection: Social media connection instance  
+            platform: Platform type ('facebook' or 'instagram')
+            
+        Returns:
+            Dict with subscription status
+        """
+        try:
+            if platform == 'facebook':
+                page_id = connection.facebook_page_id
+                subscribed_fields = 'messages,messaging_postbacks,messaging_optins'
+            elif platform == 'instagram':
+                page_id = connection.instagram_business_id
+                subscribed_fields = 'messages'
+            else:
+                return {'success': False, 'error': f'Unsupported platform: {platform}'}
+            
+            if not page_id:
+                return {'success': False, 'error': f'No {platform} page/account ID found'}
+            
+            url = f"{self.graph_api_base}/{page_id}/subscribed_apps"
+            data = {
+                'subscribed_fields': subscribed_fields,
+                'access_token': connection.access_token
+            }
+            
+            self.log_info(f"Subscribing {platform} page {page_id} to messaging webhooks")
+            
+            response = requests.post(url, data=data)
+            
+            if response.status_code not in [200, 201]:
+                error_msg = f"{platform.title()} messaging webhook subscription failed: {response.status_code}"
+                self.log_error(f"{error_msg} - {response.text}")
+                return {
+                    'success': False,
+                    'error': error_msg,
+                    'details': response.text
+                }
+            
+            result = response.json()
+            
+            self.log_info(f"{platform.title()} messaging webhook subscription successful")
+            
+            return {
+                'success': True,
+                'platform': platform,
+                'page_id': page_id,
+                'subscribed_fields': subscribed_fields,
+                'result': result
+            }
+            
+        except requests.exceptions.RequestException as e:
+            error_msg = f"Network error subscribing to {platform} messaging webhooks: {str(e)}"
+            self.log_error(error_msg)
+            return {'success': False, 'error': error_msg}
+        except Exception as e:
+            error_msg = f"Unexpected error subscribing to {platform} messaging webhooks: {str(e)}"
+            self.log_error(error_msg)
+            return {'success': False, 'error': error_msg}

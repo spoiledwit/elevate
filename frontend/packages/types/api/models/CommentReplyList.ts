@@ -12,5 +12,8 @@ export type CommentReplyList = {
     status?: CommentReplyListStatusEnum;
     readonly sent_at: string;
     readonly rule_name: string;
+    readonly comment_message: string;
+    readonly comment_from_user: string;
+    readonly page_name: string;
 };
 

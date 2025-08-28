@@ -5,9 +5,44 @@ from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 from rest_framework import exceptions, serializers
 
-from .models import UserProfile, UserSocialLinks, SocialIcon, CustomLink, CTABanner, SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, Plan, PlanFeature, Subscription, Folder, Media, ProfileView, LinkClick, Comment, CommentAutomationRule, CommentAutomationSettings, CommentReply
+from .models import UserProfile, UserSocialLinks, SocialIcon, CustomLink, CTABanner, SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, Plan, PlanFeature, Subscription, Folder, Media, ProfileView, LinkClick, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply
+
+# Backwards compatibility aliases
+CommentAutomationRule = AutomationRule
+CommentAutomationSettings = AutomationSettings
 
 User = get_user_model()
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    """Serializer for requesting a password reset email using username."""
+    username = serializers.CharField(required=True)
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    """Serializer for confirming a password reset using uid & token."""
+    uid = serializers.CharField(required=True)
+    token = serializers.CharField(required=True)
+    password = serializers.CharField(style={"input_type": "password"}, write_only=True)
+    password_retype = serializers.CharField(
+        style={"input_type": "password"}, write_only=True
+    )
+
+    default_error_messages = {
+        "password_mismatch": _("Passwords are not matching."),
+        "password_invalid": _("Password does not meet all requirements."),
+    }
+
+    def validate(self, attrs):
+        if attrs.get("password") != attrs.get("password_retype"):
+            raise serializers.ValidationError({"password_retype": self.default_error_messages["password_mismatch"]})
+
+        try:
+            validate_password(attrs.get("password"))
+        except ValidationError as e:
+            raise exceptions.ValidationError({"password": list(e.messages)}) from e
+
+        return super().validate(attrs)
 
 
 class UserCurrentSerializer(serializers.ModelSerializer):
@@ -1272,3 +1307,280 @@ class CommentReplyListSerializer(serializers.ModelSerializer):
             'comment_from_user',
             'page_name'
         ]
+
+
+# =============================================================================
+# DIRECT MESSAGE SERIALIZERS
+# =============================================================================
+
+class DirectMessageSerializer(serializers.ModelSerializer):
+    """
+    Detailed serializer for direct messages.
+    """
+    connection_name = serializers.CharField(source='connection.facebook_page_name', read_only=True)
+    platform_display = serializers.CharField(source='get_platform_display', read_only=True)
+    
+    class Meta:
+        model = DirectMessage
+        fields = [
+            'id',
+            'message_id',
+            'conversation_id',
+            'platform',
+            'platform_display',
+            'sender_id',
+            'sender_name',
+            'message_text',
+            'message_attachments',
+            'connection',
+            'connection_name',
+            'status',
+            'is_echo',
+            'created_time',
+            'received_at'
+        ]
+        read_only_fields = ['id', 'received_at']
+
+
+class DirectMessageListSerializer(serializers.ModelSerializer):
+    """
+    Simplified serializer for listing direct messages.
+    """
+    connection_name = serializers.CharField(source='connection.facebook_page_name', read_only=True)
+    platform_display = serializers.CharField(source='get_platform_display', read_only=True)
+    replies_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = DirectMessage
+        fields = [
+            'id',
+            'message_id',
+            'conversation_id',
+            'platform',
+            'platform_display',
+            'sender_name',
+            'message_text',
+            'connection_name',
+            'status',
+            'created_time',
+            'replies_count'
+        ]
+    
+    def get_replies_count(self, obj):
+        """Get count of replies for this direct message."""
+        return obj.replies.count()
+
+
+class DirectMessageReplySerializer(serializers.ModelSerializer):
+    """
+    Serializer for automated direct message replies.
+    """
+    message_text = serializers.CharField(source='direct_message.message_text', read_only=True)
+    sender_name = serializers.CharField(source='direct_message.sender_name', read_only=True)
+    rule_name = serializers.CharField(source='rule.rule_name', read_only=True)
+    platform = serializers.CharField(source='direct_message.platform', read_only=True)
+    
+    class Meta:
+        model = DirectMessageReply
+        fields = [
+            'id',
+            'reply_text',
+            'platform_reply_id',
+            'status',
+            'error_message',
+            'sent_at',
+            'message_text',
+            'sender_name',
+            'rule_name',
+            'platform'
+        ]
+        read_only_fields = ['id', 'sent_at']
+
+
+class DirectMessageReplyListSerializer(serializers.ModelSerializer):
+    """
+    Simplified serializer for listing direct message replies.
+    """
+    rule_name = serializers.CharField(source='rule.rule_name', read_only=True)
+    message_text = serializers.CharField(source='direct_message.message_text', read_only=True)
+    sender_name = serializers.CharField(source='direct_message.sender_name', read_only=True)
+    platform = serializers.CharField(source='direct_message.platform', read_only=True)
+    platform_display = serializers.CharField(source='direct_message.get_platform_display', read_only=True)
+    connection_name = serializers.CharField(source='direct_message.connection.facebook_page_name', read_only=True)
+    
+    class Meta:
+        model = DirectMessageReply
+        fields = [
+            'id',
+            'reply_text',
+            'status',
+            'sent_at',
+            'rule_name',
+            'message_text',
+            'sender_name',
+            'platform',
+            'platform_display',
+            'connection_name'
+        ]
+
+
+# Update existing serializer classes to use the new model names
+class AutomationRuleSerializer(serializers.ModelSerializer):
+    """
+    Serializer for automation rules (comments and DMs).
+    """
+    connection_name = serializers.CharField(source='connection.facebook_page_name', read_only=True)
+    platform_name = serializers.CharField(source='connection.platform.name', read_only=True)
+    message_type_display = serializers.CharField(source='get_message_type_display', read_only=True)
+    
+    class Meta:
+        model = AutomationRule
+        fields = [
+            'id',
+            'rule_name',
+            'message_type',
+            'message_type_display',
+            'keywords',
+            'reply_template',
+            'is_active',
+            'priority',
+            'times_triggered',
+            'created_at',
+            'connection',
+            'connection_name',
+            'platform_name'
+        ]
+        read_only_fields = ['id', 'times_triggered', 'created_at']
+
+
+class AutomationRuleCreateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for creating automation rules.
+    """
+    connection_id = serializers.IntegerField(write_only=True)
+    
+    class Meta:
+        model = AutomationRule
+        fields = [
+            'rule_name',
+            'message_type',
+            'keywords',
+            'reply_template',
+            'is_active',
+            'priority',
+            'connection_id'
+        ]
+    
+    def validate_keywords(self, value):
+        """Validate keywords field."""
+        if not isinstance(value, list):
+            raise serializers.ValidationError("Keywords must be a list.")
+        if not value:
+            raise serializers.ValidationError("At least one keyword is required.")
+        return value
+    
+    def validate_connection_id(self, value):
+        """Validate that connection belongs to user."""
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            raise serializers.ValidationError("User must be authenticated.")
+        
+        try:
+            connection = SocialMediaConnection.objects.get(
+                id=value,
+                user=request.user,
+                is_active=True
+            )
+        except SocialMediaConnection.DoesNotExist:
+            raise serializers.ValidationError("Invalid connection ID or connection not found.")
+        
+        return value
+    
+    def create(self, validated_data):
+        """Create automation rule with user from request."""
+        request = self.context.get('request')
+        connection_id = validated_data.pop('connection_id')
+        connection = SocialMediaConnection.objects.get(id=connection_id)
+        
+        return AutomationRule.objects.create(
+            user=request.user,
+            connection=connection,
+            **validated_data
+        )
+
+
+class AutomationSettingsSerializer(serializers.ModelSerializer):
+    """
+    Serializer for automation settings.
+    """
+    connection_name = serializers.CharField(source='connection.facebook_page_name', read_only=True)
+    platform_name = serializers.CharField(source='connection.platform.name', read_only=True)
+    
+    class Meta:
+        model = AutomationSettings
+        fields = [
+            'id',
+            'connection',
+            'connection_name',
+            'platform_name',
+            'is_enabled',
+            'default_reply',
+            'reply_delay_seconds',
+            'enable_dm_automation',
+            'dm_default_reply',
+            'dm_reply_delay_seconds',
+            'created_at',
+            'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+
+class AutomationSettingsCreateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for creating/updating automation settings.
+    """
+    connection_id = serializers.IntegerField(write_only=True)
+    
+    class Meta:
+        model = AutomationSettings
+        fields = [
+            'is_enabled',
+            'default_reply',
+            'reply_delay_seconds',
+            'enable_dm_automation',
+            'dm_default_reply',
+            'dm_reply_delay_seconds',
+            'connection_id'
+        ]
+    
+    def validate_connection_id(self, value):
+        """Validate that connection belongs to user."""
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            raise serializers.ValidationError("User must be authenticated.")
+        
+        try:
+            connection = SocialMediaConnection.objects.get(
+                id=value,
+                user=request.user,
+                is_active=True
+            )
+        except SocialMediaConnection.DoesNotExist:
+            raise serializers.ValidationError("Invalid connection ID or connection not found.")
+        
+        return value
+    
+    def create(self, validated_data):
+        """Create or update automation settings."""
+        request = self.context.get('request')
+        connection_id = validated_data.pop('connection_id')
+        connection = SocialMediaConnection.objects.get(id=connection_id)
+        
+        # Try to update existing settings or create new ones
+        settings, created = AutomationSettings.objects.update_or_create(
+            user=request.user,
+            connection=connection,
+            defaults=validated_data
+        )
+        
+        return settings

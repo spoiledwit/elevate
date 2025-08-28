@@ -24,7 +24,7 @@ export class AiService {
              */
             prompt?: string;
             /**
-             * Vision model to use
+             * Vision model to use (uses configured model if not specified)
              */
             model?: string;
             /**

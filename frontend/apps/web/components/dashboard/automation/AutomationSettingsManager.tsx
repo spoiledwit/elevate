@@ -54,12 +54,21 @@ export function AutomationSettingsManager({ initialSettings, facebookPages }: Au
       : 0
     const withDefaultReply = settingsList.filter((s: any) => s.default_reply?.trim()).length
 
+    // DM statistics
+    const dmEnabledCount = settingsList.filter((s: any) => s.enable_dm_automation).length
+    const dmSettingsWithDelay = settingsList.filter((s: any) => s.enable_dm_automation && s.dm_reply_delay_seconds !== undefined)
+    const avgDmDelay = dmSettingsWithDelay.length > 0
+      ? dmSettingsWithDelay.reduce((sum: number, s: any) => sum + (s.dm_reply_delay_seconds || 0), 0) / dmSettingsWithDelay.length
+      : 0
+
     return {
       total: settingsList.length,
       enabled: enabledCount,
       disabled: disabledCount,
       avgDelay: Math.round(avgDelay),
-      withDefaultReply
+      withDefaultReply,
+      dmEnabled: dmEnabledCount,
+      avgDmDelay: Math.round(avgDmDelay)
     }
   }
 

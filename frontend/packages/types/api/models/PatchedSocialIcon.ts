@@ -2,10 +2,10 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { PlatformEnum } from './PlatformEnum';
+import type { SocialIconPlatformEnum } from './SocialIconPlatformEnum';
 export type PatchedSocialIcon = {
     readonly id?: number;
-    platform?: PlatformEnum;
+    platform?: SocialIconPlatformEnum;
     url?: string;
     is_active?: boolean;
 };

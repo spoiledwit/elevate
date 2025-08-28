@@ -2,7 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { PaginatedCommentAutomationSettingsList } from '../models/PaginatedCommentAutomationSettingsList';
+import type { PaginatedAutomationSettingsList } from '../models/PaginatedAutomationSettingsList';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
 export class AutomationSettingsService {
@@ -10,12 +10,12 @@ export class AutomationSettingsService {
     /**
      * List automation settings for user's Facebook connections.
      * @param page A page number within the paginated result set.
-     * @returns PaginatedCommentAutomationSettingsList
+     * @returns PaginatedAutomationSettingsList
      * @throws ApiError
      */
     public automationSettingsList(
         page?: number,
-    ): CancelablePromise<PaginatedCommentAutomationSettingsList> {
+    ): CancelablePromise<PaginatedAutomationSettingsList> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/api/automation-settings/',

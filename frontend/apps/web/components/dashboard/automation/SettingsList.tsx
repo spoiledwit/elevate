@@ -118,12 +118,18 @@ export function SettingsList({ settings, loading, onRefresh, facebookPages }: Se
                 <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
                   <div className="flex items-center gap-1">
                     <Clock className="w-3 h-3" />
-                    {setting.reply_delay_seconds || 0}s delay
+                    Comments: {setting.reply_delay_seconds || 0}s
                   </div>
-                  {setting.default_reply && (
+                  {setting.enable_dm_automation && (
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      DMs: {setting.dm_reply_delay_seconds || 0}s
+                    </div>
+                  )}
+                  {(setting.default_reply || setting.dm_default_reply) && (
                     <div className="flex items-center gap-1">
                       <MessageSquare className="w-3 h-3" />
-                      Has default reply
+                      Default replies
                     </div>
                   )}
                 </div>
@@ -131,21 +137,42 @@ export function SettingsList({ settings, loading, onRefresh, facebookPages }: Se
             </div>
 
             {/* Status Badge */}
-            <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-              setting.is_enabled
-                ? 'bg-green-100 text-green-800'
-                : 'bg-gray-100 text-gray-800'
-            }`}>
-              {setting.is_enabled ? (
-                <>
-                  <CheckCircle className="w-3 h-3" />
-                  Enabled
-                </>
-              ) : (
-                <>
-                  <XCircle className="w-3 h-3" />
-                  Disabled
-                </>
+            <div className="flex flex-col gap-1">
+              <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                setting.is_enabled
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-gray-100 text-gray-800'
+              }`}>
+                {setting.is_enabled ? (
+                  <>
+                    <CheckCircle className="w-3 h-3" />
+                    Comments
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="w-3 h-3" />
+                    Comments
+                  </>
+                )}
+              </div>
+              {setting.enable_dm_automation !== undefined && (
+                <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                  setting.enable_dm_automation
+                    ? 'bg-blue-100 text-blue-800'
+                    : 'bg-gray-100 text-gray-800'
+                }`}>
+                  {setting.enable_dm_automation ? (
+                    <>
+                      <CheckCircle className="w-3 h-3" />
+                      DMs
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="w-3 h-3" />
+                      DMs
+                    </>
+                  )}
+                </div>
               )}
             </div>
 

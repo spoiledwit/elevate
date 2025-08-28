@@ -11,6 +11,7 @@ export type Comment = {
     comment_id: string;
     post_id: string;
     page_id: string;
+    readonly facebook_page_id: string;
     from_user_name: string;
     from_user_id?: string;
     message: string;

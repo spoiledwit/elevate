@@ -5,9 +5,11 @@ import { twMerge } from 'tailwind-merge'
 
 export function SubmitField({
   children,
-  isLoading
+  isLoading,
+  className
 }: React.PropsWithChildren<{
   isLoading?: boolean
+  className?: string
 }>) {
   return (
     <button
@@ -15,7 +17,8 @@ export function SubmitField({
       disabled={isLoading}
       className={twMerge(
         'block h-10 w-full rounded bg-purple-600 font-medium text-white',
-        isLoading && 'bg-purple-400'
+        isLoading && 'bg-purple-400',
+        className
       )}
     >
       {children}

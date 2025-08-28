@@ -61,7 +61,7 @@ export function DeleteAccountSection({
             placeholder={session.data?.user.username}
           />
 
-          <SubmitField 
+          <SubmitField
             isLoading={formState.isLoading}
             className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
           >

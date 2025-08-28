@@ -1,10 +1,10 @@
 import { ReplyAnalyticsManager } from '@/components/dashboard/automation/ReplyAnalyticsManager'
-import { 
-  getCommentRepliesListAction, 
-  getAutomationStatsAction, 
+import {
+  getCommentRepliesListAction,
+  getAutomationStatsAction,
   getDMRepliesAction,
   getDMAutomationStatsAction,
-  getFacebookPagesAction 
+  getFacebookPagesAction
 } from '@/actions/comment-automation-action'
 import type { Metadata } from 'next'
 
@@ -14,12 +14,9 @@ export const metadata: Metadata = {
 }
 
 export default async function ReplyAnalyticsPage() {
-  // Fetch data server-side
   const [
-    commentRepliesResult, 
-    commentStatsResult, 
-    dmRepliesResult,
-    dmStatsResult,
+    commentRepliesResult,
+    commentStatsResult,
     pagesResult
   ] = await Promise.all([
     getCommentRepliesListAction(),
@@ -31,17 +28,13 @@ export default async function ReplyAnalyticsPage() {
 
   const commentReplies = 'error' in commentRepliesResult ? null : commentRepliesResult
   const commentStats = 'error' in commentStatsResult ? null : commentStatsResult
-  const dmReplies = 'error' in dmRepliesResult ? null : dmRepliesResult
-  const dmStats = 'error' in dmStatsResult ? null : dmStatsResult
   const pages = 'error' in pagesResult ? null : pagesResult
 
   return (
     <div className="flex-1 bg-gray-50">
       <ReplyAnalyticsManager
-        initialCommentReplies={commentReplies}
-        initialCommentStats={commentStats}
-        initialDMReplies={dmReplies}
-        initialDMStats={dmStats}
+        initialReplies={commentReplies}
+        initialStats={commentStats}
         facebookPages={pages}
       />
     </div>

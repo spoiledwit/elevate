@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useSearchParams, useRouter } from 'next/navigation'
+import { signIn } from 'next-auth/react'
 import logo from '@/assets/logo.png'
 import { UsernameClaim } from '@/components/landing/username-claim'
 import type { registerAction } from '@/actions/register-action'
@@ -111,9 +112,17 @@ export function MultiStepRegisterForm({ onSubmitHandler }: MultiStepRegisterForm
 
       const result = await onSubmitHandler(registrationData)
 
-      if (result === true) {
+      if (result === true || (typeof result === 'object' && 'success' in result && result.success)) {
+        // Auto sign in the user
+        if (typeof result === 'object' && 'credentials' in result) {
+          await signIn('credentials', {
+            username: result.credentials.username,
+            password: result.credentials.password,
+            redirect: false
+          })
+        }
         setIsLoading(false)
-        router.push('/login')
+        router.push('/dashboard')
       } else {
         setIsLoading(false)
         setCurrentStep(2)
@@ -155,9 +164,17 @@ export function MultiStepRegisterForm({ onSubmitHandler }: MultiStepRegisterForm
 
       const result = await onSubmitHandler(registrationData)
 
-      if (result === true) {
+      if (result === true || (typeof result === 'object' && 'success' in result && result.success)) {
+        // Auto sign in the user
+        if (typeof result === 'object' && 'credentials' in result) {
+          await signIn('credentials', {
+            username: result.credentials.username,
+            password: result.credentials.password,
+            redirect: false
+          })
+        }
         setIsLoading(false)
-        router.push('/login')
+        router.push('/dashboard')
       } else {
         setIsLoading(false)
         setCurrentStep(3)
@@ -342,7 +359,7 @@ export function MultiStepRegisterForm({ onSubmitHandler }: MultiStepRegisterForm
           Elevating your brand.
         </h2>
         <p className="text-gray-600 mb-8">
-          Connecting your platforms...
+          Setting up your account...
         </p>
 
         <div className="w-full bg-gray-200 rounded-full h-2 mb-8">

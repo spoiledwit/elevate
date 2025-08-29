@@ -21,7 +21,7 @@ from .apis.storefront import (
 )
 
 from .apis.auth import (
-    UserViewSet, UserProfileViewSet
+    UserViewSet, UserProfileViewSet, CustomTokenObtainPairView
 )
 from .apis.plans import PlanViewSet
 from .apis.subscriptions import (
@@ -123,14 +123,14 @@ urlpatterns = [
     
     # Authentication URLs
     path("api/auth/register/", UserViewSet.as_view({'post': 'create'}), name="auth_register"),
-    path("api/auth/login/", TokenObtainPairView.as_view(), name="auth_login"),
+    path("api/auth/login/", CustomTokenObtainPairView.as_view(), name="auth_login"),
     path("api/auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/auth/me/", UserViewSet.as_view({'get': 'me', 'put': 'me', 'patch': 'me'}), name="auth_me"),
     path("api/auth/change-password/", UserViewSet.as_view({'post': 'change_password'}), name="auth_change_password"),
     path("api/auth/check-username/", UserViewSet.as_view({'post': 'check_username'}), name="auth_check_username"),
     
     # Legacy JWT URLs (for compatibility)
-    path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("api/token/", CustomTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     
     # Subscription URLs

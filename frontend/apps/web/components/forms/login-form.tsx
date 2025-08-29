@@ -38,7 +38,7 @@ export function LoginForm() {
       {search.has('error') && search.get('error') === 'CredentialsSignin' && (
         <div className="bg-red-100 border border-red-200 rounded-lg p-3 mb-6 flex items-center gap-2">
           <span className="text-red-600">❌</span>
-          <span className="text-red-700 text-sm">Invalid username or password. Please try again.</span>
+          <span className="text-red-700 text-sm">Invalid username/email or password. Please try again.</span>
         </div>
       )}
 
@@ -46,11 +46,11 @@ export function LoginForm() {
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Username</label>
+            <label className="block text-sm font-medium text-gray-700">Username or Email</label>
             <input
               {...register('username')}
               type="text"
-              placeholder="Email address or username"
+              placeholder="Enter your username or email"
               className="w-full px-3 h-11 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm"
             />
             {formState.errors.username && (

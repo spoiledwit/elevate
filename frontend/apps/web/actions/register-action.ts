@@ -9,7 +9,7 @@ export type RegisterFormSchema = z.infer<typeof registerFormSchema>
 
 export async function registerAction(
   data: RegisterFormSchema
-): Promise<UserCreateError | boolean> {
+): Promise<UserCreateError | { success: true; needsClientSignIn: true; credentials: { username: string; password: string } } | boolean> {
   try {
     const apiClient = await getApiClient()
 
@@ -29,7 +29,15 @@ export async function registerAction(
       website: data.website || '',
     })
 
-    return true
+    // Return credentials for client-side sign in
+    return {
+      success: true,
+      needsClientSignIn: true,
+      credentials: {
+        username: data.username,
+        password: data.password
+      }
+    }
   } catch (error) {
     if (error instanceof ApiError) {
       return error.body as UserCreateError

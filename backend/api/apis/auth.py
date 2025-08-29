@@ -24,6 +24,7 @@ from ..serializers import (
     UserProfilePublicSerializer,
     PasswordResetRequestSerializer,
     PasswordResetConfirmSerializer,
+    CustomTokenObtainPairSerializer,
 )
 
 User = get_user_model()
@@ -134,7 +135,7 @@ class UserViewSet(
 
         # Construct reset link for frontend to consume
         frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
-        reset_path = f"/auth/reset-password/?uid={uid}&token={token}"
+        reset_path = f"/reset-password/?uid={uid}&token={token}"
         reset_url = frontend_url.rstrip("/") + reset_path
 
         # Render email body (simple plaintext)
@@ -246,3 +247,11 @@ class UserProfileViewSet(viewsets.ReadOnlyModelViewSet):
             serializer = self.get_serializer(profile)
             return Response(serializer.data)
         return super().retrieve(request, *args, **kwargs)
+
+
+# --- SimpleJWT login view that uses the custom serializer ---
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer

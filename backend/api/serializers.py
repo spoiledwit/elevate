@@ -4,6 +4,8 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 from rest_framework import exceptions, serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.db.models import Q
 
 from .models import UserProfile, UserSocialLinks, SocialIcon, CustomLink, CTABanner, SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, Plan, PlanFeature, Subscription, Folder, Media, ProfileView, LinkClick, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply
 
@@ -43,6 +45,39 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
             raise exceptions.ValidationError({"password": list(e.messages)}) from e
 
         return super().validate(attrs)
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """Custom serializer to allow login with username or email"""
+    username_field = 'username'
+    
+    def validate(self, attrs):
+        username_or_email = attrs.get(self.username_field)
+        password = attrs.get('password')
+        
+        if username_or_email and password:
+            # Try to find user by username or email
+            user = User.objects.filter(
+                Q(username__iexact=username_or_email) | Q(email__iexact=username_or_email)
+            ).first()
+            
+            if user and user.check_password(password):
+                if not user.is_active:
+                    raise serializers.ValidationError(
+                        _('No active account found with the given credentials'),
+                        code='no_active_account'
+                    )
+                
+                # Set username for the parent serializer
+                attrs[self.username_field] = user.username
+                
+                # Call parent validate to get tokens
+                return super().validate(attrs)
+        
+        raise serializers.ValidationError(
+            _('No active account found with the given credentials'),
+            code='no_active_account'
+        )
 
 
 class UserCurrentSerializer(serializers.ModelSerializer):

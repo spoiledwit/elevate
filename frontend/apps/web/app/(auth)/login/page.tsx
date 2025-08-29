@@ -22,7 +22,17 @@ export default function Login() {
       <div className="flex-1 flex w-full justify-between items-center">
         {/* Left side - Form */}
         <div className='flex-1 p-8 flex items-center justify-center'>
-          <Suspense fallback={<div>Loading...</div>}>
+          <Suspense fallback={
+            <div className="w-full max-w-md animate-pulse">
+              <div className="h-8 bg-gray-200 rounded w-48 mb-2"></div>
+              <div className="h-5 bg-gray-200 rounded w-64 mb-8"></div>
+              <div className="space-y-4">
+                <div className="h-11 bg-gray-200 rounded"></div>
+                <div className="h-11 bg-gray-200 rounded"></div>
+                <div className="h-11 bg-purple-200 rounded"></div>
+              </div>
+            </div>
+          }>
             <LoginForm />
           </Suspense>
         </div>

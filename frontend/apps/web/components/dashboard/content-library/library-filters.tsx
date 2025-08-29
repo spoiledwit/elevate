@@ -32,7 +32,7 @@ export function LibraryFilters({
   totalItems,
   filteredItems
 }: LibraryFiltersProps) {
-  
+
   const clearAllFilters = () => {
     onFolderChange('all')
     onTypeChange('all')
@@ -82,7 +82,7 @@ export function LibraryFilters({
             <FolderOpen className={cn("w-4 h-4", selectedFolder === 'all' ? "text-purple-600" : "text-gray-400")} />
             <span className="flex-1 text-left">All Folders</span>
           </button>
-          
+
           {folders.map((folder) => (
             <button
               key={folder}
@@ -108,7 +108,7 @@ export function LibraryFilters({
           {fileTypes.map((type) => {
             const Icon = type.icon
             const isSelected = selectedType === type.id
-            
+
             return (
               <button
                 key={type.id}
@@ -125,26 +125,6 @@ export function LibraryFilters({
               </button>
             )
           })}
-        </div>
-      </div>
-
-      {/* Storage Info */}
-      <div className="pt-4 border-t border-gray-200">
-        <div className="bg-gray-50 rounded-lg p-3">
-          <h4 className="text-sm font-medium text-gray-900 mb-2">Storage</h4>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm text-gray-600">
-              <span>Used</span>
-              <span>2.3 GB</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div className="bg-purple-600 h-2 rounded-full" style={{ width: '45%' }}></div>
-            </div>
-            <div className="flex justify-between text-xs text-gray-500">
-              <span>2.3 GB used</span>
-              <span>5 GB total</span>
-            </div>
-          </div>
         </div>
       </div>
     </div>

@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { MoreHorizontal, Download, Share2, Trash2, Eye, Tag, Clock, FolderOpen, Check, Image, Video, FileText, Archive } from 'lucide-react'
+import { MoreHorizontal, Download, Share2, Trash2, Tag, Clock, FolderOpen, Check, Image, Video, FileText, Archive } from 'lucide-react'
 import { cn, formatDate, formatCompactNumber } from '@/lib/utils'
+import { useRouter } from 'next/navigation'
 
 interface MediaItem {
   id: string
@@ -71,6 +72,7 @@ const getFileTypeColor = (type: string) => {
 
 export function MediaGrid({ items, viewMode, selectedItems, onSelectionChange }: MediaGridProps) {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
+  const router = useRouter()
 
   const toggleSelection = (itemId: string) => {
     if (selectedItems.includes(itemId)) {
@@ -254,13 +256,32 @@ export function MediaGrid({ items, viewMode, selectedItems, onSelectionChange }:
               {isHovered && (
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                   <div className="flex items-center gap-2">
-                    <button className="p-2 bg-white/90 rounded-lg hover:bg-white transition-colors">
-                      <Eye className="w-4 h-4 text-gray-700" />
-                    </button>
-                    <button className="p-2 bg-white/90 rounded-lg hover:bg-white transition-colors">
+                    <button 
+                      className="p-2 bg-white/90 rounded-lg hover:bg-white transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        // Create a temporary anchor element to trigger download
+                        const link = document.createElement('a')
+                        link.href = item.url
+                        link.download = item.name
+                        document.body.appendChild(link)
+                        link.click()
+                        document.body.removeChild(link)
+                      }}
+                    >
                       <Download className="w-4 h-4 text-gray-700" />
                     </button>
-                    <button className="p-2 bg-white/90 rounded-lg hover:bg-white transition-colors">
+                    <button 
+                      className="p-2 bg-white/90 rounded-lg hover:bg-white transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        // Store the media URL in sessionStorage to use in post-creator
+                        sessionStorage.setItem('preloadedMediaUrl', item.url)
+                        sessionStorage.setItem('preloadedMediaName', item.name)
+                        // Navigate to post-creator page
+                        router.push('/post-creator')
+                      }}
+                    >
                       <Share2 className="w-4 h-4 text-gray-700" />
                     </button>
                   </div>

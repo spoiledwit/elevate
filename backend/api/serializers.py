@@ -238,6 +238,16 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         with transaction.atomic():
+            # Extract Google profile data before user creation
+            google_profile_image = validated_data.pop('google_profile_image', None)
+            google_display_name = validated_data.pop('google_display_name', None)
+            
+            # Extract social media links
+            social_links = {}
+            for field in ['instagram', 'facebook', 'pinterest', 'linkedin', 'tiktok', 'youtube', 'twitter', 'website']:
+                if field in validated_data:
+                    social_links[field] = validated_data.pop(field)
+            
             # Create user with username, email, and password
             user = User.objects.create_user(**validated_data)
 
@@ -247,19 +257,19 @@ class UserCreateSerializer(serializers.ModelSerializer):
             user.save(update_fields=["is_active"])
             
             # Update social links if provided
-            if hasattr(self, 'social_links') and self.social_links:
+            if social_links:
                 social_links_obj = user.social_links
-                for field, value in self.social_links.items():
+                for field, value in social_links.items():
                     if value:  # Only set non-empty values
                         setattr(social_links_obj, field, value)
                 social_links_obj.save()
             
             # Update profile with Google profile image and display name if provided
-            if hasattr(self, 'google_profile_image') and self.google_profile_image:
+            if google_profile_image:
                 profile = user.profile
-                profile.profile_image = self.google_profile_image
-                if hasattr(self, 'google_display_name') and self.google_display_name:
-                    profile.display_name = self.google_display_name
+                profile.profile_image = google_profile_image
+                if google_display_name:
+                    profile.display_name = google_display_name
                 profile.save()
 
         return user

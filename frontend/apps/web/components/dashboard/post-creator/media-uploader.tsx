@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Upload, X, Image, Film, FileText, Loader2, FolderOpen, Cloud } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -8,12 +8,41 @@ interface MediaUploaderProps {
   mediaFiles: File[]
   onMediaChange: (files: File[]) => void
   selectedPlatforms: string[]
+  isLoadingMedia?: boolean
 }
 
-export function MediaUploader({ mediaFiles, onMediaChange, selectedPlatforms }: MediaUploaderProps) {
+export function MediaUploader({ mediaFiles, onMediaChange, selectedPlatforms, isLoadingMedia = false }: MediaUploaderProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [previews, setPreviews] = useState<string[]>([])
+
+  // Generate previews whenever mediaFiles change
+  useEffect(() => {
+    const generatePreviews = async () => {
+      const newPreviews: string[] = []
+      
+      for (const file of mediaFiles) {
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader()
+          const preview = await new Promise<string>((resolve) => {
+            reader.onloadend = () => resolve(reader.result as string)
+            reader.readAsDataURL(file)
+          })
+          newPreviews.push(preview)
+        } else {
+          newPreviews.push('') // Empty string for non-image files
+        }
+      }
+      
+      setPreviews(newPreviews)
+    }
+    
+    if (mediaFiles.length > 0) {
+      generatePreviews()
+    } else {
+      setPreviews([])
+    }
+  }, [mediaFiles])
 
   // Platform-specific media limits
   const getMediaLimits = () => {
@@ -79,22 +108,14 @@ export function MediaUploader({ mediaFiles, onMediaChange, selectedPlatforms }: 
     // Add to existing files (up to limit)
     const totalFiles = [...mediaFiles, ...validFiles].slice(0, limits.maxFiles)
     onMediaChange(totalFiles)
-
-    // Generate previews
-    validFiles.forEach(file => {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setPreviews(prev => [...prev, reader.result as string])
-      }
-      reader.readAsDataURL(file)
-    })
+    
+    // Previews are now handled by useEffect
   }
 
   const removeFile = (index: number) => {
     const newFiles = mediaFiles.filter((_, i) => i !== index)
-    const newPreviews = previews.filter((_, i) => i !== index)
     onMediaChange(newFiles)
-    setPreviews(newPreviews)
+    // Previews will be updated automatically by useEffect
   }
 
   const getFileIcon = (file: File) => {
@@ -125,10 +146,15 @@ export function MediaUploader({ mediaFiles, onMediaChange, selectedPlatforms }: 
         className={cn(
           "relative border-2 border-dashed rounded-lg transition-all",
           isDragging ? "border-purple-500 bg-purple-50" : "border-gray-300",
-          mediaFiles.length > 0 ? "p-4" : "p-8"
+          mediaFiles.length > 0 || isLoadingMedia ? "p-4" : "p-8"
         )}
       >
-        {mediaFiles.length === 0 ? (
+        {isLoadingMedia ? (
+          <div className="text-center py-8">
+            <Loader2 className="w-12 h-12 text-purple-600 animate-spin mx-auto mb-4" />
+            <p className="text-gray-600">Loading image from content library...</p>
+          </div>
+        ) : mediaFiles.length === 0 ? (
           <div className="text-center">
             <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-600 mb-2">

@@ -453,7 +453,7 @@ function CreateFolderModal({ onClose, onCreateFolder }: { onClose: () => void, o
               value={folderName}
               onChange={(e) => setFolderName(e.target.value)}
               placeholder="Folder name"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent mb-4"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all mb-4"
               autoFocus
             />
             <div className="flex items-center gap-3">

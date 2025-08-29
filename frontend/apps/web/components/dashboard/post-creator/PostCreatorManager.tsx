@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { PostComposer } from '@/components/dashboard/post-creator/post-composer'
 import { MediaUploader } from '@/components/dashboard/post-creator/media-uploader'
 import { PlatformSelector } from '@/components/dashboard/post-creator/platform-selector'
@@ -48,6 +48,39 @@ export function PostCreatorManager({ initialPlatforms }: PostCreatorManagerProps
   const [isScheduled, setIsScheduled] = useState(false)
   const [platforms, setPlatforms] = useState<Platform[]>(initialPlatforms)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isLoadingMedia, setIsLoadingMedia] = useState(false)
+
+  // Check for preloaded media from content library
+  useEffect(() => {
+    const mediaUrl = sessionStorage.getItem('preloadedMediaUrl')
+    const mediaName = sessionStorage.getItem('preloadedMediaName')
+    
+    if (mediaUrl && mediaName) {
+      // Clear the sessionStorage to prevent reloading on refresh
+      sessionStorage.removeItem('preloadedMediaUrl')
+      sessionStorage.removeItem('preloadedMediaName')
+      
+      // Show loading state
+      setIsLoadingMedia(true)
+      
+      // Fetch the image and convert it to a File object
+      fetch(mediaUrl)
+        .then(response => response.blob())
+        .then(blob => {
+          // Create a File object from the blob
+          const file = new File([blob], mediaName, { type: blob.type })
+          // Add the file to the media files
+          setMediaFiles([file])
+          setIsLoadingMedia(false)
+          toast.success('Media loaded from content library')
+        })
+        .catch(error => {
+          console.error('Failed to load media from content library:', error)
+          toast.error('Failed to load media from content library')
+          setIsLoadingMedia(false)
+        })
+    }
+  }, [])
 
   // Helper function to prepare post data
   const preparePostData = (): CreatePostData => {
@@ -269,6 +302,7 @@ export function PostCreatorManager({ initialPlatforms }: PostCreatorManagerProps
                 selectedPlatforms={platforms.filter(p =>
                   p.connections.some(c => selectedConnections.includes(c.id))
                 ).map(p => p.name)}
+                isLoadingMedia={isLoadingMedia}
               />
 
               {/* Scheduling */}

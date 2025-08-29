@@ -26,6 +26,7 @@ export { CommentReplyListStatusEnum } from './models/CommentReplyListStatusEnum'
 export type { CTABanner } from './models/CTABanner';
 export type { CustomLink } from './models/CustomLink';
 export type { CustomLinkCreateUpdate } from './models/CustomLinkCreateUpdate';
+export type { CustomTokenObtainPair } from './models/CustomTokenObtainPair';
 export type { DirectMessage } from './models/DirectMessage';
 export type { DirectMessageList } from './models/DirectMessageList';
 export type { DirectMessageReplyList } from './models/DirectMessageReplyList';
@@ -91,7 +92,6 @@ export { StatusC26Enum } from './models/StatusC26Enum';
 export { StatusD18Enum } from './models/StatusD18Enum';
 export type { Subscription } from './models/Subscription';
 export { SubscriptionStatusEnum } from './models/SubscriptionStatusEnum';
-export type { TokenObtainPair } from './models/TokenObtainPair';
 export type { TokenRefresh } from './models/TokenRefresh';
 export type { UserChangePassword } from './models/UserChangePassword';
 export type { UserChangePasswordError } from './models/UserChangePasswordError';

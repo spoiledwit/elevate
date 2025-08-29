@@ -42,5 +42,13 @@ export type UserCreate = {
      * Personal website URL
      */
     website?: string;
+    /**
+     * Google profile image URL
+     */
+    google_profile_image?: string;
+    /**
+     * Google display name
+     */
+    google_display_name?: string;
 };
 

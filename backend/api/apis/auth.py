@@ -214,6 +214,37 @@ class UserViewSet(
             "available": not is_taken
         }, status=status.HTTP_200_OK)
 
+    @action(["get"], url_path="verify-user", detail=False)
+    def verify_user(self, request, *args, **kwargs):
+        """
+        Verify if the authenticated user exists in the database.
+        Used by middleware to check OAuth users who might not have completed registration.
+        """
+        if not request.user.is_authenticated:
+            return Response(
+                {"error": "Authentication required"}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        try:
+            # Try to get the user from database
+            user = User.objects.get(id=request.user.id)
+            return Response({
+                "exists": True,
+                "user": {
+                    "id": user.id,
+                    "username": user.username,
+                    "email": user.email,
+                }
+            }, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            # User session exists but user doesn't exist in database
+            # This can happen with OAuth users who haven't completed registration
+            return Response(
+                {"error": "User not found in database"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+
 
 class UserProfileViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = UserProfile.objects.filter(is_active=True)

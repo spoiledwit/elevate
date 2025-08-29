@@ -8,12 +8,19 @@ import type { z } from 'zod'
 export type RegisterFormSchema = z.infer<typeof registerFormSchema>
 
 export async function registerAction(
-  data: RegisterFormSchema
+  data: RegisterFormSchema,
+  googleUserInfo?: {
+    email: string;
+    name: string;
+    given_name: string;
+    family_name: string;
+    picture: string;
+  }
 ): Promise<UserCreateError | { success: true; needsClientSignIn: true; credentials: { username: string; password: string } } | boolean> {
   try {
     const apiClient = await getApiClient()
 
-    await apiClient.users.usersCreate({
+    const user = await apiClient.users.usersCreate({
       username: data.username,
       email: data.email,
       password: data.password,
@@ -27,6 +34,9 @@ export async function registerAction(
       youtube: data.youtube || '',
       twitter: data.twitter || '',
       website: data.website || '',
+      // Include Google profile data if provided (OAuth users)
+      google_profile_image: googleUserInfo?.picture || '',
+      google_display_name: googleUserInfo?.name || `${googleUserInfo?.given_name || ''} ${googleUserInfo?.family_name || ''}`.trim(),
     })
 
     // Return credentials for client-side sign in

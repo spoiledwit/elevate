@@ -132,6 +132,7 @@ urlpatterns = [
     path("api/auth/me/", UserViewSet.as_view({'get': 'me', 'put': 'me', 'patch': 'me'}), name="auth_me"),
     path("api/auth/change-password/", UserViewSet.as_view({'post': 'change_password'}), name="auth_change_password"),
     path("api/auth/check-username/", UserViewSet.as_view({'post': 'check_username'}), name="auth_check_username"),
+    path("api/auth/verify-user/", UserViewSet.as_view({'get': 'verify_user'}), name="auth_verify_user"),
     
     # Google OAuth URLs
     path("api/auth/google/", google_oauth_login, name="google_oauth_login"),

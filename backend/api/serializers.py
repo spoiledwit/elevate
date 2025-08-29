@@ -174,6 +174,10 @@ class UserCreateSerializer(serializers.ModelSerializer):
     youtube = serializers.URLField(required=False, allow_blank=True, help_text="YouTube channel URL")
     twitter = serializers.URLField(required=False, allow_blank=True, help_text="Twitter/X profile URL")
     website = serializers.URLField(required=False, allow_blank=True, help_text="Personal website URL")
+    
+    # Optional Google profile image for OAuth users
+    google_profile_image = serializers.URLField(required=False, allow_blank=True, help_text="Google profile image URL")
+    google_display_name = serializers.CharField(required=False, allow_blank=True, help_text="Google display name")
 
     default_error_messages = {
         "password_mismatch": _("Passwords are not matching."),
@@ -187,7 +191,8 @@ class UserCreateSerializer(serializers.ModelSerializer):
         fields = [
             "username", "email", "password", "password_retype",
             "instagram", "facebook", "pinterest", "linkedin", 
-            "tiktok", "youtube", "twitter", "website"
+            "tiktok", "youtube", "twitter", "website",
+            "google_profile_image", "google_display_name"
         ]
 
     def validate_username(self, value):
@@ -205,15 +210,21 @@ class UserCreateSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         password_retype = attrs.pop("password_retype")
         
-        # Extract social media links (they're not part of User model)
+        # Extract social media links and Google profile fields (they're not part of User model)
         social_links = {}
         social_fields = ['instagram', 'facebook', 'pinterest', 'linkedin', 'tiktok', 'youtube', 'twitter', 'website']
         for field in social_fields:
             if field in attrs:
                 social_links[field] = attrs.pop(field, '')
         
-        # Store social links for later use in create method
+        # Extract Google profile fields
+        google_profile_image = attrs.pop('google_profile_image', '')
+        google_display_name = attrs.pop('google_display_name', '')
+        
+        # Store for later use in create method
         self.social_links = social_links
+        self.google_profile_image = google_profile_image
+        self.google_display_name = google_display_name
 
         try:
             validate_password(attrs.get("password"))
@@ -242,6 +253,14 @@ class UserCreateSerializer(serializers.ModelSerializer):
                     if value:  # Only set non-empty values
                         setattr(social_links_obj, field, value)
                 social_links_obj.save()
+            
+            # Update profile with Google profile image and display name if provided
+            if hasattr(self, 'google_profile_image') and self.google_profile_image:
+                profile = user.profile
+                profile.profile_image = self.google_profile_image
+                if hasattr(self, 'google_display_name') and self.google_display_name:
+                    profile.display_name = self.google_display_name
+                profile.save()
 
         return user
 

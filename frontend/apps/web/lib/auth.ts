@@ -37,15 +37,28 @@ const authOptions: AuthOptions = {
             })
           })
 
-          if (response.ok) {
-            const data = await response.json()
-            // Store JWT tokens in user object to pass to jwt callback
+          const data = await response.json()
+
+          if (response.status === 202 && data.requires_registration) {
+            // New user - allow sign-in but mark as needing registration
+            user.access_token = 'REQUIRES_REGISTRATION'
+            user.refresh_token = 'REQUIRES_REGISTRATION'
+            //@ts-ignore
+            user.backend_user = { 
+              email: user.email || '', 
+              requires_registration: true,
+              // Store Google user info for later use during registration
+              google_user_info: data.user_info
+            }
+            return true
+          } else if (response.ok) {
+            // Existing user - proceed with login
             user.access_token = data.access
             user.refresh_token = data.refresh
             user.backend_user = data.user
             return true
           } else {
-            console.error('Google OAuth backend verification failed')
+            console.error('Google OAuth backend verification failed:', response.status, data)
             return false
           }
         } catch (error) {
@@ -56,7 +69,19 @@ const authOptions: AuthOptions = {
       return true
     },
     session: async ({ session, token }) => {
-      if (token.access && token.refresh) {
+      if (token.access === 'REQUIRES_REGISTRATION') {
+        // Special case for OAuth users needing registration
+        session.user = {
+          email: token.backend_user?.email as string,
+        } as any
+        // Pass Google user info to session for use during registration
+        if (token.backend_user?.google_user_info) {
+          (session as any).googleUserInfo = token.backend_user.google_user_info
+        }
+        return session
+      }
+
+      if (token.access && token.refresh && token.access !== 'REQUIRES_REGISTRATION') {
         const access = decodeToken(token.access)
         const refresh = decodeToken(token.refresh)
 
@@ -80,6 +105,15 @@ const authOptions: AuthOptions = {
     jwt: async ({ token, user, account }) => {
       // Handle Google OAuth
       if (account?.provider === 'google' && user?.access_token) {
+        if (user.access_token === 'REQUIRES_REGISTRATION') {
+          // Special case for OAuth users needing registration
+          token.access = 'REQUIRES_REGISTRATION'
+          token.refresh = 'REQUIRES_REGISTRATION'
+          token.backend_user = user.backend_user
+          token.username = user.backend_user?.email
+          return token
+        }
+        
         token.access = user.access_token
         token.refresh = user.refresh_token
         token.backend_user = user.backend_user
@@ -93,7 +127,7 @@ const authOptions: AuthOptions = {
       }
 
       // Refresh token if needed
-      if (token.access && Date.now() / 1000 > decodeToken(token.access).exp) {
+      if (token.access && token.access !== 'REQUIRES_REGISTRATION' && Date.now() / 1000 > decodeToken(token.access).exp) {
         try {
           const apiClient = await getApiClient()
           const res = await apiClient.token.tokenRefreshCreate({

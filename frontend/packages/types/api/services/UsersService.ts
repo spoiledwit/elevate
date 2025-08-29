@@ -147,4 +147,16 @@ export class UsersService {
             mediaType: 'application/json',
         });
     }
+    /**
+     * Verify if the authenticated user exists in the database.
+     * Used by middleware to check OAuth users who might not have completed registration.
+     * @returns UserCurrent
+     * @throws ApiError
+     */
+    public usersVerifyUserRetrieve(): CancelablePromise<UserCurrent> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/api/users/verify-user/',
+        });
+    }
 }

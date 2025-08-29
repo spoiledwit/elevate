@@ -46,11 +46,17 @@
   transition: all 0.2s ease;
   border: none;
   outline: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 .driverjs-theme-elevate .driver-popover-next-btn {
   background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
   color: white;
+  text-shadow: none;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 .driverjs-theme-elevate .driver-popover-next-btn:hover {

@@ -5,9 +5,10 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { signIn } from 'next-auth/react'
+import { signIn, useSession } from 'next-auth/react'
 import logo from '@/assets/logo.png'
 import { UsernameClaim } from '@/components/landing/username-claim'
+import { GoogleSignInButton } from '@/components/forms/google-signin-button'
 import type { registerAction } from '@/actions/register-action'
 
 // Schema for multi-step form
@@ -40,7 +41,9 @@ interface MultiStepRegisterFormProps {
 export function MultiStepRegisterForm({ onSubmitHandler }: MultiStepRegisterFormProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { data: session } = useSession()
   const usernameFromUrl = searchParams.get('username') || ''
+  const isOAuthUser = searchParams.get('oauth') === 'true'
 
   const [currentStep, setCurrentStep] = useState(1)
   const [showPassword, setShowPassword] = useState(false)
@@ -82,9 +85,80 @@ export function MultiStepRegisterForm({ onSubmitHandler }: MultiStepRegisterForm
     defaultValues: formData.socialProfiles
   })
 
-  const handleStepOne = (username: string) => {
+  const handleStepOne = async (username: string) => {
     setFormData(prev => ({ ...prev, username }))
-    setCurrentStep(2)
+    
+    if (isOAuthUser) {
+      // For OAuth users, skip email/password step and directly register
+      setCurrentStep(3)
+      setIsLoading(true)
+
+      try {
+        // For OAuth users, we'll use their Google email and generate a secure password
+        if (!session?.user?.email) {
+          console.error('No email found in session for OAuth user')
+          setIsLoading(false)
+          setCurrentStep(1)
+          return
+        }
+
+        // Generate a secure random password for OAuth users
+        const securePassword = crypto.randomUUID() + Math.random().toString(36).substring(2, 15)
+
+        const registrationData = {
+          username: username,
+          email: session.user.email,
+          password: securePassword,
+          passwordRetype: securePassword,
+          instagram: '',
+          facebook: '',
+          pinterest: '',
+          linkedin: '',
+          tiktok: '',
+          youtube: '',
+          twitter: '',
+          website: '',
+        }
+
+        // For OAuth users, pass Google user info if available
+        const googleUserInfo = session?.user?.email && isOAuthUser 
+          ? (session as any)?.googleUserInfo 
+          : undefined
+
+        const result = await onSubmitHandler(registrationData, googleUserInfo)
+
+        if (result === true || (typeof result === 'object' && 'success' in result && result.success)) {
+          // For OAuth users, we need to sign in with the new credentials after registration
+          if (typeof result === 'object' && 'credentials' in result) {
+            const signInResult = await signIn('credentials', {
+              username: result.credentials.username,
+              password: result.credentials.password,
+              redirect: false
+            })
+            
+            if (signInResult?.ok) {
+              setIsLoading(false)
+              router.push('/dashboard')
+            } else {
+              setIsLoading(false)
+              setCurrentStep(1)
+            }
+          } else {
+            setIsLoading(false)
+            router.push('/dashboard')
+          }
+        } else {
+          setIsLoading(false)
+          setCurrentStep(1)
+        }
+      } catch (error) {
+        setIsLoading(false)
+        console.error('OAuth registration error:', error)
+        setCurrentStep(1)
+      }
+    } else {
+      setCurrentStep(2)
+    }
   }
 
   const handleStepTwo = async (data: StepTwoData) => {
@@ -198,35 +272,49 @@ export function MultiStepRegisterForm({ onSubmitHandler }: MultiStepRegisterForm
     stepThreeForm.reset(formData.socialProfiles)
   }, [currentStep, formData, stepOneForm, stepTwoForm, stepThreeForm])
 
-  const renderStepIndicator = () => (
-    <div className="flex items-center justify-center mb-6 sm:mb-8">
-      <div className="flex items-center gap-2 sm:gap-4">
-        {[1, 2].map((step) => (
-          <div key={step} className="flex items-center">
-            <button
-              onClick={() => goToStep(step)}
-              disabled={step >= currentStep}
-              className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-8 rounded-full font-semibold text-sm ${currentStep >= step
-                ? 'bg-purple-500 text-white'
-                : 'bg-gray-200 text-gray-500'
-                } ${step < currentStep
-                  ? 'hover:bg-purple-600 cursor-pointer'
-                  : step >= currentStep
-                    ? 'cursor-not-allowed'
-                    : ''
-                }`}
-            >
-              {step}
-            </button>
-            {step < 2 && (
-              <div className={`w-16 sm:w-24 h-1 rounded-full ${currentStep > step ? 'bg-purple-500' : 'bg-gray-200'
-                }`}></div>
-            )}
+  const renderStepIndicator = () => {
+    if (isOAuthUser) {
+      // OAuth users only have 1 step (username selection)
+      return (
+        <div className="flex items-center justify-center mb-6 sm:mb-8">
+          <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-8 rounded-full font-semibold text-sm bg-purple-500 text-white">
+            1
           </div>
-        ))}
+        </div>
+      )
+    }
+
+    // Regular users have 2 steps
+    return (
+      <div className="flex items-center justify-center mb-6 sm:mb-8">
+        <div className="flex items-center gap-2 sm:gap-4">
+          {[1, 2].map((step) => (
+            <div key={step} className="flex items-center">
+              <button
+                onClick={() => goToStep(step)}
+                disabled={step >= currentStep}
+                className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-8 rounded-full font-semibold text-sm ${currentStep >= step
+                  ? 'bg-purple-500 text-white'
+                  : 'bg-gray-200 text-gray-500'
+                  } ${step < currentStep
+                    ? 'hover:bg-purple-600 cursor-pointer'
+                    : step >= currentStep
+                      ? 'cursor-not-allowed'
+                      : ''
+                  }`}
+              >
+                {step}
+              </button>
+              {step < 2 && (
+                <div className={`w-16 sm:w-24 h-1 rounded-full ${currentStep > step ? 'bg-purple-500' : 'bg-gray-200'
+                  }`}></div>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   // Step 1: Username Claim
   if (currentStep === 1) {
@@ -235,13 +323,19 @@ export function MultiStepRegisterForm({ onSubmitHandler }: MultiStepRegisterForm
         {renderStepIndicator()}
 
         <h1 className="text-2xl sm:text-3xl font-bold text-black mb-2 text-center">
-          Create Your Account
+          {isOAuthUser ? 'Choose Your Username' : 'Create Your Account'}
         </h1>
         <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8 text-center">
-          Already have an account?{' '}
-          <a href="/login" className="text-purple-500 font-semibold hover:underline">
-            Login
-          </a>
+          {isOAuthUser ? (
+            'Complete your registration by choosing a unique username.'
+          ) : (
+            <>
+              Already have an account?{' '}
+              <a href="/login" className="text-purple-500 font-semibold hover:underline">
+                Login
+              </a>
+            </>
+          )}
         </p>
         <div className="space-y-6">
           <UsernameClaim
@@ -252,6 +346,24 @@ export function MultiStepRegisterForm({ onSubmitHandler }: MultiStepRegisterForm
             variant="small"
           />
         </div>
+
+        {/* Show Google sign-up option only for regular users, not OAuth users */}
+        {!isOAuthUser && (
+          <>
+            {/* Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-white px-2 text-gray-500">Or continue with</span>
+              </div>
+            </div>
+
+            {/* Google Sign-Up Button */}
+            <GoogleSignInButton callbackUrl="/dashboard" />
+          </>
+        )}
 
         <p className="text-xs text-gray-500 mt-4 sm:mt-6 text-center leading-relaxed">
           By signing up, you agree to our{' '}

@@ -57,29 +57,23 @@ def google_oauth_login(request):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Get or create user
+        # Check if user exists - DON'T create automatically
         try:
             user = User.objects.get(email=email)
             created = False
         except User.DoesNotExist:
-            # Create new user
-            username = email.split('@')[0]
-            
-            # Ensure username is unique
-            original_username = username
-            counter = 1
-            while User.objects.filter(username=username).exists():
-                username = f"{original_username}{counter}"
-                counter += 1
-            
-            user = User.objects.create_user(
-                username=username,
-                email=email,
-                first_name=given_name,
-                last_name=family_name,
-                is_active=True
-            )
-            created = True
+            # New user - redirect to registration page with user info
+            return Response({
+                'requires_registration': True,
+                'message': 'Please complete registration first',
+                'user_info': {
+                    'email': email,
+                    'name': name,
+                    'given_name': given_name,
+                    'family_name': family_name,
+                    'picture': picture
+                }
+            }, status=status.HTTP_202_ACCEPTED)
 
         # Update user profile if it exists
         if hasattr(user, 'profile'):
@@ -87,9 +81,9 @@ def google_oauth_login(request):
             if not profile.display_name:
                 profile.display_name = name or f"{given_name} {family_name}".strip()
             if picture and not profile.profile_image:
-                # You could save the Google profile picture URL here
-                # For now, we'll just log it
-                logger.info(f"Google profile picture available for user {user.id}: {picture}")
+                # Set the Google profile picture URL
+                profile.profile_image = picture
+                logger.info(f"Set Google profile picture for user {user.id}: {picture}")
             profile.save()
 
         # Generate JWT tokens

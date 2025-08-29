@@ -2,8 +2,8 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { CustomTokenObtainPair } from '../models/CustomTokenObtainPair';
 import type { PatchedUserCurrent } from '../models/PatchedUserCurrent';
-import type { TokenObtainPair } from '../models/TokenObtainPair';
 import type { TokenRefresh } from '../models/TokenRefresh';
 import type { UserChangePassword } from '../models/UserChangePassword';
 import type { UserCreate } from '../models/UserCreate';
@@ -48,15 +48,37 @@ export class AuthService {
         });
     }
     /**
+     * Verify Google OAuth token and return JWT tokens
+     * @returns any No response body
+     * @throws ApiError
+     */
+    public authGoogleCreate(): CancelablePromise<any> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/api/auth/google/',
+        });
+    }
+    /**
+     * Register a new user with Google OAuth (same as login for Google OAuth)
+     * @returns any No response body
+     * @throws ApiError
+     */
+    public authGoogleRegisterCreate(): CancelablePromise<any> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/api/auth/google/register/',
+        });
+    }
+    /**
      * Takes a set of user credentials and returns an access and refresh JSON web
      * token pair to prove the authentication of those credentials.
      * @param requestBody
-     * @returns TokenObtainPair
+     * @returns CustomTokenObtainPair
      * @throws ApiError
      */
     public authLoginCreate(
-        requestBody: TokenObtainPair,
-    ): CancelablePromise<TokenObtainPair> {
+        requestBody: CustomTokenObtainPair,
+    ): CancelablePromise<CustomTokenObtainPair> {
         return this.httpRequest.request({
             method: 'POST',
             url: '/api/auth/login/',
@@ -134,6 +156,18 @@ export class AuthService {
             url: '/api/auth/token/refresh/',
             body: requestBody,
             mediaType: 'application/json',
+        });
+    }
+    /**
+     * Verify if the authenticated user exists in the database.
+     * Used by middleware to check OAuth users who might not have completed registration.
+     * @returns UserCurrent
+     * @throws ApiError
+     */
+    public authVerifyUserRetrieve(): CancelablePromise<UserCurrent> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/api/auth/verify-user/',
         });
     }
 }

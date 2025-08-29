@@ -2,7 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { TokenObtainPair } from '../models/TokenObtainPair';
+import type { CustomTokenObtainPair } from '../models/CustomTokenObtainPair';
 import type { TokenRefresh } from '../models/TokenRefresh';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -12,12 +12,12 @@ export class TokenService {
      * Takes a set of user credentials and returns an access and refresh JSON web
      * token pair to prove the authentication of those credentials.
      * @param requestBody
-     * @returns TokenObtainPair
+     * @returns CustomTokenObtainPair
      * @throws ApiError
      */
     public tokenCreate(
-        requestBody: TokenObtainPair,
-    ): CancelablePromise<TokenObtainPair> {
+        requestBody: CustomTokenObtainPair,
+    ): CancelablePromise<CustomTokenObtainPair> {
         return this.httpRequest.request({
             method: 'POST',
             url: '/api/token/',

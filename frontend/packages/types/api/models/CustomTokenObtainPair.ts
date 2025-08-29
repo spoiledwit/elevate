@@ -2,10 +2,11 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type TokenObtainPair = {
+/**
+ * Custom serializer to allow login with username or email
+ */
+export type CustomTokenObtainPair = {
     username: string;
     password: string;
-    readonly access: string;
-    readonly refresh: string;
 };
 

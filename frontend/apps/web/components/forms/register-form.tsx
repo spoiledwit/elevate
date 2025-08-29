@@ -36,7 +36,11 @@ export function RegisterForm({
 
           if (res === true) {
             signIn()
-          } else if (typeof res !== 'boolean') {
+          } else if (typeof res === 'object' && res !== null && 'success' in res && res.success) {
+            // Handle success case with client sign-in
+            signIn()
+          } else if (typeof res === 'object' && res !== null && !('success' in res)) {
+            // Handle API error response
             fieldApiError('username', 'username', res, setError)
             fieldApiError('password', 'password', res, setError)
             fieldApiError('password_retype', 'passwordRetype', res, setError)

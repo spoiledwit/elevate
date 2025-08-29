@@ -44,12 +44,19 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",
     "cloudinary_storage",
     "cloudinary",
     "rest_framework",
     "rest_framework_simplejwt",
+    "rest_framework.authtoken",
     "drf_spectacular",
     "django_celery_beat",
+    # Django Allauth
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
     "api",
 ]
 
@@ -65,6 +72,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ######################################################################
@@ -332,6 +340,50 @@ LINKEDIN_REDIRECT_URI = environ.get("LINKEDIN_REDIRECT_URI", f"{environ.get('BAC
 # OPENAI
 ######################################################################
 OPENAI_API_KEY = environ.get("OPENAI_API_KEY", "")
+
+######################################################################
+# Django Allauth & Google OAuth Configuration
+######################################################################
+SITE_ID = 1
+
+# Django Allauth Settings
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = 'optional'
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+
+# Social Account Settings
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'
+SOCIALACCOUNT_LOGIN_ON_GET = True
+
+# Google OAuth Configuration
+GOOGLE_OAUTH2_CLIENT_ID = environ.get("GOOGLE_OAUTH2_CLIENT_ID", "")
+GOOGLE_OAUTH2_CLIENT_SECRET = environ.get("GOOGLE_OAUTH2_CLIENT_SECRET", "")
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        },
+        'OAUTH_PKCE_ENABLED': True,
+        'VERIFIED_EMAIL': True,
+        'APP': {
+            'client_id': GOOGLE_OAUTH2_CLIENT_ID,
+            'secret': GOOGLE_OAUTH2_CLIENT_SECRET,
+            'key': ''
+        }
+    }
+}
+
+# JWT Authentication for custom Google OAuth endpoint
+# We're using our custom implementation instead of dj-rest-auth
 
 ######################################################################
 # Unfold

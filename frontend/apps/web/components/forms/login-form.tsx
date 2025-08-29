@@ -7,6 +7,7 @@ import { useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import type { z } from 'zod'
+import { GoogleSignInButton } from './google-signin-button'
 
 type LoginFormSchema = z.infer<typeof loginFormSchema>
 
@@ -101,6 +102,19 @@ export function LoginForm() {
           Sign in
         </button>
       </form>
+
+      {/* Divider */}
+      <div className="relative my-6">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-300" />
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="bg-white px-2 text-gray-500">Or continue with</span>
+        </div>
+      </div>
+
+      {/* Google Sign-In Button */}
+      <GoogleSignInButton callbackUrl="/dashboard" />
 
       <p className="text-sm text-gray-600 text-center mt-6">
         Don't have an account?{' '}

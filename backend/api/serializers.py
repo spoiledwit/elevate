@@ -68,8 +68,10 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                         code='no_active_account'
                     )
                 
-                # Set username for the parent serializer
+                # Set the actual username (not email) for the parent serializer
                 attrs[self.username_field] = user.username
+                # Explicitly set the user object to ensure the token uses the correct user data
+                self.user = user
                 
                 # Call parent validate to get tokens
                 return super().validate(attrs)
@@ -78,6 +80,14 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             _('No active account found with the given credentials'),
             code='no_active_account'
         )
+    
+    @classmethod
+    def get_token(cls, user):
+        """Override to ensure token uses actual username from database"""
+        token = super().get_token(user)
+        # Ensure the username in the token is the actual database username, not email
+        token['username'] = user.username
+        return token
 
 
 class UserCurrentSerializer(serializers.ModelSerializer):

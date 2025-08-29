@@ -98,6 +98,10 @@ from .apis.direct_messages import (
     dm_replies_for_message,
     dm_automation_stats,
 )
+from .apis.google_oauth import (
+    google_oauth_login,
+    google_oauth_register,
+)
 
 router = routers.DefaultRouter()
 router.register("users", UserViewSet, basename="api-users")
@@ -128,6 +132,10 @@ urlpatterns = [
     path("api/auth/me/", UserViewSet.as_view({'get': 'me', 'put': 'me', 'patch': 'me'}), name="auth_me"),
     path("api/auth/change-password/", UserViewSet.as_view({'post': 'change_password'}), name="auth_change_password"),
     path("api/auth/check-username/", UserViewSet.as_view({'post': 'check_username'}), name="auth_check_username"),
+    
+    # Google OAuth URLs
+    path("api/auth/google/", google_oauth_login, name="google_oauth_login"),
+    path("api/auth/google/register/", google_oauth_register, name="google_oauth_register"),
     
     # Legacy JWT URLs (for compatibility)
     path("api/token/", CustomTokenObtainPairView.as_view(), name="token_obtain_pair"),

@@ -44,7 +44,9 @@ dependencies = [
     { name = "celery" },
     { name = "cloudinary" },
     { name = "cryptography" },
+    { name = "dj-rest-auth" },
     { name = "django" },
+    { name = "django-allauth" },
     { name = "django-celery-beat" },
     { name = "django-cloudinary-storage" },
     { name = "django-unfold" },
@@ -52,6 +54,7 @@ dependencies = [
     { name = "djangorestframework-simplejwt" },
     { name = "drf-spectacular" },
     { name = "google-api-python-client" },
+    { name = "google-auth" },
     { name = "google-auth-httplib2" },
     { name = "google-auth-oauthlib" },
     { name = "instagram-private-api" },
@@ -80,7 +83,9 @@ requires-dist = [
     { name = "celery", specifier = ">=5.3.0" },
     { name = "cloudinary", specifier = ">=1.44.1" },
     { name = "cryptography", specifier = ">=41.0.0" },
+    { name = "dj-rest-auth", specifier = ">=6.0.0" },
     { name = "django", specifier = ">=5.1" },
+    { name = "django-allauth", specifier = ">=0.63.0" },
     { name = "django-celery-beat", specifier = ">=2.5.0" },
     { name = "django-cloudinary-storage", specifier = ">=0.3.0" },
     { name = "django-unfold", specifier = ">=0.43.0" },
@@ -88,6 +93,7 @@ requires-dist = [
     { name = "djangorestframework-simplejwt", specifier = ">=5.3" },
     { name = "drf-spectacular", specifier = ">=0.28" },
     { name = "google-api-python-client", specifier = ">=2.108.0" },
+    { name = "google-auth", specifier = ">=2.34.0" },
     { name = "google-auth-httplib2", specifier = ">=0.1.1" },
     { name = "google-auth-oauthlib", specifier = ">=1.1.0" },
     { name = "instagram-private-api", specifier = ">=1.6.0" },
@@ -380,6 +386,16 @@ wheels = [
 ]
 
 [[package]]
+name = "dj-rest-auth"
+version = "7.0.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "djangorestframework" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b7/19/00150c8bedf7b6d4c44ecf7c2be9e58ae2203b42741ca734152d34f549f1/dj-rest-auth-7.0.1.tar.gz", hash = "sha256:3f8c744cbcf05355ff4bcbef0c8a63645da38e29a0fdef3c3332d4aced52fb90", size = 220541, upload-time = "2025-01-04T23:37:38.688Z" }
+
+[[package]]
 name = "django"
 version = "5.1.4"
 source = { registry = "https://pypi.org/simple" }
@@ -392,6 +408,16 @@ sdist = { url = "https://files.pythonhosted.org/packages/d3/e8/536555596dbb79f6e
 wheels = [
     { url = "https://files.pythonhosted.org/packages/58/0b/8a4ab2c02982df4ed41e29f28f189459a7eba37899438e6bea7f39db793b/Django-5.1.4-py3-none-any.whl", hash = "sha256:236e023f021f5ce7dee5779de7b286565fdea5f4ab86bae5338e3f7b69896cf0", size = 8276471, upload-time = "2024-12-04T15:09:01.608Z" },
 ]
+
+[[package]]
+name = "django-allauth"
+version = "65.11.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "asgiref" },
+    { name = "django" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ac/82/e6f607b0bad524d227f6e5aaffdb5e2b286f6ab1b4b3151134ae2303c2d6/django_allauth-65.11.1.tar.gz", hash = "sha256:e95d5234cccaf92273d315e1393cc4626cb88a19d66a1bf0e81f89f7958cfa06", size = 1915592, upload-time = "2025-08-27T18:05:05.581Z" }
 
 [[package]]
 name = "django-celery-beat"

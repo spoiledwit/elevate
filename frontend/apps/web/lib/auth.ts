@@ -49,7 +49,7 @@ const authOptions: AuthOptions = {
               requires_registration: true,
               // Store Google user info for later use during registration
               google_user_info: data.user_info
-            }
+            } as any
             return true
           } else if (response.ok) {
             // Existing user - proceed with login
@@ -75,8 +75,8 @@ const authOptions: AuthOptions = {
           email: token.backend_user?.email as string,
         } as any
         // Pass Google user info to session for use during registration
-        if (token.backend_user?.google_user_info) {
-          (session as any).googleUserInfo = token.backend_user.google_user_info
+        if ((token.backend_user as any)?.google_user_info) {
+          (session as any).googleUserInfo = (token.backend_user as any).google_user_info
         }
         return session
       }
@@ -131,10 +131,10 @@ const authOptions: AuthOptions = {
         try {
           const apiClient = await getApiClient()
           const res = await apiClient.token.tokenRefreshCreate({
-            access: token.access,
+            access: token.access as string,
             refresh: token.refresh as string
           })
-          token.access = res.access
+          token.access = (res as any).access
         } catch (error) {
           console.error('Token refresh failed:', error)
           // Return token without access/refresh to force re-login
@@ -164,16 +164,14 @@ const authOptions: AuthOptions = {
           const apiClient = await getApiClient()
           const res = await apiClient.token.tokenCreate({
             username: credentials.username,
-            password: credentials.password,
-            access: '',
-            refresh: ''
+            password: credentials.password
           })
 
           return {
-            id: decodeToken(res.access).user_id,
+            id: decodeToken((res as any).access).user_id,
             username: credentials.username,
-            access: res.access,
-            refresh: res.refresh
+            access: (res as any).access,
+            refresh: (res as any).refresh
           }
         } catch (error) {
           if (error instanceof ApiError) {

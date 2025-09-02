@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { twMerge } from 'tailwind-merge'
 import { Toaster } from 'sonner'
+import { ComingSoon } from '@/components/coming-soon'
 
 import '@frontend/ui/styles/globals.css'
 
@@ -17,6 +18,7 @@ export const metadata: Metadata = {
   title: 'Elevate Social'
 }
 
+
 export default function RootLayout({
   children
 }: { children: React.ReactNode }) {
@@ -30,9 +32,9 @@ export default function RootLayout({
       >
         <AuthProvider>
           <div className="">
-            <div className="">{children}</div>
+            <div className=""><ComingSoon /></div>
           </div>
-          <Toaster 
+          <Toaster
             position="top-right"
             closeButton
             duration={4000}

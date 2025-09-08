@@ -14,6 +14,7 @@ export async function checkUsernameAction(username: string): Promise<{
 
     const apiClient = await getApiClient()
     
+    //@ts-ignore
     const response = await apiClient.auth.authCheckUsernameCreate({
       username: username,
     })

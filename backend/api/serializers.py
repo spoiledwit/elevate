@@ -7,7 +7,7 @@ from rest_framework import exceptions, serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.db.models import Q
 
-from .models import UserProfile, UserSocialLinks, SocialIcon, CustomLink, CTABanner, SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, Plan, PlanFeature, Subscription, Folder, Media, ProfileView, LinkClick, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply
+from .models import UserProfile, UserSocialLinks, UserPermissions, SocialIcon, CustomLink, CTABanner, SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, Plan, PlanFeature, Subscription, Folder, Media, ProfileView, LinkClick, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply
 
 # Backwards compatibility aliases
 CommentAutomationRule = AutomationRule
@@ -91,9 +91,21 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class UserCurrentSerializer(serializers.ModelSerializer):
+    permissions = serializers.SerializerMethodField()
+    
     class Meta:
         model = User
-        fields = ["username", "first_name", "last_name"]
+        fields = ["username", "first_name", "last_name", "permissions"]
+    
+    def get_permissions(self, obj):
+        """Get user permissions or create default permissions if they don't exist"""
+        try:
+            permissions = obj.permissions
+        except UserPermissions.DoesNotExist:
+            # Create permissions if they don't exist
+            permissions = UserPermissions.objects.create(user=obj)
+        
+        return UserPermissionsSerializer(permissions).data
 
 
 class UserCurrentErrorSerializer(serializers.Serializer):
@@ -361,6 +373,59 @@ class UserProfilePublicSerializer(serializers.ModelSerializer):
         if obj.profile_image:
             return obj.profile_image.url
         return None
+
+
+class UserPermissionsSerializer(serializers.ModelSerializer):
+    accessible_sections = serializers.ReadOnlyField(source='get_accessible_sections')
+    
+    class Meta:
+        model = UserPermissions
+        fields = [
+            'id',
+            'user',
+            'can_access_overview',
+            'can_access_linkinbio', 
+            'can_access_content',
+            'can_access_automation',
+            'can_access_ai_tools',
+            'can_access_business',
+            'can_access_account',
+            'can_edit_profile',
+            'can_manage_integrations',
+            'can_view_analytics',
+            'accessible_sections',
+            'created_at',
+            'modified_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'modified_at', 'accessible_sections']
+    
+    def validate(self, attrs):
+        """Ensure at least one section is accessible"""
+        section_fields = [
+            'can_access_overview', 'can_access_linkinbio', 'can_access_content',
+            'can_access_automation', 'can_access_ai_tools', 'can_access_business', 'can_access_account'
+        ]
+        
+        # Check if any section is enabled (use existing values if not in attrs)
+        instance = getattr(self, 'instance', None)
+        has_access = False
+        
+        for field in section_fields:
+            value = attrs.get(field)
+            if value is None and instance:
+                # Use existing value if not being updated
+                value = getattr(instance, field, False)
+            if value:
+                has_access = True
+                break
+        
+        if not has_access:
+            raise serializers.ValidationError(
+                "At least one dashboard section must be accessible."
+            )
+        
+        return attrs
+
 
 class PlanFeatureSerializer(serializers.ModelSerializer):
     class Meta:

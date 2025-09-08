@@ -37,6 +37,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Apps
 ######################################################################
 INSTALLED_APPS = [
+    "unfold.contrib.import_export",  # Must be before unfold  
     "unfold",
     "django.contrib.admin",
     "django.contrib.auth",
@@ -52,6 +53,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "drf_spectacular",
     "django_celery_beat",
+    "import_export",
     # Django Allauth
     "allauth",
     "allauth.account",
@@ -414,6 +416,11 @@ UNFOLD = {
                         "title": _("User Profiles"),
                         "icon": "account_circle",
                         "link": reverse_lazy("admin:api_userprofile_changelist"),
+                    },
+                    {
+                        "title": _("User Permissions"),
+                        "icon": "security",
+                        "link": reverse_lazy("admin:api_userpermissions_changelist"),
                     },
                 ],
             },

@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useOnboarding } from '@/hooks/useOnboarding'
 import { OnboardingTrigger } from './onboarding-trigger'
+import { getCurrentUser } from '@/actions/user-action'
+import type { UserCurrent } from '@frontend/types/api'
 import '@/styles/driver-theme.css'
 import {
   Home,
@@ -34,12 +36,143 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [activeItem, setActiveItem] = useState('dashboard')
   const [expandedSections, setExpandedSections] = useState<string[]>(['overview'])
+  const [userPermissions, setUserPermissions] = useState<UserCurrent | null>(null)
+  const [permissionsLoading, setPermissionsLoading] = useState(true)
   const { data: session } = useSession()
   const pathname = usePathname()
   const router = useRouter()
-  const { hasSeenOnboarding, startOnboarding } = useOnboarding((sectionId: string) => {
-    setExpandedSections([sectionId])
-  })
+
+  // Fetch user permissions
+  useEffect(() => {
+    const fetchUserPermissions = async () => {
+      if (!session?.accessToken) {
+        setPermissionsLoading(false)
+        return
+      }
+
+      try {
+        const result = await getCurrentUser()
+        if (result.success && result.user) {
+          setUserPermissions(result.user)
+        } else {
+          console.error('Failed to fetch user permissions:', result.error)
+        }
+      } catch (error) {
+        console.error('Error fetching user permissions:', error)
+      } finally {
+        setPermissionsLoading(false)
+      }
+    }
+
+    fetchUserPermissions()
+  }, [session?.accessToken])
+
+  // Define sidebar sections first
+  const sidebarSections = [
+    {
+      id: 'overview',
+      title: 'Overview',
+      icon: Home,
+      items: [
+        { id: 'dashboard', label: 'Dashboard', icon: Home },
+      ]
+    },
+    {
+      id: 'linkinbio',
+      title: 'Link-in-Bio',
+      icon: Store,
+      items: [
+        { id: 'storefront', label: 'My Storefront', icon: Store },
+        { id: 'custom-links', label: 'Custom Links', icon: Link },
+        { id: 'cta-banners', label: 'CTA Banners', icon: Megaphone },
+      ]
+    },
+    {
+      id: 'content',
+      title: 'Content & Social',
+      icon: Calendar,
+      items: [
+        { id: 'calendar', label: 'Content Calendar', icon: Calendar },
+        { id: 'post-creator', label: 'Post Creator', icon: PlusCircle },
+        { id: 'content-library', label: 'Content Library', icon: FolderOpen },
+        { id: 'social-accounts', label: 'Social Accounts', icon: Share2 },
+      ]
+    },
+    {
+      id: 'automation',
+      title: 'Automation',
+      icon: Zap,
+      items: [
+        { id: 'comments', label: 'Comments', icon: MessageSquare },
+        { id: 'automation-rules', label: 'Automation Rules', icon: Zap },
+        { id: 'automation-settings', label: 'Automation Settings', icon: Settings2 },
+        { id: 'reply-analytics', label: 'Reply Analytics', icon: BarChart3 },
+      ]
+    },
+    {
+      id: 'ai-tools',
+      title: 'AI & Tools',
+      icon: Bot,
+      items: [
+        { id: 'ai-assistant', label: 'AI Assistant', icon: Bot },
+      ]
+    },
+    {
+      id: 'business',
+      title: 'Business',
+      icon: CreditCard,
+      items: [
+        { id: 'subscription', label: 'Subscription', icon: CreditCard },
+      ]
+    },
+    {
+      id: 'account',
+      title: 'Account',
+      icon: Settings2,
+      items: [
+        { id: 'settings', label: 'Settings', icon: Settings2 },
+      ]
+    }
+  ]
+
+  // Check if user has permission for a section
+  const hasPermission = (sectionId: string): boolean => {
+    if (!userPermissions?.permissions || permissionsLoading) return false // Hide sections until permissions are loaded
+    
+    const permissions = userPermissions.permissions as any
+    
+    switch (sectionId) {
+      case 'overview':
+        return permissions.can_access_overview
+      case 'linkinbio':
+        return permissions.can_access_linkinbio
+      case 'content':
+        return permissions.can_access_content
+      case 'automation':
+        return permissions.can_access_automation
+      case 'ai-tools':
+        return permissions.can_access_ai_tools
+      case 'business':
+        return permissions.can_access_business
+      case 'account':
+        return permissions.can_access_account
+      default:
+        return false
+    }
+  }
+
+  // Filter sidebar sections based on permissions - only show sections when permissions are loaded
+  const allowedSidebarSections = useMemo(() => {
+    return permissionsLoading ? [] : sidebarSections.filter(section => hasPermission(section.id))
+  }, [permissionsLoading, userPermissions])
+
+  // Initialize onboarding with allowed sections
+  const { hasSeenOnboarding, startOnboarding } = useOnboarding(
+    (sectionId: string) => {
+      setExpandedSections([sectionId])
+    },
+    allowedSidebarSections.map(section => section.id)
+  )
 
   const toggleSection = (sectionId: string) => {
     setExpandedSections(prev =>
@@ -164,73 +297,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     }
   }
 
-  const sidebarSections = [
-    {
-      id: 'overview',
-      title: 'Overview',
-      icon: Home,
-      items: [
-        { id: 'dashboard', label: 'Dashboard', icon: Home },
-      ]
-    },
-    {
-      id: 'linkinbio',
-      title: 'Link-in-Bio',
-      icon: Store,
-      items: [
-        { id: 'storefront', label: 'My Storefront', icon: Store },
-        { id: 'custom-links', label: 'Custom Links', icon: Link },
-        { id: 'cta-banners', label: 'CTA Banners', icon: Megaphone },
-      ]
-    },
-    {
-      id: 'content',
-      title: 'Content & Social',
-      icon: Calendar,
-      items: [
-        { id: 'calendar', label: 'Content Calendar', icon: Calendar },
-        { id: 'post-creator', label: 'Post Creator', icon: PlusCircle },
-        { id: 'content-library', label: 'Content Library', icon: FolderOpen },
-        { id: 'social-accounts', label: 'Social Accounts', icon: Share2 },
-      ]
-    },
-    {
-      id: 'automation',
-      title: 'Automation',
-      icon: Zap,
-      items: [
-        { id: 'comments', label: 'Comments', icon: MessageSquare },
-        { id: 'automation-rules', label: 'Automation Rules', icon: Zap },
-        { id: 'automation-settings', label: 'Automation Settings', icon: Settings2 },
-        { id: 'reply-analytics', label: 'Reply Analytics', icon: BarChart3 },
-      ]
-    },
-    {
-      id: 'ai-tools',
-      title: 'AI & Tools',
-      icon: Bot,
-      items: [
-        { id: 'ai-assistant', label: 'AI Assistant', icon: Bot },
-      ]
-    },
-    {
-      id: 'business',
-      title: 'Business',
-      icon: CreditCard,
-      items: [
-        { id: 'subscription', label: 'Subscription', icon: CreditCard },
-      ]
-    },
-    {
-      id: 'account',
-      title: 'Account',
-      icon: Settings2,
-      items: [
-        { id: 'settings', label: 'Settings', icon: Settings2 },
-      ]
-    }
-  ]
-
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Fixed Sidebar */}
@@ -250,49 +316,76 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         {/* Navigation - Scrollable */}
         <nav className="flex-1 overflow-y-auto px-4 pb-4">
           <div className="space-y-2">
-            {sidebarSections.map((section) => (
-              <div key={section.id}>
-                {/* Section Header - Clickable */}
-                <button
-                  onClick={() => toggleSection(section.id)}
-                  data-tour={`${section.id}-section`}
-                  className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <section.icon className="w-5 h-5 text-gray-500" />
-                    <span>{section.title}</span>
+            {permissionsLoading ? (
+              // Skeleton loading state
+              <>
+                {[1, 2, 3, 4].map((index) => (
+                  <div key={index} className="animate-pulse">
+                    {/* Section Header Skeleton */}
+                    <div className="flex items-center justify-between px-3 py-2.5 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-5 h-5 bg-gray-200 rounded"></div>
+                        <div className="w-24 h-4 bg-gray-200 rounded"></div>
+                      </div>
+                      <div className="w-4 h-4 bg-gray-200 rounded"></div>
+                    </div>
+                    {/* Section Items Skeleton */}
+                    <div className="ml-6 mt-1 space-y-1">
+                      {[1, 2].map((itemIndex) => (
+                        <div key={itemIndex} className="flex items-center gap-3 px-3 py-2">
+                          <div className="w-4 h-4 bg-gray-200 rounded"></div>
+                          <div className="w-20 h-3 bg-gray-200 rounded"></div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  {expandedSections.includes(section.id) ? (
-                    <ChevronDown className="w-4 h-4 text-gray-400" />
-                  ) : (
-                    <ChevronRight className="w-4 h-4 text-gray-400" />
-                  )}
-                </button>
+                ))}
+              </>
+            ) : (
+              allowedSidebarSections.map((section) => (
+                <div key={section.id}>
+                  {/* Section Header - Clickable */}
+                  <button
+                    onClick={() => toggleSection(section.id)}
+                    data-tour={`${section.id}-section`}
+                    className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <section.icon className="w-5 h-5 text-gray-500" />
+                      <span>{section.title}</span>
+                    </div>
+                    {expandedSections.includes(section.id) ? (
+                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-gray-400" />
+                    )}
+                  </button>
 
-                {/* Section Items - Collapsible with smooth animation */}
-                <div
-                  className={`ml-6 mt-1 space-y-1 overflow-hidden transition-all duration-300 ease-in-out ${expandedSections.includes(section.id)
-                    ? 'max-h-96 opacity-100'
-                    : 'max-h-0 opacity-0'
-                    }`}
-                >
-                  {section.items.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => handleItemClick(item.id, section.id)}
-                      data-tour={item.id}
-                      className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 transform border ${activeItem === item.id
-                        ? 'bg-purple-50 text-purple-700 border-purple-200 shadow-sm'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-transparent'
-                        }`}
-                    >
-                      <item.icon className={`w-4 h-4 transition-colors duration-200 ${activeItem === item.id ? 'text-purple-600' : 'text-gray-400'}`} />
-                      <span>{item.label}</span>
-                    </button>
-                  ))}
+                  {/* Section Items - Collapsible with smooth animation */}
+                  <div
+                    className={`ml-6 mt-1 space-y-1 overflow-hidden transition-all duration-300 ease-in-out ${expandedSections.includes(section.id)
+                      ? 'max-h-96 opacity-100'
+                      : 'max-h-0 opacity-0'
+                      }`}
+                  >
+                    {section.items.map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => handleItemClick(item.id, section.id)}
+                        data-tour={item.id}
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 transform border ${activeItem === item.id
+                          ? 'bg-purple-50 text-purple-700 border-purple-200 shadow-sm'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-transparent'
+                          }`}
+                      >
+                        <item.icon className={`w-4 h-4 transition-colors duration-200 ${activeItem === item.id ? 'text-purple-600' : 'text-gray-400'}`} />
+                        <span>{item.label}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </nav>
 

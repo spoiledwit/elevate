@@ -7,9 +7,11 @@ from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationFo
 from django.utils.translation import gettext_lazy as _
 from .services.stripe_service import stripe_service
 from django.contrib import messages
+from import_export.admin import ImportExportModelAdmin
+from unfold.contrib.import_export.forms import ExportForm, ImportForm
 
 from .models import (
-    User, UserProfile, UserSocialLinks, SocialIcon, CustomLink, CTABanner, Subscription,
+    User, UserProfile, UserSocialLinks, UserPermissions, SocialIcon, CustomLink, CTABanner, Subscription,
     ProfileView, LinkClick, BannerClick,
     SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, PaymentEvent, Plan, PlanFeature, StripeCustomer,
     Folder, Media, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply, AIConfiguration
@@ -23,19 +25,24 @@ admin.site.unregister(Group)
 
 
 @admin.register(User)
-class UserAdmin(BaseUserAdmin, ModelAdmin):
+class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
     form = UserChangeForm
     add_form = UserCreationForm
     change_password_form = AdminPasswordChangeForm
+    import_form_class = ImportForm
+    export_form_class = ExportForm
 
 
 @admin.register(Group)
-class GroupAdmin(BaseGroupAdmin, ModelAdmin):
-    pass
+class GroupAdmin(BaseGroupAdmin, ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
 
 
 @admin.register(UserProfile)
-class UserProfileAdmin(ModelAdmin):
+class UserProfileAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ['user', 'display_name', 'slug', 'view_count', 'is_active', 'created_at']
     list_filter = ['is_active', 'created_at']
     search_fields = ['user__username', 'user__email', 'display_name', 'slug']
@@ -69,7 +76,9 @@ class UserProfileAdmin(ModelAdmin):
 
 
 @admin.register(UserSocialLinks)
-class UserSocialLinksAdmin(ModelAdmin):
+class UserSocialLinksAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ['user', 'links_count', 'created_at', 'modified_at']
     list_filter = ['created_at', 'modified_at']
     search_fields = ['user__username', 'user__email']
@@ -100,8 +109,80 @@ class UserSocialLinksAdmin(ModelAdmin):
     links_count.short_description = 'Active Links'
 
 
+@admin.register(UserPermissions)
+class UserPermissionsAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    list_display = ['user', 'permissions_summary', 'can_edit_profile', 'can_manage_integrations', 'can_view_analytics', 'created_at']
+    list_filter = [
+        'can_access_overview', 'can_access_linkinbio', 'can_access_content', 
+        'can_access_automation', 'can_access_ai_tools', 'can_access_business', 
+        'can_access_account', 'can_edit_profile', 'can_manage_integrations', 
+        'can_view_analytics', 'created_at'
+    ]
+    search_fields = ['user__username', 'user__email']
+    readonly_fields = ['created_at', 'modified_at']
+    fieldsets = (
+        ('User', {
+            'fields': ('user',)
+        }),
+        ('Dashboard Section Permissions', {
+            'fields': (
+                'can_access_overview', 
+                'can_access_linkinbio', 
+                'can_access_content',
+                'can_access_automation', 
+                'can_access_ai_tools', 
+                'can_access_business',
+                'can_access_account'
+            ),
+            'description': 'Control access to the 7 main dashboard sections'
+        }),
+        ('Additional Permissions', {
+            'fields': (
+                'can_edit_profile', 
+                'can_manage_integrations', 
+                'can_view_analytics'
+            ),
+            'description': 'Granular permissions for specific features'
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'modified_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def permissions_summary(self, obj):
+        """Show a summary of enabled dashboard sections"""
+        sections = obj.get_accessible_sections()
+        section_names = {
+            'overview': 'Overview',
+            'linkinbio': 'Link-in-Bio', 
+            'content': 'Content',
+            'automation': 'Automation',
+            'ai-tools': 'AI Tools',
+            'business': 'Business',
+            'account': 'Account'
+        }
+        enabled = [section_names.get(s, s) for s in sections]
+        if len(enabled) == 7:
+            return "All Sections"
+        elif len(enabled) == 0:
+            return "No Access"
+        elif len(enabled) <= 3:
+            return ", ".join(enabled)
+        else:
+            return f"{', '.join(enabled[:2])} +{len(enabled)-2} more"
+    permissions_summary.short_description = 'Accessible Sections'
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user')
+
+
 @admin.register(SocialIcon)
-class SocialIconAdmin(ModelAdmin):
+class SocialIconAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ['user_profile', 'platform', 'url', 'is_active', 'created_at']
     list_filter = ['platform', 'is_active', 'created_at']
     search_fields = ['user_profile__user__username', 'platform', 'url']
@@ -121,7 +202,9 @@ class SocialIconAdmin(ModelAdmin):
 
 
 @admin.register(CustomLink)
-class CustomLinkAdmin(ModelAdmin):
+class CustomLinkAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ['user_profile', 'text', 'order', 'click_count', 'is_active', 'created_at']
     list_filter = ['is_active', 'created_at']
     search_fields = ['user_profile__user__username', 'text', 'url']
@@ -153,7 +236,9 @@ class CustomLinkAdmin(ModelAdmin):
 
 
 @admin.register(CTABanner)
-class CTABannerAdmin(ModelAdmin):
+class CTABannerAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ['user_profile', 'text', 'button_text', 'style', 'is_active', 'click_count', 'created_at']
     list_filter = ['style', 'is_active', 'created_at']
     search_fields = ['user_profile__user__username', 'text', 'button_text']
@@ -180,7 +265,9 @@ class CTABannerAdmin(ModelAdmin):
 
 # Social Media OAuth Admin
 @admin.register(SocialMediaPlatform)
-class SocialMediaPlatformAdmin(ModelAdmin):
+class SocialMediaPlatformAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ["name", "display_name", "is_active", "created_at"]
     list_filter = ["is_active", "created_at"]
     search_fields = ["name", "display_name"]
@@ -201,7 +288,9 @@ class SocialMediaPlatformAdmin(ModelAdmin):
 
 
 @admin.register(SocialMediaConnection)
-class SocialMediaConnectionAdmin(ModelAdmin):
+class SocialMediaConnectionAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ["user", "platform", "platform_username", "is_active", "is_verified", "last_used_at"]
     list_filter = ["platform", "is_active", "is_verified", "created_at", "last_used_at"]
     search_fields = ["user__username", "platform__name", "platform_username"]
@@ -232,7 +321,9 @@ class SocialMediaConnectionAdmin(ModelAdmin):
 
 
 @admin.register(SocialMediaPost)
-class SocialMediaPostAdmin(ModelAdmin):
+class SocialMediaPostAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ["user", "platform", "text_preview", "status", "scheduled_at", "sent_at", "created_at"]
     list_filter = ["status", "connection__platform", "created_at", "scheduled_at", "sent_at"]
     search_fields = ["user__username", "text", "connection__platform__name"]
@@ -271,7 +362,9 @@ class SocialMediaPostAdmin(ModelAdmin):
 
 
 @admin.register(SocialMediaPostTemplate)
-class SocialMediaPostTemplateAdmin(ModelAdmin):
+class SocialMediaPostTemplateAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ["user", "name", "is_active", "is_public", "platforms_count", "created_at"]
     list_filter = ["is_active", "is_public", "created_at"]
     search_fields = ["user__username", "name", "description"]
@@ -312,7 +405,9 @@ class PlanFeatureInline(admin.TabularInline):
 
 
 @admin.register(Plan)
-class PlanAdmin(ModelAdmin):
+class PlanAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ("name", "price", "billing_period", "is_active", "is_featured", "subscription_count", "stripe_synced", "created_at")
     list_filter = ("billing_period", "is_active", "is_featured", "created_at")
     search_fields = ("name", "description")
@@ -398,7 +493,9 @@ class PlanAdmin(ModelAdmin):
 
 
 @admin.register(PlanFeature)
-class PlanFeatureAdmin(ModelAdmin):
+class PlanFeatureAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ("plan", "feature_name", "feature_value", "is_highlight", "sort_order")
     list_filter = ("plan", "is_highlight")
     search_fields = ("feature_name", "feature_key", "feature_value")
@@ -406,13 +503,17 @@ class PlanFeatureAdmin(ModelAdmin):
 
 
 @admin.register(StripeCustomer)
-class StripeCustomerAdmin(ModelAdmin):
+class StripeCustomerAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ("user", "stripe_customer_id", "created_at")
     search_fields = ("stripe_customer_id", "user__username", "user__email")
 
 
 @admin.register(Subscription)
-class SubscriptionAdmin(ModelAdmin):
+class SubscriptionAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ("user", "plan", "status", "current_period_start", "current_period_end", "created_at")
     list_filter = ("status", "plan", "created_at")
     search_fields = ("user__username", "user__email", "plan__name", "stripe_subscription_id")
@@ -420,14 +521,18 @@ class SubscriptionAdmin(ModelAdmin):
 
 
 @admin.register(PaymentEvent)
-class PaymentEventAdmin(ModelAdmin):
+class PaymentEventAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ("user", "event_type", "created_at")
     search_fields = ("stripe_event_id", "event_type", "user__username", "user__email")
 
 
 # Media Library Admin
 @admin.register(Folder)
-class FolderAdmin(ModelAdmin):
+class FolderAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ['user', 'name', 'is_default', 'media_count', 'created_at']
     list_filter = ['is_default', 'created_at']
     search_fields = ['user__username', 'user__email', 'name', 'description']
@@ -451,7 +556,9 @@ class FolderAdmin(ModelAdmin):
 
 
 @admin.register(Media)
-class MediaAdmin(ModelAdmin):
+class MediaAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ['user', 'file_name', 'folder', 'file_size_display', 'used_in_posts_count', 'created_at']
     list_filter = ['folder', 'created_at']
     search_fields = ['user__username', 'user__email', 'file_name', 'folder__name']
@@ -487,7 +594,9 @@ class MediaAdmin(ModelAdmin):
 
 # Analytics Admin
 @admin.register(ProfileView)
-class ProfileViewAdmin(ModelAdmin):
+class ProfileViewAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ['user_profile', 'ip_address', 'user_agent_short', 'referrer_domain', 'viewed_at']
     list_filter = ['viewed_at', 'user_profile__user__username']
     search_fields = ['user_profile__user__username', 'ip_address', 'user_agent', 'referrer']
@@ -523,7 +632,9 @@ class ProfileViewAdmin(ModelAdmin):
 
 
 @admin.register(BannerClick)
-class BannerClickAdmin(ModelAdmin):
+class BannerClickAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ['banner', 'banner_user', 'ip_address', 'user_agent_short', 'referrer_domain', 'timestamp']
     list_filter = ['timestamp', 'banner__user_profile__user__username']
     search_fields = ['banner__user_profile__user__username', 'banner__text', 'ip_address', 'user_agent']
@@ -566,7 +677,9 @@ class BannerClickAdmin(ModelAdmin):
 
 
 @admin.register(LinkClick)
-class LinkClickAdmin(ModelAdmin):
+class LinkClickAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ['custom_link', 'user_profile', 'ip_address', 'user_agent_short', 'referrer_domain', 'clicked_at']
     list_filter = ['clicked_at', 'user_profile__user__username', 'custom_link__text']
     search_fields = ['user_profile__user__username', 'custom_link__text', 'ip_address', 'user_agent']
@@ -603,7 +716,9 @@ class LinkClickAdmin(ModelAdmin):
 
 # Comment Automation Admin
 @admin.register(Comment)
-class CommentAdmin(ModelAdmin):
+class CommentAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ['comment_id', 'from_user_name', 'message_preview', 'connection_page', 'status', 'created_time']
     list_filter = ['status', 'connection__platform', 'created_time', 'received_at']
     search_fields = ['comment_id', 'from_user_name', 'message', 'connection__facebook_page_name']
@@ -638,7 +753,9 @@ class CommentAdmin(ModelAdmin):
 
 
 @admin.register(AutomationRule)
-class AutomationRuleAdmin(ModelAdmin):
+class AutomationRuleAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ['rule_name', 'user', 'connection_page', 'message_type', 'keywords_preview', 'is_active', 'priority', 'times_triggered', 'created_at']
     list_filter = ['message_type', 'is_active', 'connection__platform', 'created_at', 'priority']
     search_fields = ['rule_name', 'user__username', 'connection__facebook_page_name', 'reply_template']
@@ -678,7 +795,9 @@ class AutomationRuleAdmin(ModelAdmin):
 
 
 @admin.register(AutomationSettings)
-class AutomationSettingsAdmin(ModelAdmin):
+class AutomationSettingsAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ['user', 'connection_page', 'is_enabled', 'enable_dm_automation', 'reply_delay_seconds', 'dm_reply_delay_seconds', 'has_default_reply', 'created_at']
     list_filter = ['is_enabled', 'enable_dm_automation', 'connection__platform', 'created_at']
     search_fields = ['user__username', 'connection__facebook_page_name', 'default_reply', 'dm_default_reply']
@@ -714,7 +833,9 @@ class AutomationSettingsAdmin(ModelAdmin):
 
 
 @admin.register(CommentReply)
-class CommentReplyAdmin(ModelAdmin):
+class CommentReplyAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ['comment', 'from_user', 'reply_preview', 'rule_used', 'status', 'sent_at']
     list_filter = ['status', 'sent_at', 'rule__rule_name']
     search_fields = ['comment__comment_id', 'comment__from_user_name', 'reply_text', 'facebook_reply_id']
@@ -751,7 +872,9 @@ class CommentReplyAdmin(ModelAdmin):
 
 # Direct Message Automation Admin
 @admin.register(DirectMessage)
-class DirectMessageAdmin(ModelAdmin):
+class DirectMessageAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ['message_id', 'platform', 'sender_name', 'message_preview', 'connection_page', 'status', 'is_echo', 'created_time']
     list_filter = ['platform', 'status', 'is_echo', 'connection__platform', 'created_time', 'received_at']
     search_fields = ['message_id', 'sender_name', 'message_text', 'conversation_id', 'connection__facebook_page_name']
@@ -788,7 +911,9 @@ class DirectMessageAdmin(ModelAdmin):
 
 
 @admin.register(DirectMessageReply)
-class DirectMessageReplyAdmin(ModelAdmin):
+class DirectMessageReplyAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ['direct_message', 'sender_name', 'platform', 'reply_preview', 'rule_used', 'status', 'sent_at']
     list_filter = ['status', 'direct_message__platform', 'sent_at', 'rule__rule_name']
     search_fields = ['direct_message__message_id', 'direct_message__sender_name', 'reply_text', 'platform_reply_id']
@@ -829,7 +954,9 @@ class DirectMessageReplyAdmin(ModelAdmin):
 
 # AI Configuration Admin
 @admin.register(AIConfiguration)
-class AIConfigurationAdmin(ModelAdmin):
+class AIConfigurationAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     """
     Admin interface for global AI configurations.
     Only one configuration per capability can exist.

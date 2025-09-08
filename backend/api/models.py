@@ -117,6 +117,71 @@ def save_user_social_links(sender, instance, **kwargs):
         instance.social_links.save()
 
 
+class UserPermissions(models.Model):
+    """
+    Model to store user permissions for the 7 main dashboard sections.
+    One-to-one relationship with User for granular access control.
+    """
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='permissions')
+    
+    # Dashboard Permissions (based on the 7 main sections)
+    can_access_overview = models.BooleanField(_("Can Access Overview"), default=True, help_text="Dashboard section access")
+    can_access_linkinbio = models.BooleanField(_("Can Access Link-in-Bio"), default=True, help_text="Storefront, Custom Links, CTA Banners")
+    can_access_content = models.BooleanField(_("Can Access Content & Social"), default=True, help_text="Calendar, Post Creator, Content Library, Social Accounts")
+    can_access_automation = models.BooleanField(_("Can Access Automation"), default=True, help_text="Comments, Automation Rules, Settings, Analytics")
+    can_access_ai_tools = models.BooleanField(_("Can Access AI & Tools"), default=True, help_text="AI Assistant and related tools")
+    can_access_business = models.BooleanField(_("Can Access Business"), default=True, help_text="Subscription and billing management")
+    can_access_account = models.BooleanField(_("Can Access Account"), default=True, help_text="Account settings and profile")
+    
+    # Additional granular permissions
+    can_edit_profile = models.BooleanField(_("Can Edit Profile"), default=True, help_text="Edit user profile and settings")
+    can_manage_integrations = models.BooleanField(_("Can Manage Integrations"), default=True, help_text="Connect/disconnect social media accounts")
+    can_view_analytics = models.BooleanField(_("Can View Analytics"), default=True, help_text="View performance analytics and stats")
+    
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    modified_at = models.DateTimeField(_("modified at"), auto_now=True)
+
+    class Meta:
+        db_table = "user_permissions"
+        verbose_name = _("user permissions")
+        verbose_name_plural = _("user permissions")
+
+    def __str__(self):
+        return f"{self.user.username} - Permissions"
+    
+    def get_accessible_sections(self):
+        """Returns a list of accessible dashboard sections"""
+        sections = []
+        if self.can_access_overview:
+            sections.append('overview')
+        if self.can_access_linkinbio:
+            sections.append('linkinbio')
+        if self.can_access_content:
+            sections.append('content')
+        if self.can_access_automation:
+            sections.append('automation')
+        if self.can_access_ai_tools:
+            sections.append('ai-tools')
+        if self.can_access_business:
+            sections.append('business')
+        if self.can_access_account:
+            sections.append('account')
+        return sections
+
+
+# Signal to automatically create UserPermissions when User is created
+@receiver(post_save, sender=User)
+def create_user_permissions(sender, instance, created, **kwargs):
+    if created:
+        UserPermissions.objects.create(user=instance)
+
+
+@receiver(post_save, sender=User)
+def save_user_permissions(sender, instance, **kwargs):
+    if hasattr(instance, 'permissions'):
+        instance.permissions.save()
+
+
 class SocialIcon(models.Model):
     PLATFORM_CHOICES = [
         ('instagram', 'Instagram'),

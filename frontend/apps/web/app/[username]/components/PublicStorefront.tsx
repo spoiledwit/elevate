@@ -101,7 +101,7 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
   const activeSocialIcons = profile.social_icons?.filter((icon: any) => icon.is_active && icon.url) || []
   const activeCustomLinks = profile.custom_links?.filter((link: any) => link.is_active) || []
   const activeCTABanner = profile.cta_banner && profile.cta_banner.is_active ? profile.cta_banner : null
-  
+
   // Get the banner style or default to gradient-purple
   const bannerStyle = activeCTABanner?.style ? bannerStyles[activeCTABanner.style as keyof typeof bannerStyles] : bannerStyles['gradient-purple']
 
@@ -114,7 +114,7 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
           <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-50 rounded-full mix-blend-multiply opacity-70 animate-pulse"></div>
           <div className="absolute top-0 right-1/4 w-96 h-96 bg-purple-50 rounded-full mix-blend-multiply opacity-70 animate-pulse delay-1000"></div>
         </div>
-        
+
         <div className="relative container mx-auto px-6 py-16 max-w-lg">
           {/* Profile Header */}
           <div className="text-center mb-12">
@@ -134,13 +134,13 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
                 )}
               </div>
             </div>
-            
+
             {/* Name and Bio */}
             <div className="space-y-4">
               <h1 className="text-3xl font-light text-slate-800 tracking-tight">
                 {profile.display_name || username}
               </h1>
-              
+
               {profile.bio && (
                 <p className="text-slate-600 text-lg leading-relaxed max-w-md mx-auto font-light">
                   {profile.bio}
@@ -209,7 +209,7 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
                       // Track the banner click and redirect
                       try {
                         const result = await trackBannerClickAction(activeCTABanner.id.toString())
-                        
+
                         // Check if tracking was successful and we got a redirect URL
                         if (result && !('error' in result) && (result as any).banner_url) {
                           window.location.href = (result as any).banner_url
@@ -243,9 +243,8 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
                 <button
                   key={index}
                   onClick={() => handleLinkClick(link)}
-                  className={`w-full bg-white rounded-2xl border border-slate-200 hover:border-slate-300 transition-all duration-300 p-6 group text-left ${
-                    clickedLinks.has(link.id.toString()) ? 'border-blue-300 bg-blue-50' : ''
-                  }`}
+                  className={`w-full bg-white rounded-2xl border border-slate-200 hover:border-slate-300 transition-all duration-300 p-6 group text-left ${clickedLinks.has(link.id.toString()) ? 'border-blue-300 bg-blue-50' : ''
+                    }`}
                 >
                   <div className="flex items-center gap-5">
                     {/* Thumbnail */}
@@ -308,15 +307,7 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
         </div>
       </div>
 
-      {/* Floating Analytics */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="fixed bottom-4 right-4 bg-slate-800 text-white p-3 rounded-xl text-xs border border-slate-700">
-          <div className="flex items-center gap-2">
-            <MousePointerClick className="w-4 h-4" />
-            <span>Views: {profile.view_count || 0}</span>
-          </div>
-        </div>
-      )}
+
     </div>
   )
 }

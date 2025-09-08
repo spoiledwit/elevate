@@ -5,9 +5,11 @@
 import type { PasswordResetConfirm } from '../models/PasswordResetConfirm';
 import type { PasswordResetRequest } from '../models/PasswordResetRequest';
 import type { PatchedUserCurrent } from '../models/PatchedUserCurrent';
+import type { PatchedUserPermissions } from '../models/PatchedUserPermissions';
 import type { UserChangePassword } from '../models/UserChangePassword';
 import type { UserCreate } from '../models/UserCreate';
 import type { UserCurrent } from '../models/UserCurrent';
+import type { UserPermissions } from '../models/UserPermissions';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
 export class UsersService {
@@ -143,6 +145,35 @@ export class UsersService {
         return this.httpRequest.request({
             method: 'POST',
             url: '/api/users/password-reset/request/',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Get current user's permissions
+     * Retrieve the dashboard section permissions for the authenticated user
+     * @returns UserPermissions
+     * @throws ApiError
+     */
+    public usersPermissionsRetrieve(): CancelablePromise<UserPermissions> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/api/users/permissions/',
+        });
+    }
+    /**
+     * Update current user's permissions
+     * Update the dashboard section permissions for the authenticated user
+     * @param requestBody
+     * @returns UserPermissions
+     * @throws ApiError
+     */
+    public usersPermissionsPartialUpdate(
+        requestBody?: PatchedUserPermissions,
+    ): CancelablePromise<UserPermissions> {
+        return this.httpRequest.request({
+            method: 'PATCH',
+            url: '/api/users/permissions/',
             body: requestBody,
             mediaType: 'application/json',
         });

@@ -283,7 +283,7 @@ const sidebarOnboardingSteps: OnboardingStepWithSection[] = [
   }
 ]
 
-export function useOnboarding(expandSection?: (sectionId: string) => void) {
+export function useOnboarding(expandSection?: (sectionId: string) => void, allowedSections?: string[]) {
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(true) // Default to true to avoid flash
   
   useEffect(() => {
@@ -292,11 +292,49 @@ export function useOnboarding(expandSection?: (sectionId: string) => void) {
     setHasSeenOnboarding(!!completed)
   }, [])
 
+  // Filter onboarding steps based on allowed sections
+  const getFilteredOnboardingSteps = () => {
+    if (!allowedSections || allowedSections.length === 0) {
+      // If no allowed sections provided, show all steps (fallback)
+      return sidebarOnboardingSteps
+    }
+
+    return sidebarOnboardingSteps.filter(step => {
+      // Always include the user profile step at the end
+      if (step.element === '[data-tour="user-profile"]') {
+        return true
+      }
+
+      // Check if this step is for an allowed section
+      const sectionMatches = [
+        { section: 'overview', selectors: ['[data-tour="overview-section"]', '[data-tour="dashboard"]'] },
+        { section: 'linkinbio', selectors: ['[data-tour="linkinbio-section"]', '[data-tour="storefront"]', '[data-tour="custom-links"]', '[data-tour="cta-banners"]'] },
+        { section: 'content', selectors: ['[data-tour="content-section"]', '[data-tour="calendar"]', '[data-tour="post-creator"]', '[data-tour="content-library"]', '[data-tour="social-accounts"]'] },
+        { section: 'automation', selectors: ['[data-tour="automation-section"]', '[data-tour="comments"]', '[data-tour="automation-rules"]', '[data-tour="automation-settings"]', '[data-tour="reply-analytics"]'] },
+        { section: 'ai-tools', selectors: ['[data-tour="ai-tools-section"]', '[data-tour="ai-assistant"]'] },
+        { section: 'business', selectors: ['[data-tour="business-section"]', '[data-tour="subscription"]'] },
+        { section: 'account', selectors: ['[data-tour="account-section"]', '[data-tour="settings"]', '[data-tour="support"]'] }
+      ]
+
+      // Find which section this step belongs to
+      for (const sectionMatch of sectionMatches) {
+        if (sectionMatch.selectors.includes(step.element)) {
+          return allowedSections.includes(sectionMatch.section)
+        }
+      }
+
+      // If we can't determine the section, exclude it for safety
+      return false
+    })
+  }
+
   const startOnboarding = () => {
+    const filteredSteps = getFilteredOnboardingSteps()
+    
     const driverObj = driver({
       showProgress: true,
       showButtons: ['next', 'previous', 'close'],
-      steps: sidebarOnboardingSteps,
+      steps: filteredSteps,
       onDestroyed: () => {
         // Mark onboarding as completed when user finishes or closes
         markOnboardingCompleted()
@@ -307,8 +345,8 @@ export function useOnboarding(expandSection?: (sectionId: string) => void) {
         const nextStepIndex = currentStepIndex + 1
         
         // Before moving to next step, check if we need to expand a section
-        if (nextStepIndex < sidebarOnboardingSteps.length) {
-          const nextStep = sidebarOnboardingSteps[nextStepIndex] as OnboardingStepWithSection
+        if (nextStepIndex < filteredSteps.length) {
+          const nextStep = filteredSteps[nextStepIndex] as OnboardingStepWithSection
           if (nextStep.sectionToExpand && expandSection) {
             expandSection(nextStep.sectionToExpand)
             // Wait for section to expand, then move to next step
@@ -334,7 +372,7 @@ export function useOnboarding(expandSection?: (sectionId: string) => void) {
     })
 
     // Before starting the tour, expand the first section if needed
-    const firstStep = sidebarOnboardingSteps[0] as OnboardingStepWithSection
+    const firstStep = filteredSteps[0] as OnboardingStepWithSection
     if (firstStep.sectionToExpand && expandSection) {
       expandSection(firstStep.sectionToExpand)
     }

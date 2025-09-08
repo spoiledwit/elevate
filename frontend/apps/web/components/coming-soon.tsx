@@ -68,7 +68,7 @@ export function ComingSoon() {
             {/* Footer */}
             <footer className="py-8 px-4 sm:px-6 lg:px-20 border-t border-gray-100 relative z-10">
                 <div className="max-w-4xl mx-auto text-center text-gray-600 text-sm">
-                    <p>&copy; 2024 Elevate Social. All rights reserved.</p>
+                    <p>&copy; 2025 Elevate Social. All rights reserved.</p>
                 </div>
             </footer>
         </div>

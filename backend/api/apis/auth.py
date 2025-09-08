@@ -12,7 +12,7 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
 
-from ..models import UserProfile
+from ..models import UserProfile, UserPermissions
 from ..serializers import (
     UserChangePasswordErrorSerializer,
     UserChangePasswordSerializer,
@@ -22,6 +22,7 @@ from ..serializers import (
     UserCurrentSerializer,
     UserProfileSerializer,
     UserProfilePublicSerializer,
+    UserPermissionsSerializer,
     PasswordResetRequestSerializer,
     PasswordResetConfirmSerializer,
     CustomTokenObtainPairSerializer,
@@ -244,6 +245,43 @@ class UserViewSet(
                 {"error": "User not found in database"}, 
                 status=status.HTTP_404_NOT_FOUND
             )
+
+    @extend_schema(
+        methods=["GET"],
+        responses={200: UserPermissionsSerializer},
+        summary="Get current user's permissions",
+        description="Retrieve the dashboard section permissions for the authenticated user"
+    )
+    @extend_schema(
+        methods=["PATCH"],
+        request=UserPermissionsSerializer,
+        responses={200: UserPermissionsSerializer},
+        summary="Update current user's permissions", 
+        description="Update the dashboard section permissions for the authenticated user"
+    )
+    @action(["get", "patch"], url_path="permissions", detail=False)
+    def permissions(self, request, *args, **kwargs):
+        """
+        GET: Retrieve user's permissions
+        PATCH: Update user's permissions
+        """
+        user = request.user
+        permissions, created = UserPermissions.objects.get_or_create(user=user)
+        
+        if request.method == "GET":
+            serializer = UserPermissionsSerializer(permissions)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        elif request.method == "PATCH":
+            serializer = UserPermissionsSerializer(
+                permissions, 
+                data=request.data, 
+                partial=True
+            )
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserProfileViewSet(viewsets.ReadOnlyModelViewSet):

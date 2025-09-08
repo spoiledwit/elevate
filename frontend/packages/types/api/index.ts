@@ -70,6 +70,7 @@ export type { PatchedMedia } from './models/PatchedMedia';
 export type { PatchedSocialIcon } from './models/PatchedSocialIcon';
 export type { PatchedSocialMediaPost } from './models/PatchedSocialMediaPost';
 export type { PatchedUserCurrent } from './models/PatchedUserCurrent';
+export type { PatchedUserPermissions } from './models/PatchedUserPermissions';
 export type { PatchedUserProfile } from './models/PatchedUserProfile';
 export type { PinterestAuthUrl } from './models/PinterestAuthUrl';
 export type { PinterestConnection } from './models/PinterestConnection';
@@ -99,6 +100,7 @@ export type { UserCreate } from './models/UserCreate';
 export type { UserCreateError } from './models/UserCreateError';
 export type { UserCurrent } from './models/UserCurrent';
 export type { UserCurrentError } from './models/UserCurrentError';
+export type { UserPermissions } from './models/UserPermissions';
 export type { UserProfile } from './models/UserProfile';
 export type { UserProfilePublic } from './models/UserProfilePublic';
 

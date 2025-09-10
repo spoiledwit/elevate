@@ -25,6 +25,7 @@ import { SchemaService } from './services/SchemaService';
 import { StorefrontService } from './services/StorefrontService';
 import { SubscriptionsService } from './services/SubscriptionsService';
 import { TokenService } from './services/TokenService';
+import { UploadService } from './services/UploadService';
 import { UsersService } from './services/UsersService';
 import { WebhooksService } from './services/WebhooksService';
 type HttpRequestConstructor = new (config: OpenAPIConfig) => BaseHttpRequest;
@@ -49,6 +50,7 @@ export class ApiClient {
     public readonly storefront: StorefrontService;
     public readonly subscriptions: SubscriptionsService;
     public readonly token: TokenService;
+    public readonly upload: UploadService;
     public readonly users: UsersService;
     public readonly webhooks: WebhooksService;
     public readonly request: BaseHttpRequest;
@@ -84,6 +86,7 @@ export class ApiClient {
         this.storefront = new StorefrontService(this.request);
         this.subscriptions = new SubscriptionsService(this.request);
         this.token = new TokenService(this.request);
+        this.upload = new UploadService(this.request);
         this.users = new UsersService(this.request);
         this.webhooks = new WebhooksService(this.request);
     }

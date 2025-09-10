@@ -2,44 +2,40 @@
 
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
+import { toast } from 'sonner'
 import {
   Store,
   Link,
-  Megaphone,
-  Eye,
-  Settings,
-  ExternalLink,
   Users,
-  MousePointerClick
+  MousePointerClick,
+  Copy,
+  Check
 } from 'lucide-react'
-import { StorefrontPreview } from './StorefrontPreview'
 import { StorefrontEditor } from './StorefrontEditor'
-import { QuickActions } from './QuickActions'
 
 interface StorefrontDashboardProps {
   initialProfile: any
   initialCustomLinks: any[]
-  initialCtaBanner: any
   initialDashboardStats: any
 }
 
 export function StorefrontDashboard({
   initialProfile,
   initialCustomLinks,
-  initialCtaBanner,
   initialDashboardStats
 }: StorefrontDashboardProps) {
   const { data: session } = useSession()
-  const [profile, setProfile] = useState(initialProfile)
-  const [customLinks, setCustomLinks] = useState(initialCustomLinks)
-  const [ctaBanner, setCtaBanner] = useState(initialCtaBanner)
-  const [dashboardStats, setDashboardStats] = useState(initialDashboardStats)
-  const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor')
+  const [profile] = useState(initialProfile)
+  const [customLinks] = useState(initialCustomLinks)
+  const [dashboardStats] = useState(initialDashboardStats)
 
   return (
     <div className="flex-1 bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div 
+        className="bg-white"
+        style={{ boxShadow: 'rgba(0, 0, 0, 0.02) 0px 2px 8px' }}
+      >
         <div className="px-6 py-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-between">
@@ -55,42 +51,62 @@ export function StorefrontDashboard({
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                {profile && (
+              {profile && (
+                <div className="flex items-center gap-2">
                   <a
                     href={`/${session?.user?.username}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                    className="text-purple-600 hover:text-purple-700 transition-colors font-medium text-base"
                   >
-                    <ExternalLink className="w-4 h-4" />
-                    View Live
+                    elevate.social/{session?.user?.username}
                   </a>
-                )}
-
-                <div className="flex bg-gray-100 rounded-lg p-1">
                   <button
-                    onClick={() => setActiveTab('editor')}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'editor'
-                      ? 'bg-white text-gray-900 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                      }`}
+                    onClick={() => {
+                      navigator.clipboard.writeText(`https://elevate.social/${session?.user?.username}`)
+                      toast.custom(
+                        (t) => (
+                          <div 
+                            className="text-white px-6 py-4 rounded-2xl shadow-lg flex items-center justify-between min-w-80"
+                            style={{ 
+                              backgroundColor: '#7c3aed',
+                              border: 'none',
+                              boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'
+                            }}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                                <Check className="w-4 h-4 text-white" />
+                              </div>
+                              <span className="font-medium">URL Copied!</span>
+                            </div>
+                            <button
+                              onClick={() => toast.dismiss(t)}
+                              className="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg text-sm font-medium transition-colors text-white"
+                            >
+                              OK
+                            </button>
+                          </div>
+                        ),
+                        {
+                          duration: 4000,
+                          unstyled: true,
+                          style: {
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            boxShadow: 'none',
+                            padding: '0'
+                          }
+                        }
+                      )
+                    }}
+                    className="p-1.5 text-purple-600 hover:text-purple-700 transition-colors"
+                    title="Copy link"
                   >
-                    <Settings className="w-4 h-4 mr-2 inline" />
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('preview')}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'preview'
-                      ? 'bg-white text-gray-900 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                  >
-                    <Eye className="w-4 h-4 mr-2 inline" />
-                    Preview
+                    <Copy className="w-4 h-4" />
                   </button>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -100,7 +116,10 @@ export function StorefrontDashboard({
         <div className="max-w-7xl mx-auto">
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <div 
+              className="bg-white rounded-xl p-6"
+              style={{ boxShadow: 'rgba(0, 0, 0, 0.02) 0px 2px 8px' }}
+            >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                   <Users className="w-5 h-5 text-blue-600" />
@@ -114,7 +133,10 @@ export function StorefrontDashboard({
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <div 
+              className="bg-white rounded-xl p-6"
+              style={{ boxShadow: 'rgba(0, 0, 0, 0.02) 0px 2px 8px' }}
+            >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                   <MousePointerClick className="w-5 h-5 text-green-600" />
@@ -128,7 +150,10 @@ export function StorefrontDashboard({
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <div 
+              className="bg-white rounded-xl p-6"
+              style={{ boxShadow: 'rgba(0, 0, 0, 0.02) 0px 2px 8px' }}
+            >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                   <Link className="w-5 h-5 text-purple-600" />
@@ -143,67 +168,37 @@ export function StorefrontDashboard({
             </div>
           </div>
 
-          {/* Main Content */}
+          {/* Main Content with Mobile Preview */}
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-            {/* Editor/Preview Area */}
+            {/* Editor Area */}
             <div className="xl:col-span-2">
-              {activeTab === 'editor' ? (
-                <StorefrontEditor
-                  profile={profile}
-                  onUpdate={() => { }}
-                />
-              ) : (
-                <StorefrontPreview
-                  profile={profile}
-                  customLinks={customLinks}
-                  ctaBanner={ctaBanner}
-                />
-              )}
+              <StorefrontEditor
+                profile={profile}
+                onUpdate={() => { }}
+              />
             </div>
 
-            {/* Sidebar */}
-            <div className="space-y-6">
-              <QuickActions
-                customLinksCount={customLinks.length}
-                hasCtaBanner={!!ctaBanner}
-                onUpdate={() => {
-                  // Could trigger a refresh of data if needed
-                  // For now, the individual components handle their own updates
+            {/* Mobile Preview */}
+            <div className="flex items-start justify-center">
+              <div 
+                className="w-80 h-[700px] bg-white rounded-[2rem] sticky top-6 p-4"
+                style={{
+                  boxShadow: 'rgba(50, 50, 93, 0.25) 0px 50px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px, rgba(10, 37, 64, 0.35) 0px -2px 6px 0px inset'
                 }}
-              />
-
-              {/* Quick Setup Guide */}
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Setup</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-5 h-5 rounded-full flex items-center justify-center ${profile?.profile_image ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
-                      }`}>
-                      {profile?.profile_image ? '✓' : '1'}
-                    </div>
-                    <span className="text-sm text-gray-600">Upload profile image</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className={`w-5 h-5 rounded-full flex items-center justify-center ${profile?.bio ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
-                      }`}>
-                      {profile?.bio ? '✓' : '2'}
-                    </div>
-                    <span className="text-sm text-gray-600">Write your bio</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className={`w-5 h-5 rounded-full flex items-center justify-center ${customLinks.length > 0 ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
-                      }`}>
-                      {customLinks.length > 0 ? '✓' : '3'}
-                    </div>
-                    <span className="text-sm text-gray-600">Add custom links</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className={`w-5 h-5 rounded-full flex items-center justify-center ${ctaBanner ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
-                      }`}>
-                      {ctaBanner ? '✓' : '4'}
-                    </div>
-                    <span className="text-sm text-gray-600">Create CTA banner</span>
-                  </div>
+              >
+                <div className="w-full h-full rounded-xl overflow-hidden">
+                  <iframe
+                    src={`/${session?.user?.username}`}
+                    className="w-full h-full"
+                    style={{ 
+                      transform: 'scale(0.9)', 
+                      transformOrigin: 'top left', 
+                      width: '111%', 
+                      height: '111%',
+                      border: 'none',
+                      outline: 'none'
+                    }}
+                  />
                 </div>
               </div>
             </div>

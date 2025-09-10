@@ -1,61 +1,204 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { 
-  X, 
-  Save, 
-  Link, 
-  Type, 
-  Upload, 
+import React, { useState, useRef } from 'react'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import { ThumbnailPreviewer } from './ThumbnailPreviewer'
+import { CheckoutPreviewer } from './CheckoutPreviewer'
+import { TinyMCEEditor } from '@/components/TinyMCEEditor'
+import { createNewProductAction, type NewProductCreateData } from '@/actions'
+import digitalProductImg from '@/assets/product-types/ditialProduct.png'
+import customProductImg from '@/assets/product-types/product.png'
+import eCourseImg from '@/assets/product-types/eCourse.png'
+import urlMediaImg from '@/assets/product-types/media.png'
+import {
+  Plus,
+  FileText,
+  Package,
+  GraduationCap,
+  Link,
+  ArrowRight,
   Image as ImageIcon,
-  Eye,
-  EyeOff,
-  Loader2,
-  ExternalLink
+  X,
+  DollarSign,
+  Tag,
+  ShoppingCart,
+  Download,
+  BookOpen,
+  Clock,
+  ExternalLink,
+  PlusCircle,
+  User,
+  Mail,
+  Trash2,
+  Type,
+  Hash,
+  AlignLeft,
+  List,
+  CheckSquare,
+  Circle,
+  Phone,
+  Globe,
+  Settings
 } from 'lucide-react'
-import { 
-  createCustomLinkAction,
-  updateCustomLinkAction,
-  createCustomLinkWithFileAction,
-  updateCustomLinkWithFileAction,
-  createCustomLinkFormData
-} from '@/actions'
-import { validateUrl } from '@/lib/storefront-utils'
 
 interface LinkFormProps {
   link?: any
-  onClose: () => void
-  onComplete: () => void
 }
 
-export function LinkForm({ link, onClose, onComplete }: LinkFormProps) {
-  const [formData, setFormData] = useState({
-    text: link?.text || '',
-    url: link?.url || '',
-    is_active: link?.is_active ?? true,
-  })
-  
+type ProductType = 'digital' | 'custom' | 'ecourse' | 'url-media' | null
+
+export function LinkForm({ link }: LinkFormProps) {
+  const router = useRouter()
+  const [selectedType, setSelectedType] = useState<ProductType>(null)
+  const [selectedStyle, setSelectedStyle] = useState<'button' | 'callout' | null>('callout')
+  const [step, setStep] = useState(1)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Thumbnail state
   const [thumbnail, setThumbnail] = useState<File | null>(null)
-  const [thumbnailPreview, setThumbnailPreview] = useState(link?.thumbnail || '')
-  const [isLoading, setIsLoading] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [thumbnailPreview, setThumbnailPreview] = useState<string>('')
+  const [title, setTitle] = useState('')
+  const [subtitle, setSubtitle] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }))
+  // Checkout state
+  const [checkoutImage, setCheckoutImage] = useState<File | null>(null)
+  const [checkoutImagePreview, setCheckoutImagePreview] = useState<string>('')
+  const [checkoutTitle, setCheckoutTitle] = useState('')
+  const [checkoutDescription, setCheckoutDescription] = useState('')
+  const [checkoutBottomTitle, setCheckoutBottomTitle] = useState('')
+  const [checkoutCtaButtonText, setCheckoutCtaButtonText] = useState('Buy Now')
+  const [checkoutPrice, setCheckoutPrice] = useState('')
+  const [checkoutDiscountedPrice, setCheckoutDiscountedPrice] = useState('')
+  const checkoutFileInputRef = useRef<HTMLInputElement>(null)
+
+  // Product-specific state
+  const [digitalFileUrl, setDigitalFileUrl] = useState('')
+  const [downloadInstructions, setDownloadInstructions] = useState('')
+  const [customFields, setCustomFields] = useState<{ label: string; value: string }[]>([])
+  const [courseModules, setCourseModules] = useState<string[]>([''])
+  const [courseDuration, setCourseDuration] = useState('')
+  const [mediaUrl, setMediaUrl] = useState('')
+  const [buttonText, setButtonText] = useState('View Content')
+
+  // Collect info fields state - prefilled with name and email
+  const [collectInfoFields, setCollectInfoFields] = useState<{
+    field_type: string;
+    label: string;
+    placeholder?: string;
+    is_required: boolean;
+    options?: string[];
+    order: number;
+  }[]>([
+    {
+      field_type: 'text',
+      label: 'Full Name',
+      placeholder: 'Enter your full name',
+      is_required: true,
+      order: 1
+    },
+    {
+      field_type: 'email',
+      label: 'Email Address',
+      placeholder: 'Enter your email address',
+      is_required: true,
+      order: 2
+    }
+  ])
+  const [collectInfoErrors, setCollectInfoErrors] = useState<Record<number, string>>({})
+  // Store raw options text for each field to allow proper editing
+  const [optionsText, setOptionsText] = useState<Record<number, string>>({})
+  const [showFieldTypeDropdown, setShowFieldTypeDropdown] = useState(false)
+
+  const productTypes = [
+    {
+      id: 'digital' as const,
+      title: 'Digital Product',
+      description: 'Sell digital downloads like PDFs, images, audio files, or software',
+      icon: FileText,
+      color: 'bg-blue-50 border-blue-200 text-blue-600',
+      image: digitalProductImg
+    },
+    {
+      id: 'custom' as const,
+      title: 'Custom Product',
+      description: 'Create a custom product with your own fields and pricing',
+      icon: Package,
+      color: 'bg-purple-50 border-purple-200 text-purple-600',
+      image: customProductImg
+    },
+    {
+      id: 'ecourse' as const,
+      title: 'eCourse',
+      description: 'Create and sell online courses with lessons and content',
+      icon: GraduationCap,
+      color: 'bg-green-50 border-green-200 text-green-600',
+      image: eCourseImg
+    },
+    {
+      id: 'url-media' as const,
+      title: 'URL/Media',
+      description: 'Simple link to external content or media files',
+      icon: Link,
+      color: 'bg-orange-50 border-orange-200 text-orange-600',
+      image: urlMediaImg
+    }
+  ]
+
+  const handleTypeSelect = (type: ProductType) => {
+    setSelectedType(type)
+    setStep(2) // Immediately go to next step
+  }
+
+  const handleContinue = () => {
+    if (step === 1 && selectedType) {
+      setStep(2)
+    } else if (step === 2 && title.trim() && selectedStyle && checkoutPrice) {
+      setStep(3)
+    } else if (step === 3) {
+      // Always go to collect info step (step 4)
+      setStep(4)
+    } else if (step === 4) {
+      // Validate collect info fields before continuing
+      if (validateCollectInfoFields()) {
+        setStep(5)
+      } else {
+        toast.error('Please fix the errors in your information fields')
+      }
+    }
+  }
+
+  const handleBack = () => {
+    if (step > 1) {
+      setStep(step - 1)
+    } else {
+      router.push('/custom-links')
     }
   }
 
   const handleThumbnailSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file')
+        return
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image size must be less than 5MB')
+        return
+      }
+
       setThumbnail(file)
-      // Show preview
+
+      // Create preview
       const reader = new FileReader()
-      reader.onload = (e) => setThumbnailPreview(e.target?.result as string)
+      reader.onload = (e) => {
+        setThumbnailPreview(e.target?.result as string)
+      }
       reader.readAsDataURL(file)
     }
   }
@@ -68,280 +211,1189 @@ export function LinkForm({ link, onClose, onComplete }: LinkFormProps) {
     }
   }
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {}
+  const handleCheckoutImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file')
+        return
+      }
 
-    if (!formData.text.trim()) {
-      newErrors.text = 'Link text is required'
-    } else if (formData.text.length > 100) {
-      newErrors.text = 'Link text must be 100 characters or less'
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image size must be less than 5MB')
+        return
+      }
+
+      setCheckoutImage(file)
+
+      // Create preview
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setCheckoutImagePreview(e.target?.result as string)
+      }
+      reader.readAsDataURL(file)
     }
-
-    if (!formData.url.trim()) {
-      newErrors.url = 'URL is required'
-    } else if (!validateUrl(formData.url)) {
-      newErrors.url = 'Please enter a valid URL (include https://)'
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!validateForm()) {
+  const removeCheckoutImage = () => {
+    setCheckoutImage(null)
+    setCheckoutImagePreview('')
+    if (checkoutFileInputRef.current) {
+      checkoutFileInputRef.current.value = ''
+    }
+  }
+
+  // Collect info field helpers
+  const addCollectInfoField = () => {
+    setCollectInfoFields([
+      ...collectInfoFields,
+      {
+        field_type: 'text',
+        label: '',
+        placeholder: '',
+        is_required: false,
+        order: collectInfoFields.length + 1
+      }
+    ])
+  }
+
+  const addCollectInfoFieldWithType = (fieldType: string) => {
+    const fieldTypeOption = fieldTypeOptions.find(opt => opt.value === fieldType)
+    setCollectInfoFields([
+      ...collectInfoFields,
+      {
+        field_type: fieldType,
+        label: fieldTypeOption?.label.replace(/\s*Field$/, '') || '',
+        placeholder: '',
+        is_required: false,
+        options: ['select', 'checkbox', 'radio'].includes(fieldType) ? ['Option 1'] : undefined,
+        order: collectInfoFields.length + 1
+      }
+    ])
+  }
+
+  const removeCollectInfoField = (index: number) => {
+    // Prevent deletion of the first two fields (name and email)
+    if (index < 2) {
       return
     }
 
+    setCollectInfoFields(collectInfoFields.filter((_, i) => i !== index))
+    // Clean up options text state
+    setOptionsText(prev => {
+      const updated = { ...prev }
+      delete updated[index]
+      // Re-index remaining entries
+      const newOptionsText: Record<number, string> = {}
+      Object.entries(updated).forEach(([key, value]) => {
+        const oldIndex = parseInt(key)
+        if (oldIndex > index) {
+          newOptionsText[oldIndex - 1] = value
+        } else {
+          newOptionsText[oldIndex] = value
+        }
+      })
+      return newOptionsText
+    })
+  }
+
+  const updateCollectInfoField = (index: number, field: Partial<typeof collectInfoFields[0]>) => {
+    const updated = [...collectInfoFields]
+    updated[index] = { ...updated[index], ...field }
+    setCollectInfoFields(updated)
+
+    // Clear error for this field when it's updated
+    if (collectInfoErrors[index]) {
+      const newErrors = { ...collectInfoErrors }
+      delete newErrors[index]
+      setCollectInfoErrors(newErrors)
+    }
+  }
+
+  const fieldTypeOptions = [
+    { value: 'text', label: 'Text Input', icon: Type },
+    { value: 'email', label: 'Email', icon: Mail },
+    { value: 'number', label: 'Number', icon: Hash },
+    { value: 'textarea', label: 'Long Text', icon: AlignLeft },
+    { value: 'select', label: 'Dropdown', icon: List },
+    { value: 'checkbox', label: 'Checkboxes', icon: CheckSquare },
+    { value: 'radio', label: 'Radio Buttons', icon: Circle },
+    { value: 'tel', label: 'Phone', icon: Phone },
+    { value: 'url', label: 'Website URL', icon: Globe }
+  ]
+
+  // Validate collect info fields
+  const validateCollectInfoFields = () => {
+    const errors: Record<number, string> = {}
+
+    collectInfoFields.forEach((field, index) => {
+      // Validate label
+      if (!field.label.trim()) {
+        errors[index] = 'Field label is required'
+        return
+      }
+
+      // Validate options for select/checkbox/radio fields
+      if (['select', 'checkbox', 'radio'].includes(field.field_type)) {
+        if (!field.options || field.options.length === 0) {
+          errors[index] = `Options are required for ${fieldTypeOptions.find(opt => opt.value === field.field_type)?.label} fields`
+          return
+        }
+
+        // Check for empty options
+        if (field.options.some(option => !option.trim())) {
+          errors[index] = 'All options must have values (no empty options)'
+          return
+        }
+      }
+    })
+
+    setCollectInfoErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
+  const handleCreateProduct = async () => {
+    if (isSubmitting) return
+
+    setIsSubmitting(true)
+
     try {
-      setIsLoading(true)
-
-      let result
-
-      // If we have a thumbnail file, use FormData
-      if (thumbnail) {
-        const formDataObj = await createCustomLinkFormData(formData, thumbnail)
-        
-        if (link) {
-          // Update existing link with file
-          result = await updateCustomLinkWithFileAction(link.id, formDataObj)
-        } else {
-          // Create new link with file
-          result = await createCustomLinkWithFileAction(formDataObj)
-        }
-      } else {
-        // No thumbnail file, use regular JSON submission
-        const submitData = { ...formData }
-
-        if (link) {
-          // Update existing link without file
-          result = await updateCustomLinkAction(link.id, submitData)
-        } else {
-          // Create new link without file
-          result = await createCustomLinkAction(submitData)
+      // Map product type to backend format
+      const getProductTypeKey = (type: ProductType): string => {
+        switch (type) {
+          case 'digital': return 'digital_product'
+          case 'custom': return 'custom_product'
+          case 'ecourse': return 'ecourse'
+          case 'url-media': return 'url_media'
+          default: return 'generic'
         }
       }
 
-      if ('error' in result) {
-        console.error('Error saving link:', result.error)
-        setErrors({ general: result.error })
-      } else {
-        onComplete()
+      // Prepare additional info based on product type
+      let additionalInfo: any = {}
+
+      if (selectedType === 'digital') {
+        additionalInfo = {
+          digital_file_url: digitalFileUrl,
+          download_instructions: downloadInstructions
+        }
+      } else if (selectedType === 'custom') {
+        additionalInfo = {
+          custom_fields: customFields.filter(field => field.label.trim() && field.value.trim())
+        }
+      } else if (selectedType === 'ecourse') {
+        additionalInfo = {
+          course_duration: courseDuration,
+          course_modules: courseModules.filter(module => module.trim())
+        }
+      } else if (selectedType === 'url-media') {
+        additionalInfo = {
+          destination_url: mediaUrl,
+          button_text: buttonText
+        }
       }
+
+      // Prepare product data
+      const productData: NewProductCreateData = {
+        type: getProductTypeKey(selectedType),
+        thumbnail: thumbnail,
+        title: title.trim(),
+        subtitle: subtitle.trim() || undefined,
+        button_text: checkoutCtaButtonText,
+        style: selectedStyle || undefined,
+        checkout_image: checkoutImage,
+        checkout_title: checkoutTitle.trim() || undefined,
+        checkout_description: checkoutDescription.trim() || undefined,
+        checkout_bottom_title: checkoutBottomTitle.trim() || undefined,
+        checkout_cta_button_text: checkoutCtaButtonText,
+        checkout_price: checkoutPrice || undefined,
+        checkout_discounted_price: checkoutDiscountedPrice || undefined,
+        additional_info: Object.keys(additionalInfo).length > 0 ? additionalInfo : undefined,
+        collect_info_fields_data: collectInfoFields.length > 0 ? collectInfoFields : undefined,
+        is_active: true,
+        order: 0
+      }
+
+      // Create the product
+      const result = await createNewProductAction(productData)
+
+      if (result.error) {
+        toast.error(`Failed to create product: ${result.error}`)
+      } else {
+        toast.success('Product created successfully!')
+        router.push('/custom-links')
+      }
+
     } catch (error) {
-      console.error('Error saving link:', error)
-      setErrors({ general: 'Failed to save link. Please try again.' })
+      console.error('Error creating product:', error)
+      toast.error('An unexpected error occurred')
     } finally {
-      setIsLoading(false)
+      setIsSubmitting(false)
     }
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Link className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">
-                {link ? 'Edit Link' : 'Add New Link'}
-              </h2>
-              <p className="text-sm text-gray-600">
-                Create a custom button for your storefront
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* General Error */}
-          {errors.general && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-sm font-medium text-red-800">{errors.general}</p>
-            </div>
-          )}
-
-          {/* Link Text */}
+    <div className={`w-full ${step >= 2 ? 'bg-white px-6' : ''}`}>
+      {/* Header */}
+      <div className="py-6 border-b border-gray-200">
+        <div className="flex items-center gap-3">
           <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
-              Button Text *
-            </label>
-            <div className="relative">
-              <Type className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                value={formData.text}
-                onChange={(e) => handleInputChange('text', e.target.value)}
-                placeholder="e.g., Visit My Website, Shop Now, Contact Me"
-                className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                  errors.text ? 'border-red-300' : 'border-gray-300'
-                }`}
-                maxLength={100}
-              />
-            </div>
-            {errors.text && (
-              <p className="mt-1 text-sm text-red-600">{errors.text}</p>
-            )}
-            <div className="flex justify-between items-center mt-1">
-              <p className="text-xs text-gray-500">
-                This text will appear on the button
-              </p>
-              <span className="text-xs text-gray-400">{formData.text.length}/100</span>
-            </div>
-          </div>
-
-          {/* URL */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
-              Destination URL *
-            </label>
-            <div className="relative">
-              <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="url"
-                value={formData.url}
-                onChange={(e) => handleInputChange('url', e.target.value)}
-                placeholder="https://example.com"
-                className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                  errors.url ? 'border-red-300' : 'border-gray-300'
-                }`}
-              />
-              {formData.url && validateUrl(formData.url) && (
-                <a
-                  href={formData.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  title="Test link"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </a>
-              )}
-            </div>
-            {errors.url && (
-              <p className="mt-1 text-sm text-red-600">{errors.url}</p>
-            )}
-            <p className="text-xs text-gray-500 mt-1">
-              Include https:// for external links
+            <h2 className="text-xl font-semibold text-gray-900">
+              {link ? 'Edit Product' : 'Add New Product'}
+            </h2>
+            <p className="text-sm text-gray-600">
+              Step {step} of 5: {
+                step === 1 ? 'Choose your product type' :
+                  step === 2 ? 'Add basic information' :
+                    step === 3 ? 'Configure checkout & pricing' :
+                      step === 4 ? 'Information to collect' :
+                        'Product-specific details'
+              }
             </p>
           </div>
+        </div>
+      </div>
 
-          {/* Thumbnail */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
-              Button Thumbnail (Optional)
-            </label>
-            
-            {thumbnailPreview ? (
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                  <img 
-                    src={thumbnailPreview} 
-                    alt="Thumbnail preview"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">Thumbnail uploaded</p>
-                  <p className="text-xs text-gray-600">This will appear above your button text</p>
-                </div>
+      {/* Step 1: Product Type Selection */}
+      {step === 1 && (
+        <div className="pt-6">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            {productTypes.map((type) => {
+              const isSelected = selectedType === type.id
+
+              return (
                 <button
+                  key={type.id}
                   type="button"
-                  onClick={removeThumbnail}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  onClick={() => handleTypeSelect(type.id)}
+                  className="p-2 rounded-2xl text-left transition-all duration-200 bg-white hover:shadow-md"
+                  style={{ boxShadow: 'rgba(0, 0, 0, 0.02) 0px 2px 8px' }}
                 >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-colors"
-              >
-                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                  <ImageIcon className="w-6 h-6 text-gray-400" />
-                </div>
-                <p className="text-sm font-medium text-gray-900 mb-1">Upload thumbnail image</p>
-                <p className="text-xs text-gray-600">PNG, JPG or GIF up to 2MB</p>
-              </div>
-            )}
+                  <div className="flex items-center gap-4">
+                    {/* Icon Section */}
+                    <div className={`
+                      w-24 h-24 rounded-2xl flex items-center justify-center flex-shrink-0
+                      ${type.color.split(' ')[0]}
+                    `}>
+                      <img
+                        src={type.image.src}
+                        alt={type.title}
+                        className="w-24 h-24 object-contain"
+                      />
+                    </div>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleThumbnailSelect}
-              className="hidden"
-            />
+                    {/* Content Section */}
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-lg mb-1 text-gray-900">
+                        {type.title}
+                      </h4>
+                      <p className="text-sm leading-relaxed text-gray-600">
+                        {type.description}
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              )
+            })}
           </div>
 
-          {/* Visibility Toggle */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-medium text-gray-900">Link Visibility</h3>
-                {formData.is_active ? (
-                  <Eye className="w-4 h-4 text-green-600" />
+        </div>
+      )}
+
+      {/* Step 2: Product Details */}
+      {step === 2 && (
+        <div className="p-6">
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Form Column */}
+            <div className="space-y-6">
+              {/* Thumbnail Upload */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Product Thumbnail
+                </label>
+
+                {thumbnailPreview ? (
+                  <div className="flex items-center gap-4">
+                    <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                      <img
+                        src={thumbnailPreview}
+                        alt="Thumbnail preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900">Thumbnail uploaded</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={removeThumbnail}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Remove thumbnail"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
                 ) : (
-                  <EyeOff className="w-4 h-4 text-gray-400" />
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-colors"
+                  >
+                    <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                      <ImageIcon className="w-6 h-6 text-gray-400" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-900 mb-1">
+                      Click to upload thumbnail
+                    </p>
+                  </div>
                 )}
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleThumbnailSelect}
+                  className="hidden"
+                />
               </div>
-              <p className="text-sm text-gray-600">
-                {formData.is_active 
-                  ? 'This link will be visible on your storefront'
-                  : 'This link will be hidden from your storefront'
-                }
-              </p>
+
+              {/* Title Field */}
+              <div>
+                <label htmlFor="title" className="block text-sm font-semibold text-gray-900 mb-2">
+                  Product Title
+                </label>
+                <input
+                  type="text"
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Enter a catchy title for your product"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                  maxLength={100}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  {title.length}/100 characters
+                </p>
+              </div>
+
+              {/* Subtitle Field */}
+              <div>
+                <label htmlFor="subtitle" className="block text-sm font-semibold text-gray-900 mb-2">
+                  Product Subtitle <span className="text-gray-400 font-normal">(Optional)</span>
+                </label>
+                <input
+                  type="text"
+                  id="subtitle"
+                  value={subtitle}
+                  onChange={(e) => setSubtitle(e.target.value)}
+                  placeholder="Brief description or tagline"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                  maxLength={150}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  {subtitle.length}/150 characters
+                </p>
+              </div>
+
+
+              {/* Style Selection */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-3">
+                  Display Style
+                </label>
+                <div className="grid grid-cols-2 gap-4 max-w-sm">
+                  {/* Button Style */}
+                  <button
+                    type="button"
+                    onClick={() => setSelectedStyle('button')}
+                    className={`
+                      p-4 rounded-2xl text-center transition-all duration-200 bg-white hover:shadow-md border-2
+                      ${selectedStyle === 'button' 
+                        ? 'bg-gray-100 border-gray-300' 
+                        : 'border-transparent'
+                      }
+                    `}
+                    style={{ boxShadow: 'rgba(0, 0, 0, 0.02) 0px 2px 8px' }}
+                  >
+                    <div className="flex flex-col items-center gap-3">
+                      {/* Icon */}
+                      <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <div className="w-6 h-4 rounded border-2 border-gray-800"></div>
+                      </div>
+                      {/* Label */}
+                      <span className="text-lg font-semibold text-gray-900">Button</span>
+                    </div>
+                  </button>
+
+                  {/* Callout Style */}
+                  <button
+                    type="button"
+                    onClick={() => setSelectedStyle('callout')}
+                    className={`
+                      p-4 rounded-2xl text-center transition-all duration-200 bg-white hover:shadow-md border-2
+                      ${selectedStyle === 'callout' 
+                        ? 'bg-gray-100 border-gray-300' 
+                        : 'border-transparent'
+                      }
+                    `}
+                    style={{ boxShadow: 'rgba(0, 0, 0, 0.02) 0px 2px 8px' }}
+                  >
+                    <div className="flex flex-col items-center gap-3">
+                      {/* Icon */}
+                      <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <div className="w-6 h-5 rounded border-2 border-gray-800 relative">
+                          <div className="absolute top-1 left-1 w-4 h-0.5 bg-gray-600 rounded-full"></div>
+                          <div className="absolute top-2 left-1 w-3 h-0.5 bg-gray-600 rounded-full"></div>
+                        </div>
+                      </div>
+                      {/* Label */}
+                      <span className="text-lg font-semibold text-gray-900">Callout</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Pricing Section */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-3">
+                  Pricing
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Regular Price */}
+                  <div>
+                    <label htmlFor="checkout-price" className="block text-sm font-medium text-gray-700 mb-2">
+                      Price <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type="number"
+                        id="checkout-price"
+                        value={checkoutPrice}
+                        onChange={(e) => setCheckoutPrice(e.target.value)}
+                        placeholder="99.00"
+                        step="0.01"
+                        min="0"
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Discounted Price */}
+                  <div>
+                    <label htmlFor="checkout-discounted-price" className="block text-sm font-medium text-gray-700 mb-2">
+                      Sale Price <span className="text-gray-400 font-normal">(Optional)</span>
+                    </label>
+                    <div className="relative">
+                      <Tag className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type="number"
+                        id="checkout-discounted-price"
+                        value={checkoutDiscountedPrice}
+                        onChange={(e) => setCheckoutDiscountedPrice(e.target.value)}
+                        placeholder="79.00"
+                        step="0.01"
+                        min="0"
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                      />
+                    </div>
+                    {checkoutDiscountedPrice && checkoutPrice && parseFloat(checkoutDiscountedPrice) >= parseFloat(checkoutPrice) && (
+                      <p className="mt-1 text-xs text-red-600">Sale price should be less than regular price</p>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
-            <button
-              type="button"
-              onClick={() => handleInputChange('is_active', !formData.is_active)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                formData.is_active ? 'bg-purple-600' : 'bg-gray-200'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  formData.is_active ? 'translate-x-6' : 'translate-x-1'
-                }`}
+
+            {/* Preview Column */}
+            <div className="lg:sticky lg:top-6">
+              <ThumbnailPreviewer
+                productType={selectedType}
+                thumbnail={thumbnailPreview}
+                title={title}
+                subtitle={subtitle}
+                displayStyle={selectedStyle}
+                buttonText="View"
+                price={checkoutPrice || "0.00"}
+                discountedPrice={checkoutDiscountedPrice}
               />
-            </button>
+            </div>
           </div>
 
           {/* Form Actions */}
-          <div className="flex gap-3 pt-4 border-t border-gray-200">
+          <div className="flex gap-3 pt-6 mt-6 border-t border-gray-200">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleBack}
               className="flex-1 px-4 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
             >
-              Cancel
+              Back
             </button>
             <button
-              type="submit"
-              disabled={isLoading}
+              type="button"
+              onClick={handleContinue}
+              disabled={!title.trim() || !selectedStyle || !checkoutPrice}
               className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
-              {isLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4" />
-              )}
-              {isLoading ? 'Saving...' : (link ? 'Update Link' : 'Create Link')}
+              Continue
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
-        </form>
-      </div>
+        </div>
+      )}
+
+      {/* Step 3: Checkout & Pricing */}
+      {step === 3 && (
+        <div className="p-6">
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Form Column */}
+            <div className="space-y-6">
+              {/* Checkout Image */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Checkout Page Image <span className="text-gray-400 font-normal">(Optional)</span>
+                </label>
+
+                {checkoutImagePreview ? (
+                  <div className="flex items-center gap-4">
+                    <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                      <img
+                        src={checkoutImagePreview}
+                        alt="Checkout image preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900">Checkout image uploaded</p>
+                      <p className="text-xs text-gray-600">
+                        This image will be displayed on the checkout page
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={removeCheckoutImage}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Remove checkout image"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => checkoutFileInputRef.current?.click()}
+                    className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-colors"
+                  >
+                    <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                      <ShoppingCart className="w-6 h-6 text-gray-400" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-900 mb-1">
+                      Add checkout page image
+                    </p>
+                  </div>
+                )}
+
+                <input
+                  ref={checkoutFileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleCheckoutImageSelect}
+                  className="hidden"
+                />
+              </div>
+
+              {/* Checkout Title */}
+              <div>
+                <label htmlFor="checkout-title" className="block text-sm font-semibold text-gray-900 mb-2">
+                  Checkout Page Title
+                </label>
+                <input
+                  type="text"
+                  id="checkout-title"
+                  value={checkoutTitle}
+                  onChange={(e) => setCheckoutTitle(e.target.value)}
+                  placeholder="e.g., Premium Course Bundle"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                  maxLength={100}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  {checkoutTitle.length}/100 characters
+                </p>
+              </div>
+
+              {/* Checkout Description */}
+              <div>
+                <label htmlFor="checkout-description" className="block text-sm font-semibold text-gray-900 mb-2">
+                  Product Description
+                </label>
+                <div className="border border-gray-300 rounded-lg overflow-hidden">
+                  <TinyMCEEditor
+                    value={checkoutDescription}
+                    onChange={setCheckoutDescription}
+                    height={300}
+                  />
+                </div>
+              </div>
+
+
+              {/* Bottom Title & CTA */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Bottom Title */}
+                <div>
+                  <label htmlFor="checkout-bottom-title" className="block text-sm font-semibold text-gray-900 mb-2">
+                    Bottom Section Title <span className="text-gray-400 font-normal">(Optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="checkout-bottom-title"
+                    value={checkoutBottomTitle}
+                    onChange={(e) => setCheckoutBottomTitle(e.target.value)}
+                    placeholder="e.g., What's included?"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                    maxLength={100}
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    {checkoutBottomTitle.length}/100 characters
+                  </p>
+                </div>
+
+                {/* CTA Button Text */}
+                <div>
+                  <label htmlFor="checkout-cta-button" className="block text-sm font-semibold text-gray-900 mb-2">
+                    Button Text
+                  </label>
+                  <input
+                    type="text"
+                    id="checkout-cta-button"
+                    value={checkoutCtaButtonText}
+                    onChange={(e) => setCheckoutCtaButtonText(e.target.value)}
+                    placeholder="Buy Now"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                    maxLength={50}
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    {checkoutCtaButtonText.length}/50 characters
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Preview Column */}
+            <div className="lg:sticky lg:top-6">
+              <CheckoutPreviewer
+                productType={selectedType}
+                thumbnail={checkoutImagePreview || thumbnailPreview}
+                title={title}
+                subtitle={subtitle}
+                checkoutTitle={checkoutTitle}
+                checkoutDescription={checkoutDescription}
+                checkoutBottomTitle={checkoutBottomTitle}
+                checkoutCtaButtonText={checkoutCtaButtonText}
+                price={checkoutPrice || "0.00"}
+                discountedPrice={checkoutDiscountedPrice}
+                customFields={customFields}
+                collectInfoFields={collectInfoFields}
+              />
+            </div>
+          </div>
+
+          {/* Form Actions */}
+          <div className="flex gap-3 pt-6 mt-6 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={handleBack}
+              className="flex-1 px-4 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+            >
+              Back
+            </button>
+            <button
+              type="button"
+              onClick={handleContinue}
+              disabled={false}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            >
+              Continue
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 4: Collect Info Fields Configuration */}
+      {step === 4 && (
+        <div className="p-6">
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Form Column */}
+            <div className="space-y-6">
+              {/* Fields Section */}
+              <div className="space-y-6">
+                <h4 className="text-lg font-semibold text-gray-900">Fields</h4>
+                <p className="text-sm text-gray-600">Basic info fields can't be edited</p>
+                
+                {/* Fixed Name and Email Fields */}
+                <div className="space-y-3">
+                  <div className="bg-gray-50 rounded-lg p-4 flex items-center gap-4">
+                    <User className="w-5 h-5 text-gray-600" />
+                    <span className="flex-1 text-gray-900">Name</span>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-4 flex items-center gap-4">
+                    <Mail className="w-5 h-5 text-gray-600" />
+                    <span className="flex-1 text-gray-900">Email</span>
+                  </div>
+                </div>
+
+                {/* Custom Fields */}
+                {collectInfoFields.length > 2 && (
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-600">Collect additional customer info</p>
+                    {collectInfoFields.slice(2).map((field, index) => {
+                      const actualIndex = index + 2
+                      const fieldIcon = fieldTypeOptions.find(opt => opt.value === field.field_type)?.icon
+                      
+                      return (
+                        <div key={actualIndex} className="bg-gray-50 rounded-lg p-4">
+                          {/* Field Header */}
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-4 flex-1">
+                              {fieldIcon && React.createElement(fieldIcon, { className: 'w-5 h-5 text-gray-600' })}
+                              <input
+                                type="text"
+                                value={field.label}
+                                onChange={(e) => updateCollectInfoField(actualIndex, { label: e.target.value })}
+                                className="flex-1 bg-transparent border-none text-gray-900 font-medium focus:outline-none"
+                                placeholder="Field title..."
+                              />
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className="text-sm text-gray-600">Required</span>
+                              <button
+                                type="button"
+                                onClick={() => updateCollectInfoField(actualIndex, { is_required: !field.is_required })}
+                                className={`w-12 h-6 rounded-full transition-colors relative ${
+                                  field.is_required ? 'bg-blue-500' : 'bg-gray-300'
+                                }`}
+                              >
+                                <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${
+                                  field.is_required ? 'translate-x-6' : 'translate-x-0.5'
+                                }`} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => removeCollectInfoField(actualIndex)}
+                                className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Options for select/checkbox/radio */}
+                          {['select', 'checkbox', 'radio'].includes(field.field_type) && (
+                            <div className="space-y-2 ml-9">
+                              {field.options?.map((option, optIndex) => (
+                                <div key={optIndex} className="flex items-center gap-3">
+                                  <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                                  <input
+                                    type="text"
+                                    value={option}
+                                    onChange={(e) => {
+                                      const newOptions = [...(field.options || [])]
+                                      newOptions[optIndex] = e.target.value
+                                      updateCollectInfoField(actualIndex, { options: newOptions })
+                                    }}
+                                    className="flex-1 bg-transparent border-none text-gray-700 focus:outline-none"
+                                    placeholder={`Option ${optIndex + 1}`}
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const newOptions = field.options?.filter((_, i) => i !== optIndex) || []
+                                      updateCollectInfoField(actualIndex, { options: newOptions })
+                                    }}
+                                    className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              ))}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newOptions = [...(field.options || []), `Option ${(field.options?.length || 0) + 1}`]
+                                  updateCollectInfoField(actualIndex, { options: newOptions })
+                                }}
+                                className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 ml-4"
+                              >
+                                <Plus className="w-3 h-3" />
+                                Add Option
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Add Field Button */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowFieldTypeDropdown(!showFieldTypeDropdown)}
+                  className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-blue-300 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Field
+                </button>
+
+                {/* Field Type Dropdown */}
+                {showFieldTypeDropdown && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-10" 
+                      onClick={() => setShowFieldTypeDropdown(false)}
+                    />
+                    <div className="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
+                      <div className="p-2">
+                        <div className="text-sm font-medium text-gray-700 px-3 py-2">Select field type</div>
+                        <div className="space-y-1">
+                          {fieldTypeOptions.slice(2).map((option) => (
+                            <button
+                              key={option.value}
+                              type="button"
+                              onClick={() => {
+                                addCollectInfoFieldWithType(option.value)
+                                setShowFieldTypeDropdown(false)
+                              }}
+                              className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-gray-50 rounded-md transition-colors"
+                            >
+                              <option.icon className="w-4 h-4 text-gray-600" />
+                              <span className="text-sm text-gray-900">{option.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Preview Column */}
+            <div className="lg:sticky lg:top-6">
+              <CheckoutPreviewer
+                productType={selectedType}
+                thumbnail={checkoutImagePreview || thumbnailPreview}
+                title={title}
+                subtitle={subtitle}
+                checkoutTitle={checkoutTitle}
+                checkoutDescription={checkoutDescription}
+                checkoutBottomTitle={checkoutBottomTitle}
+                checkoutCtaButtonText={checkoutCtaButtonText}
+                price={checkoutPrice || "0.00"}
+                discountedPrice={checkoutDiscountedPrice}
+                customFields={customFields}
+                collectInfoFields={collectInfoFields}
+              />
+            </div>
+          </div>
+
+          {/* Form Actions */}
+          <div className="flex gap-3 pt-6 mt-6 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={handleBack}
+              className="flex-1 px-4 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+            >
+              Back
+            </button>
+            <button
+              type="button"
+              onClick={handleContinue}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+            >
+              Continue
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 5: Product-Specific Details */}
+      {step === 5 && (
+        <div className="p-6">
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              {selectedType && productTypes.find(t => t.id === selectedType)?.title} Configuration
+            </h3>
+            <p className="text-gray-600">
+              Complete the final details specific to your {selectedType && productTypes.find(t => t.id === selectedType)?.title.toLowerCase()}
+            </p>
+          </div>
+
+          <div className="space-y-6">
+            {/* Digital Product Fields */}
+            {selectedType === 'digital' && (
+              <>
+                <div>
+                  <label htmlFor="digital-file-url" className="block text-sm font-semibold text-gray-900 mb-2">
+                    Download Link <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Download className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="url"
+                      id="digital-file-url"
+                      value={digitalFileUrl}
+                      onChange={(e) => setDigitalFileUrl(e.target.value)}
+                      placeholder="https://example.com/download/file.zip"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Direct link to the downloadable file (PDF, ZIP, etc.)
+                  </p>
+                </div>
+
+                <div>
+                  <label htmlFor="download-instructions" className="block text-sm font-semibold text-gray-900 mb-2">
+                    Download Instructions <span className="text-gray-400 font-normal">(Optional)</span>
+                  </label>
+                  <textarea
+                    id="download-instructions"
+                    value={downloadInstructions}
+                    onChange={(e) => setDownloadInstructions(e.target.value)}
+                    placeholder="After purchase, you'll receive an email with the download link..."
+                    rows={3}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300 resize-none"
+                    maxLength={300}
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    {downloadInstructions.length}/300 characters
+                  </p>
+                </div>
+              </>
+            )}
+
+            {/* Custom Product Fields */}
+            {selectedType === 'custom' && (
+              <>
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-sm font-semibold text-gray-900">
+                      Custom Fields
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setCustomFields([...customFields, { label: '', value: '' }])}
+                      className="inline-flex items-center gap-1 text-sm text-purple-600 hover:text-purple-700"
+                    >
+                      <PlusCircle className="w-4 h-4" />
+                      Add Field
+                    </button>
+                  </div>
+
+                  {customFields.length === 0 ? (
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                      <Package className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-600">No custom fields added yet</p>
+                      <button
+                        type="button"
+                        onClick={() => setCustomFields([{ label: '', value: '' }])}
+                        className="mt-2 text-sm text-purple-600 hover:text-purple-700"
+                      >
+                        Add your first field
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {customFields.map((field, index) => (
+                        <div key={index} className="flex gap-2">
+                          <input
+                            type="text"
+                            value={field.label}
+                            onChange={(e) => {
+                              const updated = [...customFields]
+                              updated[index].label = e.target.value
+                              setCustomFields(updated)
+                            }}
+                            placeholder="Label (e.g., Size)"
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                          />
+                          <input
+                            type="text"
+                            value={field.value}
+                            onChange={(e) => {
+                              const updated = [...customFields]
+                              updated[index].value = e.target.value
+                              setCustomFields(updated)
+                            }}
+                            placeholder="Value (e.g., Large)"
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = customFields.filter((_, i) => i !== index)
+                              setCustomFields(updated)
+                            }}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* eCourse Fields */}
+            {selectedType === 'ecourse' && (
+              <>
+                <div>
+                  <label htmlFor="course-duration" className="block text-sm font-semibold text-gray-900 mb-2">
+                    Course Duration
+                  </label>
+                  <div className="relative">
+                    <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      id="course-duration"
+                      value={courseDuration}
+                      onChange={(e) => setCourseDuration(e.target.value)}
+                      placeholder="e.g., 8 weeks, 30 hours, Self-paced"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-sm font-semibold text-gray-900">
+                      Course Modules
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setCourseModules([...courseModules, ''])}
+                      className="inline-flex items-center gap-1 text-sm text-purple-600 hover:text-purple-700"
+                    >
+                      <PlusCircle className="w-4 h-4" />
+                      Add Module
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    {courseModules.map((module, index) => (
+                      <div key={index} className="flex gap-2">
+                        <div className="flex items-center gap-2 flex-1">
+                          <BookOpen className="w-4 h-4 text-gray-400" />
+                          <input
+                            type="text"
+                            value={module}
+                            onChange={(e) => {
+                              const updated = [...courseModules]
+                              updated[index] = e.target.value
+                              setCourseModules(updated)
+                            }}
+                            placeholder={`Module ${index + 1}: Introduction to...`}
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                          />
+                        </div>
+                        {courseModules.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = courseModules.filter((_, i) => i !== index)
+                              setCourseModules(updated)
+                            }}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* URL/Media Fields */}
+            {selectedType === 'url-media' && (
+              <>
+                <div>
+                  <label htmlFor="media-url" className="block text-sm font-semibold text-gray-900 mb-2">
+                    Destination URL <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <ExternalLink className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="url"
+                      id="media-url"
+                      value={mediaUrl}
+                      onChange={(e) => setMediaUrl(e.target.value)}
+                      placeholder="https://example.com/content"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    URL where users will be redirected
+                  </p>
+                </div>
+
+                <div>
+                  <label htmlFor="button-text" className="block text-sm font-semibold text-gray-900 mb-2">
+                    Button Text
+                  </label>
+                  <input
+                    type="text"
+                    id="button-text"
+                    value={buttonText}
+                    onChange={(e) => setButtonText(e.target.value)}
+                    placeholder="View Content"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                    maxLength={50}
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    {buttonText.length}/50 characters
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Form Actions */}
+          <div className="flex gap-3 pt-6 mt-6 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={handleBack}
+              className="flex-1 px-4 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+            >
+              Back
+            </button>
+            <button
+              type="button"
+              onClick={handleCreateProduct}
+              disabled={
+                isSubmitting ||
+                (selectedType === 'digital' && !digitalFileUrl) ||
+                (selectedType === 'url-media' && !mediaUrl)
+              }
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            >
+              <Plus className="w-4 h-4" />
+              {isSubmitting ? 'Creating...' : 'Create Product'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

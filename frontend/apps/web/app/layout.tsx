@@ -32,7 +32,7 @@ export default function RootLayout({
       >
         <AuthProvider>
           <div className="">
-            <div className=""><ComingSoon /></div>
+            <div className="">{children}</div>
           </div>
           <Toaster
             position="top-right"

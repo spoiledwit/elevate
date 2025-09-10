@@ -7,7 +7,7 @@ from rest_framework import exceptions, serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.db.models import Q
 
-from .models import UserProfile, UserSocialLinks, UserPermissions, SocialIcon, CustomLink, CTABanner, SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, Plan, PlanFeature, Subscription, Folder, Media, ProfileView, LinkClick, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply
+from .models import UserProfile, UserSocialLinks, UserPermissions, SocialIcon, CustomLink, CollectInfoField, CollectInfoResponse, CTABanner, SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, Plan, PlanFeature, Subscription, Folder, Media, ProfileView, LinkClick, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply
 
 # Backwards compatibility aliases
 CommentAutomationRule = AutomationRule
@@ -312,19 +312,61 @@ class SocialIconSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 
+class CollectInfoFieldSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CollectInfoField
+        fields = [
+            'id', 'field_type', 'label', 'placeholder', 'is_required', 
+            'order', 'options', 'created_at', 'modified_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'modified_at']
+
+
+class CollectInfoResponseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CollectInfoResponse
+        fields = [
+            'id', 'responses', 'ip_address', 'user_agent', 'submitted_at'
+        ]
+        read_only_fields = ['id', 'submitted_at']
+
+
 class CustomLinkSerializer(serializers.ModelSerializer):
     click_count = serializers.IntegerField(read_only=True)
     thumbnail = serializers.SerializerMethodField()
+    checkout_image = serializers.SerializerMethodField()
+    collect_info_fields = CollectInfoFieldSerializer(many=True, read_only=True)
+    collect_info_responses = CollectInfoResponseSerializer(many=True, read_only=True)
     
     class Meta:
         model = CustomLink
-        fields = ['id', 'text', 'url', 'thumbnail', 'order', 'is_active', 'click_count']
-        read_only_fields = ['id', 'click_count']
+        fields = [
+            'id', 'order', 'is_active', 'type', 'click_count', 'created_at', 'modified_at',
+            # Thumbnail info fields
+            'thumbnail', 'title', 'subtitle', 
+            # Style and button fields
+            'button_text', 'style',
+            # Checkout page fields
+            'checkout_image', 'checkout_title', 'checkout_description', 
+            'checkout_bottom_title', 'checkout_cta_button_text', 
+            'checkout_price', 'checkout_discounted_price',
+            # Additional info
+            'additional_info',
+            # Related data
+            'collect_info_fields', 'collect_info_responses'
+        ]
+        read_only_fields = ['id', 'click_count', 'created_at', 'modified_at']
     
     def get_thumbnail(self, obj):
         """Return the full Cloudinary URL for the thumbnail"""
         if obj.thumbnail:
             return obj.thumbnail.url
+        return None
+    
+    def get_checkout_image(self, obj):
+        """Return the full Cloudinary URL for the checkout image"""
+        if obj.checkout_image:
+            return obj.checkout_image.url
         return None
 
 
@@ -1048,63 +1090,256 @@ class CustomLinkCreateUpdateSerializer(serializers.ModelSerializer):
     Used in storefront management APIs.
     """
     thumbnail = serializers.FileField(required=False, allow_null=True)
+    checkout_image = serializers.FileField(required=False, allow_null=True)
+    collect_info_fields_data = serializers.ListField(
+        child=serializers.DictField(),
+        write_only=True,
+        required=False,
+        help_text="List of collect info fields to create for this custom link"
+    )
+    
+    def to_internal_value(self, data):
+        """Handle multipart form data arrays and JSON strings"""
+        import json
+        
+        # Create a mutable copy of data
+        if hasattr(data, 'dict'):
+            # Convert QueryDict to regular dict for processing
+            data_dict = data.dict()
+            # Handle lists manually for fields that need them
+            if hasattr(data, 'getlist'):
+                for key in data.keys():
+                    values = data.getlist(key)
+                    if len(values) > 1 or key == 'collect_info_fields_data':
+                        data_dict[key] = values
+            data = data_dict
+        
+        # Handle collect_info_fields_data JSON strings
+        if 'collect_info_fields_data' in data:
+            fields_data = data['collect_info_fields_data']
+            if isinstance(fields_data, list):
+                processed_fields = []
+                for field in fields_data:
+                    if isinstance(field, str):
+                        try:
+                            processed_fields.append(json.loads(field))
+                        except json.JSONDecodeError:
+                            processed_fields.append(field)
+                    else:
+                        processed_fields.append(field)
+                data['collect_info_fields_data'] = processed_fields
+        
+        # Handle additional_info JSON string  
+        if 'additional_info' in data:
+            additional_info = data['additional_info']
+            if isinstance(additional_info, list) and len(additional_info) == 1:
+                additional_info = additional_info[0]
+            if isinstance(additional_info, str):
+                try:
+                    data['additional_info'] = json.loads(additional_info)
+                except json.JSONDecodeError:
+                    pass
+        
+        return super().to_internal_value(data)
     
     class Meta:
         model = CustomLink
-        fields = ['text', 'url', 'thumbnail', 'order', 'is_active']
+        fields = [
+            # Core fields
+            'order', 'is_active', 'type',
+            # Thumbnail info fields
+            'thumbnail', 'title', 'subtitle', 
+            # Style and button fields
+            'button_text', 'style',
+            # Checkout page fields
+            'checkout_image', 'checkout_title', 'checkout_description', 
+            'checkout_bottom_title', 'checkout_cta_button_text', 
+            'checkout_price', 'checkout_discounted_price',
+            # Additional info
+            'additional_info',
+            # Collect info fields data for creation
+            'collect_info_fields_data'
+        ]
     
-    def validate(self, attrs):
-        print("DEBUG - Serializer received data:", attrs)
-        result = super().validate(attrs)
-        print("DEBUG - Serializer validated data:", result)
-        return result
+    def validate_style(self, value):
+        """Validate the style choice"""
+        if value not in ['callout', 'button', 'checkout']:
+            raise serializers.ValidationError("Invalid style choice")
+        return value
     
-    def to_internal_value(self, data):
-        print("DEBUG - Raw data to serializer:", data)
-        try:
-            result = super().to_internal_value(data)
-            print("DEBUG - Serializer internal value:", result)
-            return result
-        except Exception as e:
-            print("DEBUG - Serializer validation error:", str(e))
-            raise
-    
-    def validate_url(self, value):
-        """Validate URL for security and proper format"""
+    def validate_collect_info_fields_data(self, value):
+        """Validate collect info fields data"""
         if not value:
             return value
         
-        # Ensure URL has proper protocol
-        if not value.startswith(('http://', 'https://')):
-            value = f'https://{value}'
+        # Handle case where multipart form data sends JSON strings
+        processed_fields = []
+        for field_data in value:
+            if isinstance(field_data, str):
+                try:
+                    import json
+                    field_data = json.loads(field_data)
+                except json.JSONDecodeError:
+                    raise serializers.ValidationError("Invalid JSON in collect_info_fields_data")
+            
+            # Validate required keys
+            required_keys = ['field_type', 'label']
+            for key in required_keys:
+                if key not in field_data:
+                    raise serializers.ValidationError(f"Missing required field: {key}")
+            
+            # Validate field type
+            valid_types = ['text', 'email', 'number', 'textarea', 'select', 'checkbox', 'radio', 'tel', 'url']
+            if field_data['field_type'] not in valid_types:
+                raise serializers.ValidationError(f"Invalid field_type: {field_data['field_type']}")
+            
+            # Validate options for select/checkbox/radio fields
+            if field_data['field_type'] in ['select', 'checkbox', 'radio'] and not field_data.get('options'):
+                raise serializers.ValidationError(f"Options are required for {field_data['field_type']} fields")
+            
+            processed_fields.append(field_data)
         
-        # Basic URL validation
-        from django.core.validators import URLValidator
-        from django.core.exceptions import ValidationError
+        return processed_fields
+    
+    def create(self, validated_data):
+        """Create custom link with collect info fields if provided"""
+        collect_info_fields_data = validated_data.pop('collect_info_fields_data', [])
         
-        validator = URLValidator()
-        try:
-            validator(value)
-        except ValidationError:
-            raise serializers.ValidationError("Invalid URL format")
+        # Create the custom link
+        custom_link = super().create(validated_data)
         
-        # Security checks
-        from urllib.parse import urlparse
-        parsed = urlparse(value)
+        # Create collect info fields if provided (regardless of style)
+        if collect_info_fields_data:
+            for field_data in collect_info_fields_data:
+                CollectInfoField.objects.create(
+                    custom_link=custom_link,
+                    **field_data
+                )
         
-        # Block dangerous schemes
-        if parsed.scheme not in ['http', 'https']:
-            raise serializers.ValidationError("Only HTTP and HTTPS URLs are allowed")
+        return custom_link
+    
+    def update(self, instance, validated_data):
+        """Update custom link and handle collect info fields"""
+        collect_info_fields_data = validated_data.pop('collect_info_fields_data', None)
         
-        # Block localhost and private IP ranges (optional security measure)
-        if parsed.hostname:
-            hostname = parsed.hostname.lower()
-            if hostname in ['localhost', '127.0.0.1', '0.0.0.0'] or hostname.startswith('192.168.') or hostname.startswith('10.') or hostname.startswith('172.'):
-                raise serializers.ValidationError("Private/localhost URLs are not allowed")
+        # Update the custom link
+        custom_link = super().update(instance, validated_data)
         
-        # Length limit
-        if len(value) > 2048:
-            raise serializers.ValidationError("URL too long (max 2048 characters)")
+        # Handle collect info fields if provided (regardless of style)
+        if collect_info_fields_data is not None:
+            # Delete existing fields and create new ones
+            custom_link.collect_info_fields.all().delete()
+            for field_data in collect_info_fields_data:
+                CollectInfoField.objects.create(
+                    custom_link=custom_link,
+                    **field_data
+                )
+        
+        return custom_link
+
+
+class CollectInfoFieldCreateUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for creating/updating collect info fields"""
+    
+    class Meta:
+        model = CollectInfoField
+        fields = [
+            'field_type', 'label', 'placeholder', 'is_required', 
+            'order', 'options'
+        ]
+    
+    def validate_field_type(self, value):
+        """Validate field type choice"""
+        valid_types = ['text', 'phone', 'multiple_choice', 'dropdown', 'checkbox']
+        if value not in valid_types:
+            raise serializers.ValidationError(f"Invalid field type. Must be one of: {valid_types}")
+        return value
+    
+    def validate(self, attrs):
+        """Validate field data based on type"""
+        field_type = attrs.get('field_type')
+        options = attrs.get('options')
+        
+        # Validate options for choice-based fields
+        if field_type in ['multiple_choice', 'dropdown', 'checkbox']:
+            if not options or not isinstance(options, list) or len(options) < 2:
+                raise serializers.ValidationError(
+                    f"{field_type} fields must have at least 2 options"
+                )
+            # Validate each option is a non-empty string
+            for option in options:
+                if not isinstance(option, str) or not option.strip():
+                    raise serializers.ValidationError("All options must be non-empty strings")
+        elif options:
+            # Clear options for non-choice fields
+            attrs['options'] = None
+        
+        return attrs
+
+
+class CollectInfoResponseCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating collect info responses (form submissions)"""
+    
+    class Meta:
+        model = CollectInfoResponse
+        fields = ['responses', 'ip_address', 'user_agent']
+    
+    def validate_responses(self, value):
+        """Validate that responses is a dict with valid field data"""
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("Responses must be a dictionary")
+        
+        # Get the custom link from context
+        custom_link = self.context.get('custom_link')
+        if not custom_link:
+            raise serializers.ValidationError("Custom link context is required")
+        
+        # Validate responses against collect info fields
+        required_fields = custom_link.collect_info_fields.filter(is_required=True)
+        available_fields = custom_link.collect_info_fields.all()
+        
+        # Check all required fields are provided
+        for field in required_fields:
+            field_key = str(field.id)
+            if field_key not in value or not value[field_key]:
+                raise serializers.ValidationError(
+                    f"Response required for field: {field.label}"
+                )
+        
+        # Validate each response
+        for field_id, response in value.items():
+            try:
+                field = available_fields.get(id=int(field_id))
+            except (ValueError, CollectInfoField.DoesNotExist):
+                raise serializers.ValidationError(f"Invalid field ID: {field_id}")
+            
+            # Validate based on field type
+            if field.field_type == 'phone':
+                # Basic phone validation
+                import re
+                if not re.match(r'^[\+]?[1-9][\d\s\-\(\)]{7,15}$', str(response)):
+                    raise serializers.ValidationError(
+                        f"Invalid phone number format for field: {field.label}"
+                    )
+            elif field.field_type in ['multiple_choice', 'dropdown']:
+                # Validate response is one of the available options
+                if field.options and response not in field.options:
+                    raise serializers.ValidationError(
+                        f"Invalid option for field {field.label}. Must be one of: {field.options}"
+                    )
+            elif field.field_type == 'checkbox':
+                # Validate checkbox response (can be multiple options)
+                if field.options:
+                    if isinstance(response, list):
+                        invalid_options = [opt for opt in response if opt not in field.options]
+                        if invalid_options:
+                            raise serializers.ValidationError(
+                                f"Invalid options for field {field.label}: {invalid_options}"
+                            )
+                    elif response not in field.options:
+                        raise serializers.ValidationError(
+                            f"Invalid option for field {field.label}. Must be from: {field.options}"
+                        )
         
         return value
 
@@ -1125,13 +1360,14 @@ class LinkClickSerializer(serializers.ModelSerializer):
     """
     Serializer for link click analytics.
     """
-    custom_link_text = serializers.CharField(source='custom_link.text', read_only=True)
-    custom_link_url = serializers.CharField(source='custom_link.url', read_only=True)
+    custom_link_title = serializers.CharField(source='custom_link.title', read_only=True)
+    custom_link_style = serializers.CharField(source='custom_link.style', read_only=True)
+    custom_link_button_text = serializers.CharField(source='custom_link.button_text', read_only=True)
     
     class Meta:
         model = LinkClick
         fields = [
-            'id', 'custom_link_text', 'custom_link_url', 
+            'id', 'custom_link_title', 'custom_link_style', 'custom_link_button_text',
             'ip_address', 'user_agent', 'referrer', 'clicked_at'
         ]
         read_only_fields = ['id', 'clicked_at']

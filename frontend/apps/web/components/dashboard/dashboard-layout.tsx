@@ -12,7 +12,7 @@ import {
   Home,
   BarChart3,
   Store,
-  Link,
+  Package,
   Megaphone,
   Calendar,
   PlusCircle,
@@ -83,7 +83,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       icon: Store,
       items: [
         { id: 'storefront', label: 'My Storefront', icon: Store },
-        { id: 'custom-links', label: 'Custom Links', icon: Link },
+        { id: 'custom-links', label: 'My Products', icon: Package },
         { id: 'cta-banners', label: 'CTA Banners', icon: Megaphone },
       ]
     },
@@ -138,9 +138,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   // Check if user has permission for a section
   const hasPermission = (sectionId: string): boolean => {
     if (!userPermissions?.permissions || permissionsLoading) return false // Hide sections until permissions are loaded
-    
+
     const permissions = userPermissions.permissions as any
-    
+
     switch (sectionId) {
       case 'overview':
         return permissions.can_access_overview
@@ -192,6 +192,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       case '/storefront':
         return { itemId: 'storefront', sectionId: 'linkinbio' }
       case '/custom-links':
+      case '/custom-links/create':
         return { itemId: 'custom-links', sectionId: 'linkinbio' }
       case '/cta-banners':
         return { itemId: 'cta-banners', sectionId: 'linkinbio' }

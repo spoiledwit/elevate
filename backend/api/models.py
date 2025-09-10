@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from cloudinary.models import CloudinaryField
+from tinymce import models as tinymce_models
 
 
 class User(AbstractUser):
@@ -192,7 +193,19 @@ class SocialIcon(models.Model):
         ('tiktok', 'TikTok'),
         ('snapchat', 'Snapchat'),
         ('pinterest', 'Pinterest'),
+        ('twitch', 'Twitch'),
+        ('discord', 'Discord'),
+        ('telegram', 'Telegram'),
+        ('whatsapp', 'WhatsApp'),
+        ('reddit', 'Reddit'),
+        ('tumblr', 'Tumblr'),
+        ('medium', 'Medium'),
         ('github', 'GitHub'),
+        ('dribbble', 'Dribbble'),
+        ('behance', 'Behance'),
+        ('spotify', 'Spotify'),
+        ('soundcloud', 'SoundCloud'),
+        ('email', 'Email'),
         ('website', 'Website'),
     ]
     
@@ -214,15 +227,42 @@ class SocialIcon(models.Model):
 
 
 class CustomLink(models.Model):
+    # Core fields
     user_profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='custom_links')
-    text = models.CharField(_("text"), max_length=255)
-    url = models.URLField(_("url"))
-    thumbnail = CloudinaryField('link_thumbnail', blank=True, null=True)
     order = models.IntegerField(_("order"), default=0)
     is_active = models.BooleanField(_("is active"), default=True)
     click_count = models.PositiveIntegerField(_("click count"), default=0)
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
     modified_at = models.DateTimeField(_("modified at"), auto_now=True)
+    type = models.CharField(_("type"), max_length=50, default='generic', help_text="Product type (e.g., 'generic', 'digital_product', 'service', 'event', 'subscription')")
+    
+    # Thumbnail info fields
+    thumbnail = CloudinaryField('link_thumbnail', blank=True, null=True)
+    title = models.CharField(_("title"), max_length=100, blank=True)
+    subtitle = models.CharField(_("subtitle"), max_length=150, blank=True)
+    
+    # Style and button fields
+    button_text = models.CharField(_("button text"), max_length=100, blank=True)
+    
+    STYLE_CHOICES = [
+        ('callout', _('Callout')),
+        ('button', _('Button')),
+        ('checkout', _('Checkout')),
+        ('collect_info', _('Collect Info')),
+    ]
+    style = models.CharField(_("style"), max_length=20, choices=STYLE_CHOICES, default='callout')
+    
+    # Checkout page info fields (only used when style='checkout')
+    checkout_image = CloudinaryField('checkout_image', blank=True, null=True)
+    checkout_title = models.CharField(_("checkout title"), max_length=100, blank=True)
+    checkout_description = tinymce_models.HTMLField(_("checkout description"), blank=True)
+    checkout_bottom_title = models.CharField(_("checkout bottom title"), max_length=100, blank=True)
+    checkout_cta_button_text = models.CharField(_("checkout CTA button text"), max_length=50, blank=True)
+    checkout_price = models.DecimalField(_("checkout price"), max_digits=10, decimal_places=2, blank=True, null=True)
+    checkout_discounted_price = models.DecimalField(_("checkout discounted price"), max_digits=10, decimal_places=2, blank=True, null=True)
+    
+    # Additional product-specific information stored as JSON
+    additional_info = models.JSONField(_("additional info"), blank=True, null=True, help_text="Product-specific information based on product type")
 
     class Meta:
         db_table = "custom_links"
@@ -231,7 +271,71 @@ class CustomLink(models.Model):
         ordering = ['order']
 
     def __str__(self):
-        return f"{self.user_profile.user.username} - {self.text}"
+        display_text = self.title or self.button_text or 'Untitled'
+        return f"{self.user_profile.user.username} - {display_text}"
+
+
+class CollectInfoField(models.Model):
+    """
+    Dynamic form fields for collect_info style custom links.
+    Each CustomLink with style='collect_info' can have multiple form fields.
+    """
+    custom_link = models.ForeignKey(CustomLink, on_delete=models.CASCADE, related_name='collect_info_fields')
+    
+    FIELD_TYPE_CHOICES = [
+        ('text', _('Text Input')),
+        ('phone', _('Phone Number')),
+        ('multiple_choice', _('Multiple Choice')),
+        ('dropdown', _('Dropdown')),
+        ('checkbox', _('Checkbox')),
+    ]
+    
+    field_type = models.CharField(_("field type"), max_length=20, choices=FIELD_TYPE_CHOICES)
+    label = models.CharField(_("field label"), max_length=100)
+    placeholder = models.CharField(_("placeholder text"), max_length=150, blank=True)
+    is_required = models.BooleanField(_("is required"), default=False)
+    order = models.IntegerField(_("order"), default=0)
+    
+    # For multiple choice, dropdown, checkbox - store options as JSON
+    options = models.JSONField(_("field options"), blank=True, null=True, help_text="JSON array of options for multiple choice/dropdown/checkbox fields")
+    
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    modified_at = models.DateTimeField(_("modified at"), auto_now=True)
+
+    class Meta:
+        db_table = "collect_info_fields"
+        verbose_name = _("collect info field")
+        verbose_name_plural = _("collect info fields")
+        ordering = ['custom_link', 'order']
+
+    def __str__(self):
+        return f"{self.custom_link} - {self.label} ({self.field_type})"
+
+
+class CollectInfoResponse(models.Model):
+    """
+    Stores responses/submissions from collect_info style custom links.
+    Each submission creates one response record with all field answers.
+    """
+    custom_link = models.ForeignKey(CustomLink, on_delete=models.CASCADE, related_name='collect_info_responses')
+    
+    # Store all form responses as JSON
+    responses = models.JSONField(_("form responses"), help_text="JSON object with field_id: response mappings")
+    
+    # Optional visitor info
+    ip_address = models.GenericIPAddressField(_("IP address"), blank=True, null=True)
+    user_agent = models.TextField(_("user agent"), blank=True)
+    
+    submitted_at = models.DateTimeField(_("submitted at"), auto_now_add=True)
+
+    class Meta:
+        db_table = "collect_info_responses"
+        verbose_name = _("collect info response")
+        verbose_name_plural = _("collect info responses")
+        ordering = ['-submitted_at']
+
+    def __str__(self):
+        return f"{self.custom_link} - Response #{self.id}"
 
 
 class CTABanner(models.Model):

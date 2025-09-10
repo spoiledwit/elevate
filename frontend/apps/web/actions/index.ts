@@ -78,6 +78,16 @@ export {
   createMediaFormData
 } from './media-action'
 
+// Upload actions
+export {
+  uploadFileAction,
+  uploadMultipleFilesAction,
+  deleteFileAction,
+  uploadImageAction,
+  uploadVideoAction,
+  uploadDocumentAction
+} from './upload-action'
+
 // Storefront actions
 export {
   getProfilesAction,
@@ -89,7 +99,7 @@ export {
   trackProfileViewAction,
   getProfileAnalyticsAction,
   getCustomLinksAction,
-  createCustomLinkAction,
+  createNewProductAction,
   createCustomLinkWithFileAction,
   createCustomLinkFormData,
   getCustomLinkAction,
@@ -173,9 +183,14 @@ export type {
   MoveMediaData
 } from './media-action'
 export type {
+  UploadFileData,
+  UploadResponse,
+  DeleteFileData
+} from './upload-action'
+export type {
   CTABannerCreateData,
   CTABannerUpdateData,
-  CustomLinkCreateData,
+  NewProductCreateData,
   CustomLinkUpdateData,
   CustomLinkReorderData,
   SocialIconCreateData,

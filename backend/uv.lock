@@ -50,6 +50,7 @@ dependencies = [
     { name = "django-celery-beat" },
     { name = "django-cloudinary-storage" },
     { name = "django-import-export" },
+    { name = "django-tinymce" },
     { name = "django-unfold" },
     { name = "djangorestframework" },
     { name = "djangorestframework-simplejwt" },
@@ -90,6 +91,7 @@ requires-dist = [
     { name = "django-celery-beat", specifier = ">=2.5.0" },
     { name = "django-cloudinary-storage", specifier = ">=0.3.0" },
     { name = "django-import-export", specifier = ">=4.2.0" },
+    { name = "django-tinymce", specifier = ">=4.1.0" },
     { name = "django-unfold", specifier = ">=0.43.0" },
     { name = "djangorestframework", specifier = ">=3.15" },
     { name = "djangorestframework-simplejwt", specifier = ">=5.3" },
@@ -484,6 +486,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ba/5b/0dbe271fef3c2274b83dbcb1b19fa3dacf1f7e542382819294644e78ea8b/django_timezone_field-7.1.tar.gz", hash = "sha256:b3ef409d88a2718b566fabe10ea996f2838bc72b22d3a2900c0aa905c761380c", size = 13727, upload-time = "2025-01-11T17:49:54.486Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ec/09/7a808392a751a24ffa62bec00e3085a9c1a151d728c323a5bab229ea0e58/django_timezone_field-7.1-py3-none-any.whl", hash = "sha256:93914713ed882f5bccda080eda388f7006349f25930b6122e9b07bf8db49c4b4", size = 13177, upload-time = "2025-01-11T17:49:52.142Z" },
+]
+
+[[package]]
+name = "django-tinymce"
+version = "4.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b3/36/56faa2cb1bde28c66ffe38d67ddbacab9c416baecbb7dd911bfabc5fa409/django_tinymce-4.1.0.tar.gz", hash = "sha256:02e3b70e940fd299f0fbef4315aee5c185664e1eb8cd396b176963954e4357c9", size = 1087250, upload-time = "2024-06-21T07:07:03.915Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/91/a6/467464d08495360689380906db8e67427c381545ce8af9ce633e0128b004/django_tinymce-4.1.0-py3-none-any.whl", hash = "sha256:9804836e6d2b08de3b03a27c100f8c2e9633549913eff8b323678a10cd48b94e", size = 1317923, upload-time = "2024-06-21T07:07:40.454Z" },
 ]
 
 [[package]]

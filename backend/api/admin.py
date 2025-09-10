@@ -11,11 +11,13 @@ from import_export.admin import ImportExportModelAdmin
 from unfold.contrib.import_export.forms import ExportForm, ImportForm
 
 from .models import (
-    User, UserProfile, UserSocialLinks, UserPermissions, SocialIcon, CustomLink, CTABanner, Subscription,
+    User, UserProfile, UserSocialLinks, UserPermissions, SocialIcon, CustomLink, CollectInfoField, CollectInfoResponse, CTABanner, Subscription,
     ProfileView, LinkClick, BannerClick,
     SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, PaymentEvent, Plan, PlanFeature, StripeCustomer,
     Folder, Media, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply, AIConfiguration
 )
+from tinymce.widgets import TinyMCE
+from django import forms
 
 # Backwards compatibility aliases
 CommentAutomationRule = AutomationRule
@@ -201,24 +203,61 @@ class SocialIconAdmin(ModelAdmin, ImportExportModelAdmin):
     )
 
 
+class CustomLinkAdminForm(forms.ModelForm):
+    class Meta:
+        model = CustomLink
+        fields = '__all__'
+        widgets = {
+            'checkout_description': TinyMCE(attrs={'cols': 80, 'rows': 20}),
+        }
+
+
 @admin.register(CustomLink)
 class CustomLinkAdmin(ModelAdmin, ImportExportModelAdmin):
+    form = CustomLinkAdminForm
     import_form_class = ImportForm
     export_form_class = ExportForm
-    list_display = ['user_profile', 'text', 'order', 'click_count', 'is_active', 'created_at']
-    list_filter = ['is_active', 'created_at']
-    search_fields = ['user_profile__user__username', 'text', 'url']
+    list_display = ['user_profile', 'display_title', 'type', 'style', 'order', 'click_count', 'is_active', 'created_at']
+    list_filter = ['is_active', 'type', 'style', 'created_at']
+    search_fields = ['user_profile__user__username', 'title', 'button_text', 'checkout_title']
     readonly_fields = ['created_at', 'modified_at', 'click_count']
     list_editable = ['order']
+    
+    def display_title(self, obj):
+        return obj.title or obj.button_text or obj.checkout_title or 'Untitled'
+    display_title.short_description = 'Title'
+    
     fieldsets = (
-        ('Link Information', {
-            'fields': ('user_profile', 'text', 'url', 'thumbnail', 'order')
+        ('Basic Information', {
+            'fields': ('user_profile', 'type', 'style', 'order', 'is_active')
+        }),
+        ('Callout Fields', {
+            'fields': ('title', 'subtitle', 'thumbnail'),
+            'classes': ('collapse',),
+            'description': 'Fields used when style is set to Callout'
+        }),
+        ('Button Fields', {
+            'fields': ('button_text',),
+            'classes': ('collapse',),
+            'description': 'Fields used when style is set to Button'
+        }),
+        ('Checkout Fields', {
+            'fields': ('checkout_image', 'checkout_title', 'checkout_description', 'checkout_bottom_title', 'checkout_cta_button_text', 'checkout_price', 'checkout_discounted_price'),
+            'classes': ('collapse',),
+            'description': 'Fields used when style is set to Checkout'
+        }),
+        ('Collect Info Fields', {
+            'fields': (),
+            'classes': ('collapse',),
+            'description': 'Collect Info fields are managed through the CollectInfoField model. See the related CollectInfoField entries for this CustomLink.'
+        }),
+        ('Additional Info', {
+            'fields': ('additional_info',),
+            'classes': ('collapse',),
+            'description': 'Product-specific information stored as JSON'
         }),
         ('Analytics', {
             'fields': ('click_count',)
-        }),
-        ('Status', {
-            'fields': ('is_active',)
         }),
         ('Timestamps', {
             'fields': ('created_at', 'modified_at'),
@@ -233,6 +272,54 @@ class CustomLinkAdmin(ModelAdmin, ImportExportModelAdmin):
     
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('user_profile__user').prefetch_related('clicks')
+
+
+@admin.register(CollectInfoField)
+class CollectInfoFieldAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    list_display = ['custom_link', 'label', 'field_type', 'is_required', 'order', 'created_at']
+    list_filter = ['field_type', 'is_required', 'created_at']
+    search_fields = ['custom_link__title', 'custom_link__button_text', 'label']
+    readonly_fields = ['created_at', 'modified_at']
+    list_editable = ['order']
+    
+    fieldsets = (
+        ('Field Information', {
+            'fields': ('custom_link', 'field_type', 'label', 'placeholder', 'is_required', 'order')
+        }),
+        ('Options (for dropdowns/checkboxes)', {
+            'fields': ('options',),
+            'classes': ('collapse',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'modified_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(CollectInfoResponse)
+class CollectInfoResponseAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    list_display = ['custom_link', 'submitted_at', 'ip_address']
+    list_filter = ['submitted_at', 'custom_link__style']
+    search_fields = ['custom_link__title', 'custom_link__button_text', 'ip_address']
+    readonly_fields = ['submitted_at']
+    date_hierarchy = 'submitted_at'
+    
+    fieldsets = (
+        ('Response Information', {
+            'fields': ('custom_link', 'responses')
+        }),
+        ('Visitor Info', {
+            'fields': ('ip_address', 'user_agent')
+        }),
+        ('Timestamp', {
+            'fields': ('submitted_at',)
+        }),
+    )
 
 
 @admin.register(CTABanner)
@@ -681,8 +768,8 @@ class LinkClickAdmin(ModelAdmin, ImportExportModelAdmin):
     import_form_class = ImportForm
     export_form_class = ExportForm
     list_display = ['custom_link', 'user_profile', 'ip_address', 'user_agent_short', 'referrer_domain', 'clicked_at']
-    list_filter = ['clicked_at', 'user_profile__user__username', 'custom_link__text']
-    search_fields = ['user_profile__user__username', 'custom_link__text', 'ip_address', 'user_agent']
+    list_filter = ['clicked_at', 'user_profile__user__username', 'custom_link__style']
+    search_fields = ['user_profile__user__username', 'custom_link__title', 'custom_link__button_text', 'ip_address', 'user_agent']
     readonly_fields = ['clicked_at']
     date_hierarchy = 'clicked_at'
     

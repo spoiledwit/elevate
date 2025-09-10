@@ -11,7 +11,19 @@
  * * `tiktok` - TikTok
  * * `snapchat` - Snapchat
  * * `pinterest` - Pinterest
+ * * `twitch` - Twitch
+ * * `discord` - Discord
+ * * `telegram` - Telegram
+ * * `whatsapp` - WhatsApp
+ * * `reddit` - Reddit
+ * * `tumblr` - Tumblr
+ * * `medium` - Medium
  * * `github` - GitHub
+ * * `dribbble` - Dribbble
+ * * `behance` - Behance
+ * * `spotify` - Spotify
+ * * `soundcloud` - SoundCloud
+ * * `email` - Email
  * * `website` - Website
  */
 export enum SocialIconPlatformEnum {
@@ -23,6 +35,18 @@ export enum SocialIconPlatformEnum {
     TIKTOK = 'tiktok',
     SNAPCHAT = 'snapchat',
     PINTEREST = 'pinterest',
+    TWITCH = 'twitch',
+    DISCORD = 'discord',
+    TELEGRAM = 'telegram',
+    WHATSAPP = 'whatsapp',
+    REDDIT = 'reddit',
+    TUMBLR = 'tumblr',
+    MEDIUM = 'medium',
     GITHUB = 'github',
+    DRIBBBLE = 'dribbble',
+    BEHANCE = 'behance',
+    SPOTIFY = 'spotify',
+    SOUNDCLOUD = 'soundcloud',
+    EMAIL = 'email',
     WEBSITE = 'website',
 }

@@ -37,6 +37,7 @@ dependencies = [
     "google-auth>=2.34.0",
     # Django import/export
     "django-import-export>=4.2.0",
+    "django-tinymce>=4.1.0",
 ]
 
 [dependency-groups]

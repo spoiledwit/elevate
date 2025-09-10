@@ -14,12 +14,13 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.contrib.auth import get_user_model
 
 from ..models import (
-    UserProfile, CustomLink, SocialIcon, CTABanner, 
+    UserProfile, CustomLink, CollectInfoField, CollectInfoResponse, SocialIcon, CTABanner, 
     LinkClick, ProfileView, BannerClick
 )
 from ..serializers import (
     UserProfileSerializer, UserProfilePublicSerializer,
     CustomLinkSerializer, CustomLinkCreateUpdateSerializer,
+    CollectInfoFieldCreateUpdateSerializer, CollectInfoResponseCreateSerializer,
     SocialIconSerializer, CTABannerSerializer,
     ProfileAnalyticsSerializer
 )
@@ -259,8 +260,8 @@ class UserProfileStorefrontViewSet(viewsets.ModelViewSet):
                     'top_performing': [
                         {
                             'id': link.id,
-                            'text': link.text,
-                            'url': link.url,
+                            'title': link.title or link.button_text or 'Untitled',
+                            'style': link.style,
                             'click_count': link.click_count,
                             'order': link.order
                         } for link in top_links
@@ -476,11 +477,27 @@ class CustomLinkViewSet(viewsets.ModelViewSet):
             return CustomLinkCreateUpdateSerializer
         return CustomLinkSerializer
 
+    def create(self, request, *args, **kwargs):
+        print("DEBUG - CREATE method called")
+        print("DEBUG - Request data:", dict(request.data))
+        print("DEBUG - Content type:", request.content_type)
+        
+        try:
+            return super().create(request, *args, **kwargs)
+        except Exception as e:
+            print("DEBUG - Exception during create:", str(e))
+            # Get serializer to check validation errors
+            serializer = self.get_serializer(data=request.data)
+            if not serializer.is_valid():
+                print("DEBUG - Serializer validation errors:", serializer.errors)
+            raise
+
     def perform_create(self, serializer):
-        # Debug: Log what we're receiving
         print("DEBUG - Request data:", dict(self.request.data))
-        print("DEBUG - Request files:", dict(self.request.FILES))
-        print("DEBUG - Content type:", self.request.content_type)
+        print("DEBUG - Is valid:", serializer.is_valid())
+        if not serializer.is_valid():
+            print("DEBUG - Serializer errors:", serializer.errors)
+            return
         
         profile = get_object_or_404(UserProfile, user=self.request.user)
         
@@ -609,8 +626,8 @@ class CustomLinkViewSet(viewsets.ModelViewSet):
         
         analytics_data = {
             'link_id': link.id,
-            'link_text': link.text,
-            'link_url': link.url,
+            'link_title': link.title or link.button_text or 'Untitled',
+            'link_style': link.style,
             'total_clicks': total_clicks,
             'unique_clicks': unique_clicks,
             'click_through_rate': click_through_rate,
@@ -673,8 +690,157 @@ class CustomLinkViewSet(viewsets.ModelViewSet):
         
         return Response({
             "tracked": True,
-            "redirect_url": link.url
+            "link_id": link.id,
+            "link_style": link.style
         }, status=status.HTTP_201_CREATED)
+
+    @extend_schema(
+        summary="Submit collect info form",
+        request=CollectInfoResponseCreateSerializer,
+        responses={201: CollectInfoResponseCreateSerializer}
+    )
+    @action(["post"], detail=True, url_path="submit-form", permission_classes=[AllowAny])
+    def submit_form(self, request, pk=None):
+        """
+        Submit a form for a custom link with collect info fields.
+        """
+        link = get_object_or_404(CustomLink, pk=pk, is_active=True)
+        
+        # Check if link has collect info fields
+        if not link.collect_info_fields.exists():
+            return Response(
+                {"detail": "This link has no collect info fields"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Rate limiting check
+        client_ip = get_client_ip(request)
+        if is_rate_limited(f"{client_ip}:{link.id}", 'form_submit', limit=5, window=300):
+            return Response(
+                {"detail": "Rate limit exceeded"}, 
+                status=status.HTTP_429_TOO_MANY_REQUESTS
+            )
+        
+        # Get client info for submission tracking
+        client_ip_anonymized = anonymize_ip(client_ip)
+        user_agent = request.META.get('HTTP_USER_AGENT', '')[:1000]
+        
+        # Prepare serializer data
+        submission_data = request.data.copy()
+        submission_data['ip_address'] = client_ip_anonymized
+        submission_data['user_agent'] = user_agent
+        
+        # Create serializer with custom link context
+        serializer = CollectInfoResponseCreateSerializer(
+            data=submission_data,
+            context={'request': request, 'custom_link': link}
+        )
+        serializer.is_valid(raise_exception=True)
+        
+        # Save the response
+        response_obj = serializer.save(custom_link=link)
+        
+        return Response({
+            "success": True,
+            "response_id": response_obj.id,
+            "message": "Form submitted successfully"
+        }, status=status.HTTP_201_CREATED)
+
+    @extend_schema(
+        summary="Get collect info fields for a link",
+        responses={200: CollectInfoFieldCreateUpdateSerializer(many=True)}
+    )
+    @action(["get"], detail=True, url_path="collect-fields", permission_classes=[AllowAny])
+    def get_collect_fields(self, request, pk=None):
+        """
+        Get the collect info fields for a custom link (public endpoint).
+        """
+        link = get_object_or_404(CustomLink, pk=pk, is_active=True)
+        fields = link.collect_info_fields.all().order_by('order')
+        
+        # Return 404 if link has no collect info fields
+        if not fields.exists():
+            return Response(
+                {"detail": "This link has no collect info fields"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        serializer = CollectInfoFieldCreateUpdateSerializer(fields, many=True)
+        return Response(serializer.data)
+
+    @extend_schema(
+        summary="Manage collect info fields",
+        request=CollectInfoFieldCreateUpdateSerializer(many=True),
+        responses={200: CollectInfoFieldCreateUpdateSerializer(many=True)}
+    )
+    @action(["post", "put"], detail=True, url_path="collect-fields/manage")
+    def manage_collect_fields(self, request, pk=None):
+        """
+        Create or update collect info fields for a custom link (authenticated endpoint).
+        """
+        link = get_object_or_404(
+            CustomLink, 
+            pk=pk, 
+            user_profile__user=request.user
+        )
+        
+        if not isinstance(request.data, list):
+            return Response(
+                {"detail": "Expected a list of field objects"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Delete existing fields and create new ones
+        with transaction.atomic():
+            link.collect_info_fields.all().delete()
+            
+            created_fields = []
+            for field_data in request.data:
+                serializer = CollectInfoFieldCreateUpdateSerializer(data=field_data)
+                serializer.is_valid(raise_exception=True)
+                field = serializer.save(custom_link=link)
+                created_fields.append(field)
+        
+        # Return the created fields
+        serializer = CollectInfoFieldCreateUpdateSerializer(created_fields, many=True)
+        return Response(serializer.data)
+
+    @extend_schema(
+        summary="Get form responses for a collect info link",
+        responses={200: CollectInfoResponseCreateSerializer(many=True)}
+    )
+    @action(["get"], detail=True, url_path="responses")
+    def get_responses(self, request, pk=None):
+        """
+        Get form responses for a custom link with collect info fields (owner only).
+        """
+        link = get_object_or_404(
+            CustomLink, 
+            pk=pk, 
+            user_profile__user=request.user
+        )
+        
+        # Get query parameters for filtering
+        limit = int(request.GET.get('limit', 50))
+        offset = int(request.GET.get('offset', 0))
+        
+        responses = link.collect_info_responses.all().order_by('-submitted_at')[offset:offset+limit]
+        
+        # Serialize responses with additional metadata
+        response_data = []
+        for response in responses:
+            response_data.append({
+                'id': response.id,
+                'responses': response.responses,
+                'ip_address': response.ip_address,
+                'user_agent': response.user_agent,
+                'submitted_at': response.submitted_at.isoformat(),
+            })
+        
+        return Response({
+            'total_responses': link.collect_info_responses.count(),
+            'responses': response_data
+        })
 
 
 class SocialIconViewSet(viewsets.ModelViewSet):

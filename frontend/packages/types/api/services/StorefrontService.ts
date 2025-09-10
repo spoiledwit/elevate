@@ -2,9 +2,13 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { CollectInfoFieldCreateUpdate } from '../models/CollectInfoFieldCreateUpdate';
+import type { CollectInfoResponseCreate } from '../models/CollectInfoResponseCreate';
 import type { CTABanner } from '../models/CTABanner';
 import type { CustomLink } from '../models/CustomLink';
 import type { CustomLinkCreateUpdate } from '../models/CustomLinkCreateUpdate';
+import type { PaginatedCollectInfoFieldCreateUpdateList } from '../models/PaginatedCollectInfoFieldCreateUpdateList';
+import type { PaginatedCollectInfoResponseCreateList } from '../models/PaginatedCollectInfoResponseCreateList';
 import type { PaginatedCTABannerList } from '../models/PaginatedCTABannerList';
 import type { PaginatedCustomLinkList } from '../models/PaginatedCustomLinkList';
 import type { PaginatedSocialIconList } from '../models/PaginatedSocialIconList';
@@ -187,7 +191,7 @@ export class StorefrontService {
      * @throws ApiError
      */
     public storefrontLinksCreate(
-        formData: CustomLinkCreateUpdate,
+        formData?: CustomLinkCreateUpdate,
     ): CancelablePromise<CustomLinkCreateUpdate> {
         return this.httpRequest.request({
             method: 'POST',
@@ -224,7 +228,7 @@ export class StorefrontService {
      */
     public storefrontLinksUpdate(
         id: string,
-        formData: CustomLinkCreateUpdate,
+        formData?: CustomLinkCreateUpdate,
     ): CancelablePromise<CustomLinkCreateUpdate> {
         return this.httpRequest.request({
             method: 'PUT',
@@ -295,6 +299,128 @@ export class StorefrontService {
         });
     }
     /**
+     * Get collect info fields for a link
+     * Get the collect info fields for a custom link (public endpoint).
+     * @param id
+     * @param page A page number within the paginated result set.
+     * @returns PaginatedCollectInfoFieldCreateUpdateList
+     * @throws ApiError
+     */
+    public storefrontLinksCollectFieldsList(
+        id: string,
+        page?: number,
+    ): CancelablePromise<PaginatedCollectInfoFieldCreateUpdateList> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/api/storefront/links/{id}/collect-fields/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'page': page,
+            },
+        });
+    }
+    /**
+     * Manage collect info fields
+     * Create or update collect info fields for a custom link (authenticated endpoint).
+     * @param id
+     * @param formData
+     * @param page A page number within the paginated result set.
+     * @returns PaginatedCollectInfoFieldCreateUpdateList
+     * @throws ApiError
+     */
+    public storefrontLinksCollectFieldsManageCreate(
+        id: string,
+        formData: Array<CollectInfoFieldCreateUpdate>,
+        page?: number,
+    ): CancelablePromise<PaginatedCollectInfoFieldCreateUpdateList> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/api/storefront/links/{id}/collect-fields/manage/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'page': page,
+            },
+            formData: formData,
+            mediaType: 'multipart/form-data',
+        });
+    }
+    /**
+     * Manage collect info fields
+     * Create or update collect info fields for a custom link (authenticated endpoint).
+     * @param id
+     * @param formData
+     * @param page A page number within the paginated result set.
+     * @returns PaginatedCollectInfoFieldCreateUpdateList
+     * @throws ApiError
+     */
+    public storefrontLinksCollectFieldsManageUpdate(
+        id: string,
+        formData: Array<CollectInfoFieldCreateUpdate>,
+        page?: number,
+    ): CancelablePromise<PaginatedCollectInfoFieldCreateUpdateList> {
+        return this.httpRequest.request({
+            method: 'PUT',
+            url: '/api/storefront/links/{id}/collect-fields/manage/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'page': page,
+            },
+            formData: formData,
+            mediaType: 'multipart/form-data',
+        });
+    }
+    /**
+     * Get form responses for a collect info link
+     * Get form responses for a collect info custom link (owner only).
+     * @param id
+     * @param page A page number within the paginated result set.
+     * @returns PaginatedCollectInfoResponseCreateList
+     * @throws ApiError
+     */
+    public storefrontLinksResponsesList(
+        id: string,
+        page?: number,
+    ): CancelablePromise<PaginatedCollectInfoResponseCreateList> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/api/storefront/links/{id}/responses/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'page': page,
+            },
+        });
+    }
+    /**
+     * Submit collect info form
+     * Submit a form for a collect_info style custom link.
+     * @param id
+     * @param formData
+     * @returns CollectInfoResponseCreate
+     * @throws ApiError
+     */
+    public storefrontLinksSubmitFormCreate(
+        id: string,
+        formData: CollectInfoResponseCreate,
+    ): CancelablePromise<CollectInfoResponseCreate> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/api/storefront/links/{id}/submit-form/',
+            path: {
+                'id': id,
+            },
+            formData: formData,
+            mediaType: 'multipart/form-data',
+        });
+    }
+    /**
      * Track link click
      * Track a click on a custom link for analytics with rate limiting and privacy protection.
      * @param id A unique integer value identifying this custom link.
@@ -306,7 +432,7 @@ export class StorefrontService {
     public storefrontLinksTrackClickCreate(
         id: number,
         linkId: number,
-        formData: CustomLink,
+        formData?: CustomLink,
     ): CancelablePromise<CustomLink> {
         return this.httpRequest.request({
             method: 'POST',

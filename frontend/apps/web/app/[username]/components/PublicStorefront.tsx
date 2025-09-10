@@ -4,15 +4,33 @@ import { useEffect, useState } from 'react'
 import {
   User,
   ExternalLink,
-  Instagram,
-  Facebook,
-  Twitter,
-  Linkedin,
-  Youtube,
-  Globe,
   MousePointerClick,
-  Heart
+  Heart,
+  Globe
 } from 'lucide-react'
+import {
+  FaInstagram,
+  FaFacebook,
+  FaTwitter,
+  FaLinkedin,
+  FaYoutube,
+  FaTiktok,
+  FaSnapchat,
+  FaPinterest,
+  FaTwitch,
+  FaDiscord,
+  FaTelegram,
+  FaWhatsapp,
+  FaReddit,
+  FaTumblr,
+  FaMedium,
+  FaGithub,
+  FaDribbble,
+  FaBehance,
+  FaSpotify,
+  FaSoundcloud,
+  FaEnvelope
+} from 'react-icons/fa'
 import { trackProfileViewAction, trackLinkClickAction, trackBannerClickAction } from '@/actions'
 
 interface PublicStorefrontProps {
@@ -20,13 +38,41 @@ interface PublicStorefrontProps {
   profile: any
 }
 
+// Custom X (Twitter) icon component
+const XIcon = ({ className }: { className?: string }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+  </svg>
+)
+
 const socialIcons = {
-  instagram: { icon: Instagram, color: 'hover:text-pink-500' },
-  facebook: { icon: Facebook, color: 'hover:text-blue-600' },
-  twitter: { icon: Twitter, color: 'hover:text-blue-400' },
-  linkedin: { icon: Linkedin, color: 'hover:text-blue-700' },
-  youtube: { icon: Youtube, color: 'hover:text-red-600' },
-  website: { icon: Globe, color: 'hover:text-gray-700' },
+  instagram: { icon: FaInstagram, color: '#E4405F' },
+  facebook: { icon: FaFacebook, color: '#1877F2' },
+  twitter: { icon: XIcon, color: '#000000' },
+  linkedin: { icon: FaLinkedin, color: '#0A66C2' },
+  youtube: { icon: FaYoutube, color: '#FF0000' },
+  tiktok: { icon: FaTiktok, color: '#000000' },
+  snapchat: { icon: FaSnapchat, color: '#FFFC00' },
+  pinterest: { icon: FaPinterest, color: '#BD081C' },
+  twitch: { icon: FaTwitch, color: '#9146FF' },
+  discord: { icon: FaDiscord, color: '#5865F2' },
+  telegram: { icon: FaTelegram, color: '#0088CC' },
+  whatsapp: { icon: FaWhatsapp, color: '#25D366' },
+  reddit: { icon: FaReddit, color: '#FF4500' },
+  tumblr: { icon: FaTumblr, color: '#001935' },
+  medium: { icon: FaMedium, color: '#000000' },
+  github: { icon: FaGithub, color: '#181717' },
+  dribbble: { icon: FaDribbble, color: '#EA4C89' },
+  behance: { icon: FaBehance, color: '#1769FF' },
+  spotify: { icon: FaSpotify, color: '#1DB954' },
+  soundcloud: { icon: FaSoundcloud, color: '#FF3300' },
+  email: { icon: FaEnvelope, color: '#6B7280' },
+  website: { icon: Globe, color: '#6B7280' },
 }
 
 const bannerStyles = {
@@ -109,13 +155,8 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
     <div className="min-h-screen bg-white">
       {/* Modern Hero Section */}
       <div className="relative">
-        {/* Subtle geometric background */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-50 rounded-full mix-blend-multiply opacity-70 animate-pulse"></div>
-          <div className="absolute top-0 right-1/4 w-96 h-96 bg-purple-50 rounded-full mix-blend-multiply opacity-70 animate-pulse delay-1000"></div>
-        </div>
 
-        <div className="relative container mx-auto px-6 py-16 max-w-lg">
+        <div className="relative container mx-auto px-6 pt-16 max-w-lg">
           {/* Profile Header */}
           <div className="text-center mb-12">
             {/* Profile Image */}
@@ -151,8 +192,8 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
 
           {/* Social Icons */}
           {activeSocialIcons.length > 0 && (
-            <div className="flex justify-center gap-6 mb-12">
-              {activeSocialIcons.slice(0, 6).map((socialIcon: any, index: number) => {
+            <div className="flex justify-center gap-4 mb-12 flex-wrap">
+              {activeSocialIcons.map((socialIcon: any, index: number) => {
                 const iconData = socialIcons[socialIcon.platform as keyof typeof socialIcons]
                 if (!iconData) return null
 
@@ -163,7 +204,8 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
                     href={socialIcon.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all duration-300 border border-slate-200"
+                    className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center hover:bg-slate-100 transition-all duration-300 border border-slate-200 hover:border-slate-300 hover:shadow-sm"
+                    style={{ color: iconData.color }}
                   >
                     <IconComponent className="w-5 h-5" />
                   </a>
@@ -193,7 +235,7 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
       </div>
 
       {/* Content Section */}
-      <div className="bg-slate-50 py-16">
+      <div className="bg-slate-50 py-4">
         <div className="container mx-auto px-6 max-w-lg">
 
           {/* CTA Banner */}
@@ -289,23 +331,6 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="bg-white border-t border-slate-100">
-        <div className="text-center py-8">
-          <div className="flex items-center justify-center gap-2 text-slate-400 text-sm">
-            <Heart className="w-4 h-4" />
-            <span>Powered by</span>
-            <a
-              href="https://elevate.social"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium text-slate-600 hover:text-slate-800 transition-colors"
-            >
-              Elevate Social
-            </a>
-          </div>
-        </div>
-      </div>
 
 
     </div>

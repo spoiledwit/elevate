@@ -102,6 +102,10 @@ from .apis.google_oauth import (
     google_oauth_login,
     google_oauth_register,
 )
+from .apis.upload import (
+    upload_to_cloudinary,
+    delete_from_cloudinary,
+)
 
 router = routers.DefaultRouter()
 router.register("users", UserViewSet, basename="api-users")
@@ -117,6 +121,7 @@ router.register("storefront/cta-banners", CTABannerViewSet, basename="storefront
 
 urlpatterns = [
     path("", RedirectView.as_view(url="/admin/", permanent=True), name="root_redirect"),
+    path('tinymce/', include('tinymce.urls')),
     path(
         "api/schema/swagger-ui/",
         SpectacularSwaggerView.as_view(url_name="schema"),
@@ -202,6 +207,10 @@ urlpatterns = [
     path("api/media/bulk-delete/", bulk_delete_media, name="media_bulk_delete"),
     path("api/media/stats/", media_stats, name="media_stats"),
     path("api/media/move/", move_media_to_folder, name="media_move_to_folder"),
+    
+    # Upload URLs
+    path("api/upload/", upload_to_cloudinary, name="upload_to_cloudinary"),
+    path("api/upload/delete/", delete_from_cloudinary, name="delete_from_cloudinary"),
     
     # Comment Management URLs
     path("api/comments/pages/", list_facebook_pages, name="comments_facebook_pages"),

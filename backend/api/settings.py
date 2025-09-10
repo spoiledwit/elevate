@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "cloudinary_storage",
     "cloudinary",
     "rest_framework",
+    "tinymce",
     "rest_framework_simplejwt",
     "rest_framework.authtoken",
     "drf_spectacular",
@@ -388,6 +389,23 @@ SOCIALACCOUNT_PROVIDERS = {
 # We're using our custom implementation instead of dj-rest-auth
 
 ######################################################################
+# TinyMCE Configuration
+######################################################################
+TINYMCE_DEFAULT_CONFIG = {
+    "theme": "silver",
+    "height": 300,
+    "menubar": False,
+    "plugins": "advlist,autolink,lists,link,image,charmap,preview,anchor,"
+    "searchreplace,visualblocks,code,fullscreen,insertdatetime,media,table,paste,"
+    "code,help,wordcount",
+    "toolbar": "undo redo | formatselect | "
+    "bold italic backcolor | alignleft aligncenter "
+    "alignright alignjustify | bullist numlist outdent indent | "
+    "removeformat | help",
+    "content_css": "//www.tiny.cloud/css/codepen.min.css"
+}
+
+######################################################################
 # Unfold
 ######################################################################
 UNFOLD = {
@@ -447,6 +465,16 @@ UNFOLD = {
                         "title": _("CTA Banners"),
                         "icon": "campaign",
                         "link": reverse_lazy("admin:api_ctabanner_changelist"),
+                    },
+                    {
+                        "title": _("Collect Info Fields"),
+                        "icon": "input",
+                        "link": reverse_lazy("admin:api_collectinfofield_changelist"),
+                    },
+                    {
+                        "title": _("Collect Info Responses"),
+                        "icon": "feedback",
+                        "link": reverse_lazy("admin:api_collectinforesponse_changelist"),
                     },
                 ],
             },

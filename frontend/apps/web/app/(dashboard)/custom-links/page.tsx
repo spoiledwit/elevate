@@ -3,8 +3,8 @@ import { getCustomLinksAction } from '@/actions'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Custom Links - Elevate Social',
-  description: 'Manage your custom storefront links and buttons'
+  title: 'My Products - Elevate Social',
+  description: 'Manage your products, links, and call-to-actions'
 }
 
 export default async function CustomLinksPage() {

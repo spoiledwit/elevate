@@ -11,12 +11,33 @@ import {
   Video,
   Loader2,
   Check,
-  Instagram,
-  Facebook,
-  Linkedin,
-  Youtube,
-  Globe
+  Globe,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react'
+import { 
+  FaInstagram, 
+  FaFacebook, 
+  FaTwitter, 
+  FaLinkedin, 
+  FaYoutube,
+  FaTiktok,
+  FaSnapchat,
+  FaPinterest,
+  FaTwitch,
+  FaDiscord,
+  FaTelegram,
+  FaWhatsapp,
+  FaReddit,
+  FaTumblr,
+  FaMedium,
+  FaGithub,
+  FaDribbble,
+  FaBehance,
+  FaSpotify,
+  FaSoundcloud,
+  FaEnvelope
+} from 'react-icons/fa'
 import {
   updateProfileAction,
   uploadProfileImageAction,
@@ -44,12 +65,28 @@ const XIcon = ({ className }: { className?: string }) => (
 )
 
 const socialPlatforms = [
-  { key: 'instagram', label: 'Instagram', icon: Instagram, placeholder: 'https://instagram.com/username' },
-  { key: 'facebook', label: 'Facebook', icon: Facebook, placeholder: 'https://facebook.com/username' },
-  { key: 'twitter', label: 'X', icon: XIcon, placeholder: 'https://x.com/username' },
-  { key: 'linkedin', label: 'LinkedIn', icon: Linkedin, placeholder: 'https://linkedin.com/in/username' },
-  { key: 'youtube', label: 'YouTube', icon: Youtube, placeholder: 'https://youtube.com/c/username' },
-  { key: 'website', label: 'Website', icon: Globe, placeholder: 'https://yourwebsite.com' },
+  { key: 'instagram', label: 'Instagram', icon: FaInstagram, color: '#E4405F', placeholder: 'https://instagram.com/username' },
+  { key: 'facebook', label: 'Facebook', icon: FaFacebook, color: '#1877F2', placeholder: 'https://facebook.com/username' },
+  { key: 'twitter', label: 'X', icon: XIcon, color: '#000000', placeholder: 'https://x.com/username' },
+  { key: 'linkedin', label: 'LinkedIn', icon: FaLinkedin, color: '#0A66C2', placeholder: 'https://linkedin.com/in/username' },
+  { key: 'youtube', label: 'YouTube', icon: FaYoutube, color: '#FF0000', placeholder: 'https://youtube.com/c/username' },
+  { key: 'tiktok', label: 'TikTok', icon: FaTiktok, color: '#000000', placeholder: 'https://tiktok.com/@username' },
+  { key: 'snapchat', label: 'Snapchat', icon: FaSnapchat, color: '#FFFC00', placeholder: 'https://snapchat.com/add/username' },
+  { key: 'pinterest', label: 'Pinterest', icon: FaPinterest, color: '#BD081C', placeholder: 'https://pinterest.com/username' },
+  { key: 'twitch', label: 'Twitch', icon: FaTwitch, color: '#9146FF', placeholder: 'https://twitch.tv/username' },
+  { key: 'discord', label: 'Discord', icon: FaDiscord, color: '#5865F2', placeholder: 'https://discord.gg/username' },
+  { key: 'telegram', label: 'Telegram', icon: FaTelegram, color: '#0088CC', placeholder: 'https://t.me/username' },
+  { key: 'whatsapp', label: 'WhatsApp', icon: FaWhatsapp, color: '#25D366', placeholder: 'https://wa.me/phonenumber' },
+  { key: 'reddit', label: 'Reddit', icon: FaReddit, color: '#FF4500', placeholder: 'https://reddit.com/u/username' },
+  { key: 'tumblr', label: 'Tumblr', icon: FaTumblr, color: '#001935', placeholder: 'https://username.tumblr.com' },
+  { key: 'medium', label: 'Medium', icon: FaMedium, color: '#000000', placeholder: 'https://medium.com/@username' },
+  { key: 'github', label: 'GitHub', icon: FaGithub, color: '#181717', placeholder: 'https://github.com/username' },
+  { key: 'dribbble', label: 'Dribbble', icon: FaDribbble, color: '#EA4C89', placeholder: 'https://dribbble.com/username' },
+  { key: 'behance', label: 'Behance', icon: FaBehance, color: '#1769FF', placeholder: 'https://behance.net/username' },
+  { key: 'spotify', label: 'Spotify', icon: FaSpotify, color: '#1DB954', placeholder: 'https://open.spotify.com/user/username' },
+  { key: 'soundcloud', label: 'SoundCloud', icon: FaSoundcloud, color: '#FF3300', placeholder: 'https://soundcloud.com/username' },
+  { key: 'email', label: 'Email', icon: FaEnvelope, color: '#6B7280', placeholder: 'mailto:your.email@example.com' },
+  { key: 'website', label: 'Website', icon: Globe, color: '#6B7280', placeholder: 'https://yourwebsite.com' },
 ]
 
 export function StorefrontEditor({ profile, onUpdate }: StorefrontEditorProps) {
@@ -59,6 +96,8 @@ export function StorefrontEditor({ profile, onUpdate }: StorefrontEditorProps) {
     embedded_video: profile?.embedded_video || '',
     is_active: profile?.is_active ?? true,
   })
+
+  const [showAllSocials, setShowAllSocials] = useState(false)
 
   const [socialLinks, setSocialLinks] = useState<Record<string, string>>(
     profile?.social_icons?.reduce((acc: any, icon: any) => {
@@ -191,18 +230,23 @@ export function StorefrontEditor({ profile, onUpdate }: StorefrontEditorProps) {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200">
+    <div 
+      className="bg-white rounded-xl"
+      style={{ boxShadow: 'rgba(0, 0, 0, 0.02) 0px 2px 8px' }}
+    >
       <div className="p-6 border-b border-gray-200">
-        <h2 className="text-xl font-semibold text-gray-900">Profile Settings</h2>
-        <p className="text-gray-600 mt-1">Customize how your storefront appears to visitors</p>
+        <h2 className="text-xl font-semibold text-gray-900">Header</h2>
       </div>
 
-      <div className="p-6 space-y-8">
+      <div className="p-6 space-y-4">
         {/* Profile Image Section */}
         <div>
           <label className="block text-sm font-semibold text-gray-900 mb-4">Profile Image</label>
-          <div className="flex items-center gap-6">
-            <div className="relative">
+          <div className="flex items-start gap-6">
+            <div 
+              className="relative group cursor-pointer" 
+              onClick={() => fileInputRef.current?.click()}
+            >
               <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
                 {imagePreview ? (
                   <img
@@ -214,10 +258,25 @@ export function StorefrontEditor({ profile, onUpdate }: StorefrontEditorProps) {
                   <User className="w-8 h-8 text-gray-400" />
                 )}
               </div>
-              {isLoading && (
-                <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+              {/* Edit Overlay */}
+              <div className="absolute inset-0 bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                {isLoading ? (
                   <Loader2 className="w-6 h-6 text-white animate-spin" />
-                </div>
+                ) : (
+                  <Camera className="w-6 h-6 text-white drop-shadow-lg" />
+                )}
+              </div>
+              {/* Remove button - small X in top right */}
+              {imagePreview && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    removeImage()
+                  }}
+                  className="absolute -top-1 -right-1 w-6 h-6 bg-gray-600 hover:bg-gray-700 text-white rounded-full flex items-center justify-center transition-colors shadow-md"
+                >
+                  <X className="w-3 h-3" />
+                </button>
               )}
             </div>
 
@@ -229,23 +288,6 @@ export function StorefrontEditor({ profile, onUpdate }: StorefrontEditorProps) {
                 onChange={handleImageUpload}
                 className="hidden"
               />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
-              >
-                <Camera className="w-4 h-4" />
-                Upload Image
-              </button>
-              {imagePreview && (
-                <button
-                  onClick={removeImage}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
-                >
-                  <X className="w-4 h-4" />
-                  Remove
-                </button>
-              )}
-              <p className="text-xs text-gray-500">JPG, PNG or GIF (max 5MB)</p>
             </div>
           </div>
         </div>
@@ -263,7 +305,7 @@ export function StorefrontEditor({ profile, onUpdate }: StorefrontEditorProps) {
                 value={formData.display_name}
                 onChange={(e) => handleInputChange('display_name', e.target.value)}
                 placeholder="Your display name"
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all duration-300 ease-in-out"
               />
             </div>
           </div>
@@ -279,10 +321,9 @@ export function StorefrontEditor({ profile, onUpdate }: StorefrontEditorProps) {
                 value={formData.embedded_video}
                 onChange={(e) => handleInputChange('embedded_video', e.target.value)}
                 placeholder="YouTube or Vimeo URL"
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all duration-300 ease-in-out"
               />
             </div>
-            <p className="text-xs text-gray-500 mt-1">Add a welcome video to your storefront</p>
           </div>
         </div>
 
@@ -296,37 +337,55 @@ export function StorefrontEditor({ profile, onUpdate }: StorefrontEditorProps) {
               onChange={(e) => handleInputChange('bio', e.target.value)}
               placeholder="Tell visitors about yourself..."
               rows={4}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all duration-300 ease-in-out resize-none"
             />
           </div>
-          <div className="flex justify-between items-center mt-1">
-            <p className="text-xs text-gray-500">Describe what you do and what visitors can expect</p>
+          <div className="flex justify-end items-center mt-1">
             <span className="text-xs text-gray-400">{formData.bio.length}/500</span>
           </div>
         </div>
 
         {/* Social Links Section */}
         <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-4">Social Media Links</label>
+          <label className="block text-lg font-semibold text-gray-900 mb-4">Social Media Links</label>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {socialPlatforms.map((platform) => {
-              const Icon = platform.icon
+            {(showAllSocials ? socialPlatforms : socialPlatforms.slice(0, 6)).map((platform) => {
+              const IconComponent = platform.icon
               return (
                 <div key={platform.key}>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Icon className="w-4 h-4 inline mr-2" />
-                    {platform.label}
-                  </label>
-                  <input
-                    type="url"
-                    value={socialLinks[platform.key] || ''}
-                    onChange={(e) => handleSocialLinkChange(platform.key, e.target.value)}
-                    placeholder={platform.placeholder}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  />
+                  <div className="relative">
+                    <IconComponent 
+                      className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" 
+                      style={{ color: platform.color }}
+                    />
+                    <span className="absolute left-9 top-1/2 transform -translate-y-1/2 text-xs text-gray-500">
+                      URL
+                    </span>
+                    <input
+                      type="url"
+                      value={socialLinks[platform.key] || ''}
+                      onChange={(e) => handleSocialLinkChange(platform.key, e.target.value)}
+                      placeholder={platform.placeholder}
+                      className="w-full pl-16 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all duration-300 ease-in-out"
+                    />
+                  </div>
                 </div>
               )
             })}
+          </div>
+          <div className="flex justify-center mt-4">
+            <button
+              type="button"
+              onClick={() => setShowAllSocials(!showAllSocials)}
+              className="flex items-center gap-2 text-base text-purple-600 hover:text-purple-700 font-medium"
+            >
+              {showAllSocials ? 'Show Less' : 'View More'}
+              {showAllSocials ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
+            </button>
           </div>
         </div>
 

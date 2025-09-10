@@ -10,7 +10,8 @@ import {
   type PatchedCustomLinkCreateUpdate,
   type SocialIcon,
   type PatchedSocialIcon,
-  type PatchedUserProfile
+  type PatchedUserProfile,
+  StyleEnum
 } from '@frontend/types/api'
 import { getServerSession } from 'next-auth'
 
@@ -31,11 +32,31 @@ export interface CTABannerUpdateData {
   is_active?: boolean
 }
 
-export interface CustomLinkCreateData {
-  text: string
-  url: string
-  order?: number
-  is_active?: boolean
+export interface NewProductCreateData {
+  order?: number;
+  is_active?: boolean;
+  type?: string;
+  thumbnail?: File | null;
+  title?: string;
+  subtitle?: string;
+  button_text?: string;
+  style?: StyleEnum | string;
+  checkout_image?: File | null;
+  checkout_title?: string;
+  checkout_description?: string;
+  checkout_bottom_title?: string;
+  checkout_cta_button_text?: string;
+  checkout_price?: string | null;
+  checkout_discounted_price?: string | null;
+  additional_info?: any;
+  collect_info_fields_data?: Array<{
+    field_type: string;
+    label: string;
+    placeholder?: string;
+    is_required: boolean;
+    options?: string[];
+    order: number;
+  }>;
 }
 
 export interface CustomLinkUpdateData {
@@ -340,9 +361,9 @@ export async function createCustomLinkFormData(data: any, thumbnailFile?: File):
 }
 
 /**
- * Create a new custom link
+ * Create a new product/custom link
  */
-export async function createCustomLinkAction(data: CustomLinkCreateData) {
+export async function createNewProductAction(data: NewProductCreateData): Promise<{ data?: CustomLinkCreateUpdate; error?: string }> {
   const session = await getServerSession(authOptions)
 
   if (!session) {
@@ -353,13 +374,13 @@ export async function createCustomLinkAction(data: CustomLinkCreateData) {
     const apiClient = await getApiClient(session)
     const response = await apiClient.storefront.storefrontLinksCreate(data as CustomLinkCreateUpdate)
     
-    return response
+    return { data: response }
   } catch (error) {
-    console.error('Failed to create custom link:', error)
+    console.error('Failed to create new product:', error)
     if (error instanceof ApiError) {
-      return { error: error.body?.error || 'Failed to create custom link' }
+      return { error: error.body?.error || 'Failed to create new product' }
     }
-    return { error: 'Failed to create custom link' }
+    return { error: 'Failed to create new product' }
   }
 }
 
@@ -517,7 +538,14 @@ export async function reorderCustomLinksAction(links: CustomLinkReorderData[], p
 
   try {
     const apiClient = await getApiClient(session)
-    const response = await apiClient.storefront.storefrontLinksReorderCreate(page, links)
+    // Use direct HTTP request to avoid the broken mediaType in generated client
+    const response = await apiClient.storefront.httpRequest.request({
+      method: 'POST',
+      url: '/api/storefront/links/reorder/',
+      query: page ? { page } : undefined,
+      body: links,
+      mediaType: 'application/json',
+    })
     
     return response
   } catch (error) {

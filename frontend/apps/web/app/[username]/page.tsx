@@ -12,7 +12,7 @@ interface PublicStorefrontPageProps {
 export async function generateMetadata({ params }: PublicStorefrontPageProps): Promise<Metadata> {
   const { username } = await params
   const profile = await getPublicProfileAction(username)
-  
+
   if ('error' in profile) {
     return {
       title: 'Profile Not Found - Elevate Social'
@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: PublicStorefrontPageProps): P
 export default async function PublicStorefrontPage({ params }: PublicStorefrontPageProps) {
   const { username } = await params
   const profile = await getPublicProfileAction(username)
-  
+
   if ('error' in profile) {
     notFound()
   }

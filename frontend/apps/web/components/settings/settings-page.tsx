@@ -4,9 +4,10 @@ import type { UserCurrent } from '@frontend/types/api'
 import { ProfileSection } from './profile-section'
 import { PasswordSection } from './password-section'
 import { DeleteAccountSection } from './delete-account-section'
+import { StripeConnectSection } from './stripe-connect-section'
 import { useState } from 'react'
 
-type ActiveTab = 'profile' | 'password' | 'danger'
+type ActiveTab = 'profile' | 'password' | 'payments' | 'danger'
 
 export function SettingsPage({
   currentUser,
@@ -53,6 +54,15 @@ export function SettingsPage({
               Password
             </button>
             <button
+              onClick={() => setActiveTab('payments')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'payments'
+                ? 'border-green-500 text-green-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+            >
+              Payments
+            </button>
+            <button
               onClick={() => setActiveTab('danger')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'danger'
                 ? 'border-red-500 text-red-600'
@@ -90,6 +100,18 @@ export function SettingsPage({
                 </p>
               </div>
               <PasswordSection onSubmitHandler={changePasswordAction} />
+            </div>
+          )}
+
+          {activeTab === 'payments' && (
+            <div>
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold text-purple-600">Payment Settings</h2>
+                <p className="text-gray-600 mt-1">
+                  Connect your Stripe account to receive payments from customers.
+                </p>
+              </div>
+              <StripeConnectSection />
             </div>
           )}
 

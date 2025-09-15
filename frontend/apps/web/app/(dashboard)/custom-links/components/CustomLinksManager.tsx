@@ -1,10 +1,9 @@
 'use client'
 
-import { useState } from 'react'
-import { useSession } from 'next-auth/react'
+import { useState, useEffect } from 'react'
 import NextLink from 'next/link'
 import {
-  Link,
+  Package,
   Plus,
   Edit,
   Trash2,
@@ -14,25 +13,30 @@ import {
   EyeOff,
   Image,
   BarChart3,
-  MousePointerClick
+  MousePointerClick,
+  MoreVertical
 } from 'lucide-react'
 import { LinkForm } from './LinkForm'
 import { LinkAnalytics } from './LinkAnalytics'
 import { ConfirmDialog } from './ConfirmDialog'
+import { StorefrontHeaderPreview } from './StorefrontHeaderPreview'
+import { ProductCard } from './ProductCard'
 import {
   getCustomLinksAction,
   deleteCustomLinkAction,
   reorderCustomLinksAction,
-  updateCustomLinkAction
+  updateCustomLinkAction,
+  getCurrentProfileAction
 } from '@/actions'
+import noProdsImage from '@/assets/product-types/noprods.png'
 
 interface CustomLinksManagerProps {
   initialLinks: any[]
 }
 
 export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
-  const { data: session } = useSession()
   const [links, setLinks] = useState(initialLinks)
+  const [profile, setProfile] = useState<any>(null)
   const [selectedLink, setSelectedLink] = useState<any>(null)
   const [showForm, setShowForm] = useState(false)
   const [showAnalytics, setShowAnalytics] = useState(false)
@@ -40,6 +44,7 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [linkToDelete, setLinkToDelete] = useState<string | null>(null)
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
 
   const loadLinks = async () => {
     try {
@@ -51,6 +56,22 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
       console.error('Error loading links:', error)
     }
   }
+
+  const loadProfile = async () => {
+    try {
+      const result = await getCurrentProfileAction()
+      if (!('error' in result)) {
+        setProfile(result)
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error)
+    }
+  }
+
+  useEffect(() => {
+    loadProfile()
+  }, [])
+
 
   const handleDeleteLink = (linkId: string) => {
     setLinkToDelete(linkId)
@@ -91,13 +112,6 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
     setShowForm(true)
   }
 
-
-  const handleFormComplete = () => {
-    setShowForm(false)
-    setSelectedLink(null)
-    loadLinks()
-  }
-
   const handleReorderLinks = async (newOrder: any[]) => {
     try {
       const reorderData = newOrder.map((link, index) => ({
@@ -125,7 +139,7 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
 
   const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
     e.preventDefault()
-    
+
     if (draggedIndex === null || draggedIndex === dropIndex) {
       setDraggedIndex(null)
       return
@@ -133,17 +147,17 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
 
     const newLinks = [...links]
     const draggedLink = newLinks[draggedIndex]
-    
+
     // Remove dragged item
     newLinks.splice(draggedIndex, 1)
-    
+
     // Insert at new position
     newLinks.splice(dropIndex, 0, draggedLink)
-    
+
     // Update UI immediately for smooth UX
     setLinks(newLinks)
     setDraggedIndex(null)
-    
+
     // Save new order to backend
     await handleReorderLinks(newLinks)
   }
@@ -160,6 +174,20 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
   const activeLinksCount = links.filter(link => link.is_active).length
   const totalClicks = links.reduce((sum, link) => sum + (link.click_count || 0), 0)
 
+  // Show form if in form mode
+  if (showForm) {
+    return (
+      <LinkForm
+        link={selectedLink}
+        onClose={() => {
+          setShowForm(false)
+          setSelectedLink(null)
+          loadLinks() // Refresh the links list
+        }}
+      />
+    )
+  }
+
   return (
     <div className="flex-1 bg-gray-50">
       {/* Header */}
@@ -169,7 +197,7 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <Link className="w-7 h-7 text-blue-600" />
+                  <Package className="w-7 h-7 text-blue-600" />
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">My Products</h1>
@@ -181,9 +209,8 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
 
               <NextLink
                 href="/custom-links/create"
-                className={`inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium ${
-                  links.length >= 10 ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''
-                }`}
+                className={`inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium ${links.length >= 10 ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''
+                  }`}
               >
                 <Plus className="w-4 h-4" />
                 Add Product
@@ -200,7 +227,7 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
             <div className="bg-white rounded-xl p-6" style={{ boxShadow: 'rgba(0, 0, 0, 0.02) 0px 2px 8px' }}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Link className="w-5 h-5 text-blue-600" />
+                  <Package className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Products</p>
@@ -254,7 +281,7 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
                           onDragOver={handleDragOver}
                           onDrop={(e) => handleDrop(e, index)}
                           onDragEnd={handleDragEnd}
-                          className={`flex items-center gap-4 p-4 rounded-lg border-2 transition-all cursor-move ${link.is_active
+                          className={`flex items-center gap-4 p-4 rounded-lg border-2 transition-all ${link.is_active
                             ? 'border-gray-200 bg-white'
                             : 'border-gray-100 bg-gray-50'
                             } ${draggedIndex === index ? 'opacity-50 scale-95' : ''}`}
@@ -281,7 +308,7 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <h3 className="font-medium text-gray-900 truncate">
-                                {link.text}
+                                {link.title || link.text}
                               </h3>
                               {!link.is_active && (
                                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
@@ -289,67 +316,110 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
                                 </span>
                               )}
                             </div>
-                            <p className="text-sm text-gray-600 truncate">{link.url}</p>
-                            <div className="flex items-center gap-4 mt-1">
-                              <span className="text-xs text-gray-500">
-                                Order: {link.order}
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                Clicks: {link.click_count || 0}
-                              </span>
+                            <div className="flex items-center gap-3 mt-1">
+                              {/* Product Type Badge */}
+                              {link.type && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
+                                  {link.type === 'digital_product' ? 'Digital' :
+                                    link.type === 'custom_product' ? 'Custom' :
+                                      link.type === 'ecourse' ? 'Course' :
+                                        link.type === 'url_media' ? 'URL/Media' :
+                                          link.type}
+                                </span>
+                              )}
+                              {/* Price */}
+                              {link.checkout_price && (
+                                <span className="text-sm font-semibold text-gray-900">
+                                  ${link.checkout_discounted_price || link.checkout_price}
+                                  {link.checkout_discounted_price && (
+                                    <span className="text-xs text-gray-500 line-through ml-1">
+                                      ${link.checkout_price}
+                                    </span>
+                                  )}
+                                </span>
+                              )}
                             </div>
                           </div>
 
                           {/* Actions */}
-                          <div className="flex items-center gap-2">
+                          <div className="relative">
                             <button
-                              onClick={() => handleToggleActive(link)}
-                              className={`p-2 rounded-lg transition-colors ${link.is_active
-                                ? 'text-green-600 hover:bg-green-50'
-                                : 'text-gray-400 hover:bg-gray-100'
-                                }`}
-                              title={link.is_active ? 'Hide link' : 'Show link'}
-                            >
-                              {link.is_active ? (
-                                <Eye className="w-4 h-4" />
-                              ) : (
-                                <EyeOff className="w-4 h-4" />
-                              )}
-                            </button>
-
-                            <button
-                              onClick={() => handleShowAnalytics(link.id)}
-                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                              title="View analytics"
-                            >
-                              <BarChart3 className="w-4 h-4" />
-                            </button>
-
-                            <button
-                              onClick={() => handleEditLink(link)}
-                              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                              title="Edit link"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
-
-                            <button
-                              onClick={() => handleDeleteLink(link.id)}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                              title="Delete link"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-
-                            <a
-                              href={link.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                              onClick={() => setOpenMenuId(openMenuId === link.id ? null : link.id)}
                               className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                              title="Open link"
+                              title="More options"
                             >
-                              <ExternalLink className="w-4 h-4" />
-                            </a>
+                              <MoreVertical className="w-4 h-4" />
+                            </button>
+
+                            {/* Dropdown Menu */}
+                            {openMenuId === link.id && (
+                              <>
+                                <div
+                                  className="fixed inset-0 z-10"
+                                  onClick={() => setOpenMenuId(null)}
+                                />
+                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
+                                  <div className="py-1">
+                                    <button
+                                      onClick={() => {
+                                        handleToggleActive(link)
+                                        setOpenMenuId(null)
+                                      }}
+                                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                    >
+                                      {link.is_active ? (
+                                        <>
+                                          <EyeOff className="w-4 h-4" />
+                                          Hide Product
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Eye className="w-4 h-4" />
+                                          Show Product
+                                        </>
+                                      )}
+                                    </button>
+
+                                    <button
+                                      onClick={() => {
+                                        handleShowAnalytics(link.id)
+                                        setOpenMenuId(null)
+                                      }}
+                                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                    >
+                                      <BarChart3 className="w-4 h-4" />
+                                      View Analytics
+                                    </button>
+
+                                    <button
+                                      onClick={() => {
+                                        handleEditLink(link)
+                                        setOpenMenuId(null)
+                                      }}
+                                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                    >
+                                      <Edit className="w-4 h-4" />
+                                      Edit Product
+                                    </button>
+
+
+
+                                    <div className="border-t border-gray-200 my-1"></div>
+
+                                    <button
+                                      onClick={() => {
+                                        handleDeleteLink(link.id)
+                                        setOpenMenuId(null)
+                                      }}
+                                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                      Delete Product
+                                    </button>
+                                  </div>
+                                </div>
+                              </>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -357,14 +427,13 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
                   ) : (
                     <div className="text-center pb-10 pt-[-20px]">
                       <div className="mb-6">
-                        <h2 className="text-xl font-semibold text-gray-900 mb-2">Create Your First Product</h2>
-                        <p className="text-gray-600 text-base">Transform your storefront with products and links that drive engagement</p>
+                        <img src={noProdsImage.src} alt="No products" className="w-64 h-64 mx-auto mb-6" />
                       </div>
                       <NextLink
                         href="/custom-links/create"
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-base"
                       >
-                        <Plus className="w-4 h-4" />
+                        <Plus className="w-5 h-5" />
                         Add Your First Product
                       </NextLink>
                     </div>
@@ -396,34 +465,40 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
                   boxShadow: 'rgba(50, 50, 93, 0.25) 0px 50px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px, rgba(10, 37, 64, 0.35) 0px -2px 6px 0px inset'
                 }}
               >
-                <div className="w-full h-full rounded-xl overflow-hidden">
-                  <iframe
-                    src={`/${session?.user?.username}`}
-                    className="w-full h-full"
-                    style={{
-                      transform: 'scale(0.9)',
-                      transformOrigin: 'top left',
-                      width: '111%',
-                      height: '111%',
-                      border: 'none',
-                      outline: 'none'
-                    }}
-                  />
+                <div className="w-full h-full rounded-xl overflow-hidden bg-white">
+                  <div className="h-full overflow-y-auto">
+                    <div className="p-6 space-y-6">
+                      <StorefrontHeaderPreview
+                        profileImage={profile?.profile_image}
+                        displayName={profile?.display_name}
+                        bio={profile?.bio}
+                        socialIcons={profile?.social_icons || []}
+                        video={profile?.embedded_video}
+                      />
+
+                      {/* Products */}
+                      <div className="space-y-4">
+                        {links.filter(link => link.is_active).map((link) => (
+                          <ProductCard
+                            key={link.id}
+                            productType={link.type?.replace('_product', '') || 'digital'}
+                            thumbnail={link.thumbnail}
+                            title={link.title || link.text}
+                            subtitle={link.subtitle}
+                            displayStyle={link.style}
+                            price={link.checkout_price}
+                            discountedPrice={link.checkout_discounted_price}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Form Modal */}
-      {showForm && (
-        <LinkForm
-          link={selectedLink}
-          onClose={() => setShowForm(false)}
-          onComplete={handleFormComplete}
-        />
-      )}
 
       {/* Analytics Modal */}
       {showAnalytics && analyticsLinkId && (

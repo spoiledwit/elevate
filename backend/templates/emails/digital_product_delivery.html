@@ -1,0 +1,89 @@
+{% extends "emails/base.html" %}
+
+{% block title %}Your Digital Product is Ready - Elevate Social{% endblock %}
+
+{% block header_title %}Download Ready!{% endblock %}
+
+{% block content %}
+<h2>Thank you for your purchase!</h2>
+
+<p>Hi {{ customer_name|default:"valued customer" }},</p>
+
+<p>Your payment for <strong>{{ product_title }}</strong> has been processed successfully. Your digital product is now ready for download!</p>
+
+{% if product_subtitle %}
+<p><em>{{ product_subtitle }}</em></p>
+{% endif %}
+
+<div class="download-section">
+    <h3>
+        <svg class="icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="7,10 12,15 17,10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Download Your Product
+    </h3>
+    <p>Click the button below to download your digital product:</p>
+
+    {% if digital_file_url %}
+    <a href="{{ digital_file_url }}" class="download-button" style="color: white !important;">Download Now</a>
+    {% else %}
+    <p><em>Download link will be provided shortly via email.</em></p>
+    {% endif %}
+</div>
+
+{% if download_instructions %}
+<div class="info-box">
+    <h3>
+        <svg class="icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 11H7a4 4 0 0 0 0 8h2m6-8h2a4 4 0 0 1 0 8h-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="3,8 5,12 9,12 11,8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="13,8 15,12 19,12 21,8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Download Instructions
+    </h3>
+    <p>{{ download_instructions|linebreaks }}</p>
+</div>
+{% endif %}
+
+<div class="info-box">
+    <h3>
+        <svg class="icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+            <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Order Details
+    </h3>
+    <p><strong>Order ID:</strong> {{ order_id }}</p>
+    <p><strong>Product:</strong> {{ product_title }}</p>
+    <p><strong>Purchase Date:</strong> {{ purchase_date|date:"F d, Y" }}</p>
+    {% if product_price %}
+    <p><strong>Amount Paid:</strong> ${{ product_price }}</p>
+    {% endif %}
+</div>
+
+{% if form_responses %}
+<div class="info-box">
+    <h3>
+        <svg class="icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2"/>
+            <polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="2"/>
+            <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" stroke-width="2"/>
+            <polyline points="10,9 9,9 8,9" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        Your Information
+    </h3>
+    {% for response in form_responses %}
+    <p><strong>{{ response.question }}:</strong> {{ response.answer }}</p>
+    {% endfor %}
+</div>
+{% endif %}
+
+<p>If you have any issues downloading your product or need assistance, please don't hesitate to reach out to our support team.</p>
+
+<p>Thank you for your business!</p>
+
+<p>Best regards,<br>The Elevate Social Team</p>
+{% endblock %}

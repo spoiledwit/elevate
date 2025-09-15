@@ -1,21 +1,31 @@
 import { AuthProvider } from '@/providers/auth-provider'
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Poppins } from 'next/font/google'
 import { twMerge } from 'tailwind-merge'
 import { Toaster } from 'sonner'
 import { ComingSoon } from '@/components/coming-soon'
 
 import '@frontend/ui/styles/globals.css'
 
-const inter = Inter({
+const poppins = Poppins({
   subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-sans'
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-poppins'
 })
 
 
+
 export const metadata: Metadata = {
-  title: 'Elevate Social'
+  title: 'Elevate Social',
+  description: 'Elevate your social media presence with our comprehensive social media management platform.',
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/icon.ico', type: 'image/x-icon' },
+    ],
+    shortcut: [{ url: '/favicon.ico' }],
+    apple: [{ url: '/favicon.ico' }],
+  },
 }
 
 
@@ -24,15 +34,18 @@ export default function RootLayout({
 }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+      </head>
       <body
         className={twMerge(
           'bg-gray-50 text-sm text-gray-700 antialiased',
-          inter.className
+          poppins.className
         )}
       >
         <AuthProvider>
           <div className="">
-            <div className="">{children}</div>
+            <div className=""><ComingSoon /></div>
           </div>
           <Toaster
             position="top-right"

@@ -1,16 +1,18 @@
 'use client'
 
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { ThumbnailPreviewer } from './ThumbnailPreviewer'
 import { CheckoutPreviewer } from './CheckoutPreviewer'
 import { TinyMCEEditor } from '@/components/TinyMCEEditor'
-import { createNewProductAction, type NewProductCreateData } from '@/actions'
-import digitalProductImg from '@/assets/product-types/ditialProduct.png'
-import customProductImg from '@/assets/product-types/product.png'
-import eCourseImg from '@/assets/product-types/eCourse.png'
-import urlMediaImg from '@/assets/product-types/media.png'
+import { createNewProductAction, updateCustomLinkWithFileAction, updateCustomLinkAction, type NewProductCreateData } from '@/actions'
+import { uploadDocumentAction } from '@/actions/upload-action'
+import digitalProductImg from '@/assets/product-types/digitalProduct.svg'
+import customProductImg from '@/assets/product-types/product.svg'
+import eCourseImg from '@/assets/product-types/eCourse.svg'
+import urlMediaImg from '@/assets/product-types/media.svg'
+import uploadImg from '@/assets/imgs/upload.png'
 import {
   Plus,
   FileText,
@@ -44,11 +46,12 @@ import {
 
 interface LinkFormProps {
   link?: any
+  onClose?: () => void
 }
 
 type ProductType = 'digital' | 'custom' | 'ecourse' | 'url-media' | null
 
-export function LinkForm({ link }: LinkFormProps) {
+export function LinkForm({ link, onClose }: LinkFormProps) {
   const router = useRouter()
   const [selectedType, setSelectedType] = useState<ProductType>(null)
   const [selectedStyle, setSelectedStyle] = useState<'button' | 'callout' | null>('callout')
@@ -76,6 +79,10 @@ export function LinkForm({ link }: LinkFormProps) {
   // Product-specific state
   const [digitalFileUrl, setDigitalFileUrl] = useState('')
   const [downloadInstructions, setDownloadInstructions] = useState('')
+  const [digitalFile, setDigitalFile] = useState<File | null>(null)
+  const [digitalFileName, setDigitalFileName] = useState<string>('')
+  const [isUploadingFile, setIsUploadingFile] = useState(false)
+  const digitalFileInputRef = useRef<HTMLInputElement>(null)
   const [customFields, setCustomFields] = useState<{ label: string; value: string }[]>([])
   const [courseModules, setCourseModules] = useState<string[]>([''])
   const [courseDuration, setCourseDuration] = useState('')
@@ -110,6 +117,7 @@ export function LinkForm({ link }: LinkFormProps) {
   // Store raw options text for each field to allow proper editing
   const [optionsText, setOptionsText] = useState<Record<number, string>>({})
   const [showFieldTypeDropdown, setShowFieldTypeDropdown] = useState(false)
+  const [isEditMode, setIsEditMode] = useState(false)
 
   const productTypes = [
     {
@@ -146,8 +154,246 @@ export function LinkForm({ link }: LinkFormProps) {
     }
   ]
 
-  const handleTypeSelect = (type: ProductType) => {
+  // Populate form data when editing existing product
+  useEffect(() => {
+    if (link) {
+      setIsEditMode(true)
+      
+      // Map product type from backend format to frontend format
+      const getProductTypeFromBackend = (backendType: string): ProductType => {
+        switch (backendType) {
+          case 'digital_product': return 'digital'
+          case 'custom_product': return 'custom'  
+          case 'ecourse': return 'ecourse'
+          case 'url_media': return 'url-media'
+          default: return 'digital'
+        }
+      }
+
+      // Set basic product info
+      const productType = getProductTypeFromBackend(link.type || 'digital_product')
+      setSelectedType(productType)
+      setStep(2) // Skip product type selection step
+      
+      // Set basic information
+      setTitle(link.title || '')
+      setSubtitle(link.subtitle || '')
+      setSelectedStyle(link.style || 'callout')
+      
+      // Set thumbnail
+      if (link.thumbnail) {
+        setThumbnailPreview(link.thumbnail)
+      }
+      
+      // Set pricing
+      setCheckoutPrice(link.checkout_price?.toString() || '')
+      setCheckoutDiscountedPrice(link.checkout_discounted_price?.toString() || '')
+      
+      // Set checkout information
+      setCheckoutTitle(link.checkout_title || '')
+      setCheckoutDescription(link.checkout_description || '')
+      setCheckoutBottomTitle(link.checkout_bottom_title || '')
+      setCheckoutCtaButtonText(link.checkout_cta_button_text || 'Buy Now')
+      
+      // Set checkout image
+      if (link.checkout_image) {
+        setCheckoutImagePreview(link.checkout_image)
+      }
+      
+      // Set product-specific data from additional_info
+      if (link.additional_info) {
+        const additionalInfo = link.additional_info
+        
+        if (productType === 'digital') {
+          setDigitalFileUrl(additionalInfo.digital_file_url || '')
+          setDownloadInstructions(additionalInfo.download_instructions || '')
+        } else if (productType === 'custom') {
+          setCustomFields(additionalInfo.custom_fields || [])
+        } else if (productType === 'ecourse') {
+          setCourseDuration(additionalInfo.course_duration || '')
+          setCourseModules(additionalInfo.course_modules || [''])
+        } else if (productType === 'url-media') {
+          setMediaUrl(additionalInfo.destination_url || '')
+          setButtonText(additionalInfo.button_text || 'View Content')
+        }
+      }
+      
+      // Set collect info fields
+      if (link.collect_info_fields && link.collect_info_fields.length > 0) {
+        setCollectInfoFields(link.collect_info_fields)
+      }
+    }
+  }, [link])
+
+  const handleTypeSelect = async (type: ProductType) => {
     setSelectedType(type)
+    
+    // Auto-set fields for digital product
+    if (type === 'digital') {
+      // Step 2: Basic info
+      setThumbnailPreview(digitalProductImg.src)
+      
+      // Convert SVG to File object for thumbnail
+      try {
+        const response = await fetch(digitalProductImg.src)
+        const blob = await response.blob()
+        const file = new File([blob], 'digital-product-thumbnail.svg', { type: 'image/svg+xml' })
+        setThumbnail(file)
+      } catch (error) {
+        console.error('Failed to convert thumbnail to file:', error)
+      }
+      
+      setTitle('Download Your Digital Product Today!')
+      setSubtitle('Instant access to premium content that will transform your journey')
+      setCheckoutPrice('49.99')
+      setCheckoutDiscountedPrice('29.99')
+      
+      // Step 3: Checkout details
+      setCheckoutTitle('Get Instant Access to Your Digital Product')
+      setCheckoutDescription('<h3>What You\'ll Get:</h3><ul><li>✅ Immediate download after purchase</li><li>✅ Lifetime access to all updates</li><li>✅ Professional quality content</li><li>✅ 30-day money-back guarantee</li></ul><p>Transform your skills with our premium digital content. Join thousands of satisfied customers who have already upgraded their journey!</p>')
+      setCheckoutBottomTitle('Ready to Get Started?')
+      setCheckoutCtaButtonText('Get Instant Access Now')
+      
+      // Also set checkout image to the same
+      setCheckoutImagePreview(digitalProductImg.src)
+      try {
+        const response = await fetch(digitalProductImg.src)
+        const blob = await response.blob()
+        const file = new File([blob], 'digital-product-checkout.svg', { type: 'image/svg+xml' })
+        setCheckoutImage(file)
+      } catch (error) {
+        console.error('Failed to convert checkout image to file:', error)
+      }
+    }
+    
+    // Auto-set fields for custom product
+    if (type === 'custom') {
+      // Step 2: Basic info
+      setThumbnailPreview(customProductImg.src)
+      
+      // Convert SVG to File object for thumbnail
+      try {
+        const response = await fetch(customProductImg.src)
+        const blob = await response.blob()
+        const file = new File([blob], 'custom-product-thumbnail.svg', { type: 'image/svg+xml' })
+        setThumbnail(file)
+      } catch (error) {
+        console.error('Failed to convert thumbnail to file:', error)
+      }
+      
+      setTitle('Get Your Custom Product Today!')
+      setSubtitle('Premium quality product tailored just for you')
+      setCheckoutPrice('99.99')
+      setCheckoutDiscountedPrice('79.99')
+      
+      // Step 3: Checkout details
+      setCheckoutTitle('Order Your Custom Product')
+      setCheckoutDescription('<h3>What Makes This Special:</h3><ul><li>✅ Completely customized to your needs</li><li>✅ Premium materials and craftsmanship</li><li>✅ Personal consultation included</li><li>✅ Satisfaction guaranteed</li></ul><p>Experience the difference of a product made specifically for you. Join our community of satisfied customers who chose quality and personalization!</p>')
+      setCheckoutBottomTitle('Ready to Order?')
+      setCheckoutCtaButtonText('Order Custom Product')
+      
+      // Also set checkout image to the same
+      setCheckoutImagePreview(customProductImg.src)
+      try {
+        const response = await fetch(customProductImg.src)
+        const blob = await response.blob()
+        const file = new File([blob], 'custom-product-checkout.svg', { type: 'image/svg+xml' })
+        setCheckoutImage(file)
+      } catch (error) {
+        console.error('Failed to convert checkout image to file:', error)
+      }
+    }
+    
+    // Auto-set fields for URL/Media
+    if (type === 'url-media') {
+      // Step 2: Basic info
+      setThumbnailPreview(urlMediaImg.src)
+      
+      // Convert SVG to File object for thumbnail
+      try {
+        const response = await fetch(urlMediaImg.src)
+        const blob = await response.blob()
+        const file = new File([blob], 'url-media-thumbnail.svg', { type: 'image/svg+xml' })
+        setThumbnail(file)
+      } catch (error) {
+        console.error('Failed to convert thumbnail to file:', error)
+      }
+      
+      setTitle('Access Premium Content')
+      setSubtitle('Exclusive media and resources for your success')
+      setCheckoutPrice('19.99')
+      setCheckoutDiscountedPrice('14.99')
+      
+      // Step 3: Checkout details
+      setCheckoutTitle('Get Access to Premium Media')
+      setCheckoutDescription('<h3>Exclusive Access Includes:</h3><ul><li>✅ High-quality media content</li><li>✅ Instant online access</li><li>✅ Compatible with all devices</li><li>✅ Regular content updates</li></ul><p>Unlock premium content that will elevate your knowledge and skills. Join our community and start your journey today!</p>')
+      setCheckoutBottomTitle('Ready to Access?')
+      setCheckoutCtaButtonText('Get Access Now')
+      
+      // Set default media URL
+      setMediaUrl('https://example.com/your-premium-content')
+      setButtonText('Access Content')
+      
+      // Also set checkout image to the same
+      setCheckoutImagePreview(urlMediaImg.src)
+      try {
+        const response = await fetch(urlMediaImg.src)
+        const blob = await response.blob()
+        const file = new File([blob], 'url-media-checkout.svg', { type: 'image/svg+xml' })
+        setCheckoutImage(file)
+      } catch (error) {
+        console.error('Failed to convert checkout image to file:', error)
+      }
+    }
+    
+    // Auto-set fields for eCourse
+    if (type === 'ecourse') {
+      // Step 2: Basic info
+      setThumbnailPreview(eCourseImg.src)
+      
+      // Convert SVG to File object for thumbnail
+      try {
+        const response = await fetch(eCourseImg.src)
+        const blob = await response.blob()
+        const file = new File([blob], 'ecourse-thumbnail.svg', { type: 'image/svg+xml' })
+        setThumbnail(file)
+      } catch (error) {
+        console.error('Failed to convert thumbnail to file:', error)
+      }
+      
+      setTitle('Master New Skills with Our eCourse')
+      setSubtitle('Comprehensive online course with expert guidance')
+      setCheckoutPrice('199.99')
+      setCheckoutDiscountedPrice('149.99')
+      
+      // Step 3: Checkout details
+      setCheckoutTitle('Enroll in Our Premium eCourse')
+      setCheckoutDescription('<h3>What You\'ll Learn:</h3><ul><li>✅ Step-by-step video lessons</li><li>✅ Downloadable resources and worksheets</li><li>✅ Interactive assignments and quizzes</li><li>✅ Certificate of completion</li><li>✅ Lifetime access to course materials</li><li>✅ Direct access to instructor support</li></ul><p>Transform your skills with our comprehensive online course. Join thousands of successful students who have already mastered these valuable skills!</p>')
+      setCheckoutBottomTitle('Ready to Start Learning?')
+      setCheckoutCtaButtonText('Enroll Now')
+      
+      // Set default course info
+      setCourseDuration('8 weeks • Self-paced')
+      setCourseModules([
+        'Introduction and Course Overview',
+        'Fundamentals and Basic Concepts',
+        'Advanced Techniques and Strategies',
+        'Practical Applications and Case Studies',
+        'Final Project and Certification'
+      ])
+      
+      // Also set checkout image to the same
+      setCheckoutImagePreview(eCourseImg.src)
+      try {
+        const response = await fetch(eCourseImg.src)
+        const blob = await response.blob()
+        const file = new File([blob], 'ecourse-checkout.svg', { type: 'image/svg+xml' })
+        setCheckoutImage(file)
+      } catch (error) {
+        console.error('Failed to convert checkout image to file:', error)
+      }
+    }
+    
     setStep(2) // Immediately go to next step
   }
 
@@ -173,7 +419,11 @@ export function LinkForm({ link }: LinkFormProps) {
     if (step > 1) {
       setStep(step - 1)
     } else {
-      router.push('/custom-links')
+      if (onClose) {
+        onClose()
+      } else {
+        router.push('/custom-links')
+      }
     }
   }
 
@@ -354,12 +604,34 @@ export function LinkForm({ link }: LinkFormProps) {
     return Object.keys(errors).length === 0
   }
 
-  const handleCreateProduct = async () => {
+  const handleUpdateProduct = async () => {
     if (isSubmitting) return
 
     setIsSubmitting(true)
 
     try {
+      // Handle file upload for digital products if a new file is selected
+      let finalDigitalFileUrl = digitalFileUrl
+      
+      if (selectedType === 'digital' && digitalFile) {
+        setIsUploadingFile(true)
+        
+        const uploadResult = await uploadDocumentAction(digitalFile, 'digital-products')
+        
+        if (uploadResult.error) {
+          toast.error(`Failed to upload file: ${uploadResult.error}`)
+          setIsSubmitting(false)
+          setIsUploadingFile(false)
+          return
+        }
+        
+        if (uploadResult.data) {
+          finalDigitalFileUrl = uploadResult.data.secure_url
+        }
+        
+        setIsUploadingFile(false)
+      }
+
       // Map product type to backend format
       const getProductTypeKey = (type: ProductType): string => {
         switch (type) {
@@ -376,7 +648,152 @@ export function LinkForm({ link }: LinkFormProps) {
 
       if (selectedType === 'digital') {
         additionalInfo = {
-          digital_file_url: digitalFileUrl,
+          digital_file_url: finalDigitalFileUrl,
+          download_instructions: downloadInstructions
+        }
+      } else if (selectedType === 'custom') {
+        additionalInfo = {
+          custom_fields: customFields.filter(field => field.label.trim() && field.value.trim())
+        }
+      } else if (selectedType === 'ecourse') {
+        additionalInfo = {
+          course_duration: courseDuration,
+          course_modules: courseModules.filter(module => module.trim())
+        }
+      } else if (selectedType === 'url-media') {
+        additionalInfo = {
+          destination_url: mediaUrl,
+          button_text: buttonText
+        }
+      }
+
+      // Check if we need to use FormData for file uploads
+      const hasFileUploads = thumbnail instanceof File || checkoutImage instanceof File
+
+      if (hasFileUploads) {
+        // Use FormData for file uploads
+        const formData = new FormData()
+        
+        // Basic data
+        formData.append('type', getProductTypeKey(selectedType))
+        formData.append('title', title.trim())
+        formData.append('subtitle', subtitle.trim() || '')
+        formData.append('style', selectedStyle || 'callout')
+        formData.append('checkout_title', checkoutTitle.trim() || '')
+        formData.append('checkout_description', checkoutDescription.trim() || '')
+        formData.append('checkout_bottom_title', checkoutBottomTitle.trim() || '')
+        formData.append('checkout_cta_button_text', checkoutCtaButtonText)
+        formData.append('checkout_price', checkoutPrice || '')
+        formData.append('checkout_discounted_price', checkoutDiscountedPrice || '')
+        formData.append('additional_info', JSON.stringify(additionalInfo))
+        formData.append('collect_info_fields_data', JSON.stringify(collectInfoFields))
+        formData.append('is_active', 'true')
+
+        // Add files if they exist
+        if (thumbnail instanceof File) {
+          formData.append('thumbnail', thumbnail)
+        }
+        if (checkoutImage instanceof File) {
+          formData.append('checkout_image', checkoutImage)
+        }
+
+        const result = await updateCustomLinkWithFileAction(link.id.toString(), formData)
+        
+        if (result.error) {
+          toast.error(`Failed to update product: ${result.error}`)
+        } else {
+          toast.success('Product updated successfully!')
+          if (onClose) {
+            onClose()
+          } else {
+            router.push('/custom-links')
+          }
+        }
+      } else {
+        // Use regular JSON update
+        const updateData = {
+          type: getProductTypeKey(selectedType),
+          title: title.trim(),
+          subtitle: subtitle.trim() || undefined,
+          style: selectedStyle || undefined,
+          checkout_title: checkoutTitle.trim() || undefined,
+          checkout_description: checkoutDescription.trim() || undefined,
+          checkout_bottom_title: checkoutBottomTitle.trim() || undefined,
+          checkout_cta_button_text: checkoutCtaButtonText,
+          checkout_price: checkoutPrice || undefined,
+          checkout_discounted_price: checkoutDiscountedPrice || undefined,
+          additional_info: Object.keys(additionalInfo).length > 0 ? additionalInfo : undefined,
+          collect_info_fields_data: collectInfoFields.length > 0 ? collectInfoFields : undefined,
+          is_active: true
+        }
+
+        const result = await updateCustomLinkAction(link.id.toString(), updateData)
+        
+        if (result.error) {
+          toast.error(`Failed to update product: ${result.error}`)
+        } else {
+          toast.success('Product updated successfully!')
+          if (onClose) {
+            onClose()
+          } else {
+            router.push('/custom-links')
+          }
+        }
+      }
+
+    } catch (error) {
+      console.error('Error updating product:', error)
+      toast.error('An unexpected error occurred')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleCreateProduct = async () => {
+    if (isSubmitting) return
+
+    setIsSubmitting(true)
+
+    try {
+      // Handle file upload for digital products if a file is selected
+      let finalDigitalFileUrl = digitalFileUrl
+      
+      if (selectedType === 'digital' && digitalFile) {
+        setIsUploadingFile(true)
+        
+        const uploadResult = await uploadDocumentAction(digitalFile, 'digital-products')
+        
+        if (uploadResult.error) {
+          toast.error(`Failed to upload file: ${uploadResult.error}`)
+          setIsSubmitting(false)
+          setIsUploadingFile(false)
+          return
+        }
+        
+        if (uploadResult.data) {
+          finalDigitalFileUrl = uploadResult.data.secure_url
+        }
+        
+        setIsUploadingFile(false)
+      }
+
+      // Map product type to backend format
+      const getProductTypeKey = (type: ProductType): string => {
+        switch (type) {
+          case 'digital': return 'digital_product'
+          case 'custom': return 'custom_product'
+          case 'ecourse': return 'ecourse'
+          case 'url-media': return 'url_media'
+          default: return 'generic'
+        }
+      }
+
+      // Prepare additional info based on product type
+      let additionalInfo: any = {}
+
+      if (selectedType === 'digital') {
+        additionalInfo = {
+          digital_file_url: finalDigitalFileUrl,
           download_instructions: downloadInstructions
         }
       } else if (selectedType === 'custom') {
@@ -456,8 +873,8 @@ export function LinkForm({ link }: LinkFormProps) {
         </div>
       </div>
 
-      {/* Step 1: Product Type Selection */}
-      {step === 1 && (
+      {/* Step 1: Product Type Selection - Skip in edit mode */}
+      {step === 1 && !isEditMode && (
         <div className="pt-6">
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -611,8 +1028,8 @@ export function LinkForm({ link }: LinkFormProps) {
                     onClick={() => setSelectedStyle('button')}
                     className={`
                       p-4 rounded-2xl text-center transition-all duration-200 bg-white hover:shadow-md border-2
-                      ${selectedStyle === 'button' 
-                        ? 'bg-gray-100 border-gray-300' 
+                      ${selectedStyle === 'button'
+                        ? 'bg-gray-100 border-gray-300'
                         : 'border-transparent'
                       }
                     `}
@@ -634,8 +1051,8 @@ export function LinkForm({ link }: LinkFormProps) {
                     onClick={() => setSelectedStyle('callout')}
                     className={`
                       p-4 rounded-2xl text-center transition-all duration-200 bg-white hover:shadow-md border-2
-                      ${selectedStyle === 'callout' 
-                        ? 'bg-gray-100 border-gray-300' 
+                      ${selectedStyle === 'callout'
+                        ? 'bg-gray-100 border-gray-300'
                         : 'border-transparent'
                       }
                     `}
@@ -725,18 +1142,20 @@ export function LinkForm({ link }: LinkFormProps) {
 
           {/* Form Actions */}
           <div className="flex gap-3 pt-6 mt-6 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={handleBack}
-              className="flex-1 px-4 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
-            >
-              Back
-            </button>
+            {!(isEditMode && step === 2) && (
+              <button
+                type="button"
+                onClick={handleBack}
+                className="flex-1 px-4 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+              >
+                Back
+              </button>
+            )}
             <button
               type="button"
               onClick={handleContinue}
               disabled={!title.trim() || !selectedStyle || !checkoutPrice}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+              className={`${!(isEditMode && step === 2) ? 'flex-1' : 'w-full'} flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium`}
             >
               Continue
               <ArrowRight className="w-4 h-4" />
@@ -933,7 +1352,7 @@ export function LinkForm({ link }: LinkFormProps) {
               <div className="space-y-6">
                 <h4 className="text-lg font-semibold text-gray-900">Fields</h4>
                 <p className="text-sm text-gray-600">Basic info fields can't be edited</p>
-                
+
                 {/* Fixed Name and Email Fields */}
                 <div className="space-y-3">
                   <div className="bg-gray-50 rounded-lg p-4 flex items-center gap-4">
@@ -953,7 +1372,7 @@ export function LinkForm({ link }: LinkFormProps) {
                     {collectInfoFields.slice(2).map((field, index) => {
                       const actualIndex = index + 2
                       const fieldIcon = fieldTypeOptions.find(opt => opt.value === field.field_type)?.icon
-                      
+
                       return (
                         <div key={actualIndex} className="bg-gray-50 rounded-lg p-4">
                           {/* Field Header */}
@@ -973,13 +1392,11 @@ export function LinkForm({ link }: LinkFormProps) {
                               <button
                                 type="button"
                                 onClick={() => updateCollectInfoField(actualIndex, { is_required: !field.is_required })}
-                                className={`w-12 h-6 rounded-full transition-colors relative ${
-                                  field.is_required ? 'bg-blue-500' : 'bg-gray-300'
-                                }`}
+                                className={`w-12 h-6 rounded-full transition-colors relative ${field.is_required ? 'bg-blue-500' : 'bg-gray-300'
+                                  }`}
                               >
-                                <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${
-                                  field.is_required ? 'translate-x-6' : 'translate-x-0.5'
-                                }`} />
+                                <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${field.is_required ? 'translate-x-6' : 'translate-x-0.5'
+                                  }`} />
                               </button>
                               <button
                                 type="button"
@@ -1054,8 +1471,8 @@ export function LinkForm({ link }: LinkFormProps) {
                 {/* Field Type Dropdown */}
                 {showFieldTypeDropdown && (
                   <>
-                    <div 
-                      className="fixed inset-0 z-10" 
+                    <div
+                      className="fixed inset-0 z-10"
                       onClick={() => setShowFieldTypeDropdown(false)}
                     />
                     <div className="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
@@ -1127,37 +1544,122 @@ export function LinkForm({ link }: LinkFormProps) {
       {/* Step 5: Product-Specific Details */}
       {step === 5 && (
         <div className="p-6">
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {selectedType && productTypes.find(t => t.id === selectedType)?.title} Configuration
-            </h3>
-            <p className="text-gray-600">
-              Complete the final details specific to your {selectedType && productTypes.find(t => t.id === selectedType)?.title.toLowerCase()}
-            </p>
-          </div>
+          {/* Only show header for non-digital products */}
+          {selectedType !== 'digital' && (
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {selectedType && productTypes.find(t => t.id === selectedType)?.title} Configuration
+              </h3>
+              <p className="text-gray-600">
+                Complete the final details specific to your {selectedType && productTypes.find(t => t.id === selectedType)?.title.toLowerCase()}
+              </p>
+            </div>
+          )}
 
           <div className="space-y-6">
             {/* Digital Product Fields */}
             {selectedType === 'digital' && (
               <>
                 <div>
-                  <label htmlFor="digital-file-url" className="block text-sm font-semibold text-gray-900 mb-2">
-                    Download Link <span className="text-red-500">*</span>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    Digital File <span className="text-red-500">*</span>
                   </label>
-                  <div className="relative">
-                    <Download className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  
+                  {/* Upload Option */}
+                  <div className="mb-4">
+                    {digitalFile || digitalFileUrl ? (
+                      <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                        <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <img src={uploadImg.src} alt="Upload" className="w-7 h-7" />
+                        </div>
+                        <div className="flex-1">
+                          {digitalFile ? (
+                            <>
+                              <p className="text-sm font-medium text-gray-900">{digitalFileName || digitalFile.name}</p>
+                              <p className="text-xs text-gray-600 mt-1">File ready to upload</p>
+                            </>
+                          ) : (
+                            <>
+                              <p className="text-sm font-medium text-gray-900">Download link set</p>
+                              <p className="text-xs text-gray-600 mt-1 truncate">{digitalFileUrl}</p>
+                            </>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDigitalFile(null)
+                            setDigitalFileName('')
+                            setDigitalFileUrl('')
+                            if (digitalFileInputRef.current) {
+                              digitalFileInputRef.current.value = ''
+                            }
+                          }}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div
+                        onClick={() => digitalFileInputRef.current?.click()}
+                        className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-colors"
+                      >
+                        <img src={uploadImg.src} alt="Upload" className="w-12 h-12 mx-auto mb-2" />
+                        <p className="text-sm font-medium text-gray-900">
+                          Click to upload your digital file
+                        </p>
+                      </div>
+                    )}
+                    
                     <input
-                      type="url"
-                      id="digital-file-url"
-                      value={digitalFileUrl}
-                      onChange={(e) => setDigitalFileUrl(e.target.value)}
-                      placeholder="https://example.com/download/file.zip"
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                      ref={digitalFileInputRef}
+                      type="file"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          setDigitalFile(file)
+                          setDigitalFileName(file.name)
+                          setDigitalFileUrl('') // Clear URL when file is selected
+                        }
+                      }}
+                      className="hidden"
+                      accept="*/*"
                     />
                   </div>
-                  <p className="mt-1 text-xs text-gray-500">
-                    Direct link to the downloadable file (PDF, ZIP, etc.)
-                  </p>
+                  
+                  {/* OR Divider */}
+                  <div className="relative mb-4">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t border-gray-300" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-white px-2 text-gray-500">Or enter URL directly</span>
+                    </div>
+                  </div>
+                  
+                  {/* URL Input */}
+                  <div>
+                    <div className="relative">
+                      <ExternalLink className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type="url"
+                        id="digital-file-url"
+                        value={digitalFileUrl}
+                        onChange={(e) => {
+                          setDigitalFileUrl(e.target.value)
+                          setDigitalFile(null) // Clear file when URL is entered
+                          setDigitalFileName('')
+                        }}
+                        placeholder="https://example.com/download/file.zip"
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                        disabled={!!digitalFile}
+                      />
+                    </div>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Direct link to the downloadable file
+                    </p>
+                  </div>
                 </div>
 
                 <div>
@@ -1380,16 +1882,16 @@ export function LinkForm({ link }: LinkFormProps) {
             </button>
             <button
               type="button"
-              onClick={handleCreateProduct}
+              onClick={isEditMode ? handleUpdateProduct : handleCreateProduct}
               disabled={
                 isSubmitting ||
-                (selectedType === 'digital' && !digitalFileUrl) ||
+                (selectedType === 'digital' && !digitalFileUrl && !digitalFile) ||
                 (selectedType === 'url-media' && !mediaUrl)
               }
               className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
               <Plus className="w-4 h-4" />
-              {isSubmitting ? 'Creating...' : 'Create Product'}
+              {isSubmitting ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Product' : 'Create Product')}
             </button>
           </div>
         </div>

@@ -11,6 +11,7 @@ import {
   type SocialIcon,
   type PatchedSocialIcon,
   type PatchedUserProfile,
+  type Order,
   StyleEnum
 } from '@frontend/types/api'
 import { getServerSession } from 'next-auth'
@@ -98,6 +99,12 @@ export interface AnalyticsParams {
   days?: number
   start_date?: string
   end_date?: string
+}
+
+export interface OrderCreateData {
+  customer_name?: string
+  customer_email?: string
+  form_responses: { [key: string]: any }
 }
 
 // =============================================================================
@@ -894,6 +901,37 @@ export async function getDashboardStatsAction() {
       return { error: error.body?.error || 'Failed to fetch dashboard statistics' }
     }
     return { error: 'Failed to fetch dashboard statistics' }
+  }
+}
+
+// =============================================================================
+// ORDER ACTIONS
+// =============================================================================
+
+/**
+ * Create an order for a digital product
+ */
+export async function createOrderAction(linkId: string, data: OrderCreateData) {
+  try {
+    const apiClient = await getApiClient() // No session needed for public order creation
+    const response = await apiClient.storefront.storefrontLinksCreateOrderCreate(linkId, data as Order)
+    
+    return { 
+      success: true, 
+      data: {
+        ...response,
+        // TypeScript workaround - the backend returns additional fields
+        checkout_url: (response as any).checkout_url,
+        error: (response as any).error,
+        message: (response as any).message
+      }
+    }
+  } catch (error) {
+    console.error('Failed to create order:', error)
+    if (error instanceof ApiError) {
+      return { success: false, error: error.body?.error || 'Failed to create order' }
+    }
+    return { success: false, error: 'Failed to create order' }
   }
 }
 

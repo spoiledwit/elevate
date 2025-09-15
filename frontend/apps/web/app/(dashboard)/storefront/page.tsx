@@ -29,9 +29,10 @@ export default async function StorefrontPage() {
 
   return (
     <div className="flex-1 bg-gray-50">
-      <StorefrontDashboard 
+      <StorefrontDashboard
         initialProfile={profile}
         initialCustomLinks={customLinks}
+        //@ts-ignore
         initialCtaBanner={ctaBanner}
         initialDashboardStats={dashboardStats}
       />

@@ -1,0 +1,118 @@
+{% extends "emails/base.html" %}
+
+{% block title %}Welcome to Your Course - Elevate Social{% endblock %}
+
+{% block header_title %}Course Access Granted!{% endblock %}
+
+{% block content %}
+<h2>Welcome to your new course!</h2>
+
+<p>Hi {{ customer_name|default:"valued student" }},</p>
+
+<p>Congratulations! Your enrollment for <strong>{{ product_title }}</strong> has been confirmed. You now have full access to your course content.</p>
+
+{% if product_subtitle %}
+<p><em>{{ product_subtitle }}</em></p>
+{% endif %}
+
+{% if course_duration %}
+<div class="info-box">
+    <h3>
+        <svg class="icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+            <polyline points="12,6 12,12 16,14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Course Information
+    </h3>
+    <p><strong>Duration:</strong> {{ course_duration }}</p>
+    <p><strong>Access:</strong> Lifetime access to all course materials</p>
+</div>
+{% endif %}
+
+{% if course_modules %}
+<div class="course-modules">
+    <h3>
+        <svg class="icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" stroke="currentColor" stroke-width="2"/>
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        Course Modules
+    </h3>
+    <p>Here's what you'll learn:</p>
+    <ul>
+    {% for module in course_modules %}
+        <li>{{ module }}</li>
+    {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<div class="download-section">
+    <h3>
+        <svg class="icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2l10 6.5-10 6.5L2 8.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 17l10-6.5L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Get Started
+    </h3>
+    <p>Click the button below to access your course dashboard:</p>
+    <a href="{{ frontend_url }}/dashboard" class="download-button" style="color: white !important;">Access Course</a>
+</div>
+
+<div class="info-box">
+    <h3>
+        <svg class="icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+            <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Order Details
+    </h3>
+    <p><strong>Order ID:</strong> {{ order_id }}</p>
+    <p><strong>Course:</strong> {{ product_title }}</p>
+    <p><strong>Enrollment Date:</strong> {{ purchase_date|date:"F d, Y" }}</p>
+    {% if product_price %}
+    <p><strong>Amount Paid:</strong> ${{ product_price }}</p>
+    {% endif %}
+</div>
+
+{% if form_responses %}
+<div class="info-box">
+    <h3>
+        <svg class="icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2"/>
+            <polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="2"/>
+            <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" stroke-width="2"/>
+            <polyline points="10,9 9,9 8,9" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        Your Information
+    </h3>
+    {% for response in form_responses %}
+    <p><strong>{{ response.question }}:</strong> {{ response.answer }}</p>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="info-box">
+    <h3>
+        <svg class="icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" stroke="currentColor" stroke-width="2"/>
+            <line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        Course Tips
+    </h3>
+    <ul>
+        <li>Take your time with each module</li>
+        <li>Practice the exercises provided</li>
+        <li>Reach out for support when needed</li>
+        <li>Join our community forum for discussions</li>
+    </ul>
+</div>
+
+<p>We're excited to have you as a student and can't wait to see your progress!</p>
+
+<p>Happy learning!</p>
+
+<p>Best regards,<br>The Elevate Social Team</p>
+{% endblock %}

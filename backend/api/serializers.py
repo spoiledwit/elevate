@@ -7,7 +7,7 @@ from rest_framework import exceptions, serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.db.models import Q
 
-from .models import UserProfile, UserSocialLinks, UserPermissions, SocialIcon, CustomLink, CollectInfoField, CollectInfoResponse, CTABanner, SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, Plan, PlanFeature, Subscription, Folder, Media, ProfileView, LinkClick, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply
+from .models import UserProfile, UserSocialLinks, UserPermissions, SocialIcon, CustomLink, CollectInfoField, CollectInfoResponse, CTABanner, SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, Plan, PlanFeature, Subscription, Folder, Media, ProfileView, LinkClick, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply, Order, StripeConnectAccount, PaymentTransaction, ConnectWebhookEvent
 
 # Backwards compatibility aliases
 CommentAutomationRule = AutomationRule
@@ -1959,3 +1959,273 @@ class AutomationSettingsCreateSerializer(serializers.ModelSerializer):
         )
         
         return settings
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    """Serializer for Order model to handle digital product purchases."""
+    
+    # Custom link info for read operations
+    product_title = serializers.CharField(source='custom_link.title', read_only=True)
+    product_subtitle = serializers.CharField(source='custom_link.subtitle', read_only=True) 
+    product_thumbnail = serializers.CharField(source='custom_link.thumbnail', read_only=True)
+    checkout_price = serializers.DecimalField(source='custom_link.checkout_price', max_digits=10, decimal_places=2, read_only=True)
+    checkout_discounted_price = serializers.DecimalField(source='custom_link.checkout_discounted_price', max_digits=10, decimal_places=2, read_only=True)
+    
+    # Formatted responses for easier consumption
+    formatted_responses = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Order
+        fields = [
+            'id',
+            'order_id', 
+            'status',
+            'custom_link',
+            'customer_email',
+            'customer_name',
+            'form_responses',
+            'formatted_responses',
+            'product_title',
+            'product_subtitle', 
+            'product_thumbnail',
+            'checkout_price',
+            'checkout_discounted_price',
+            'created_at',
+            'updated_at'
+        ]
+        read_only_fields = ['id', 'order_id', 'created_at', 'updated_at']
+    
+    def get_formatted_responses(self, obj):
+        """Return formatted form responses."""
+        return obj.get_formatted_responses()
+    
+    def validate_custom_link(self, value):
+        """Validate that the custom link exists and is active."""
+        if not value.is_active:
+            raise serializers.ValidationError("This product is no longer available.")
+        return value
+    
+    def create(self, validated_data):
+        """Create a new order with the provided form responses."""
+        import json
+        import logging
+        logger = logging.getLogger(__name__)
+
+        logger.info(f"DEBUG - OrderSerializer.create() called with data: {validated_data}")
+
+        # Extract custom_link to get collect_info_fields
+        custom_link = validated_data.get('custom_link')
+        form_responses = validated_data.get('form_responses', {})
+
+        # If form_responses is a string, parse it as JSON
+        if isinstance(form_responses, str):
+            try:
+                form_responses = json.loads(form_responses)
+                validated_data['form_responses'] = form_responses
+                logger.info(f"DEBUG - Parsed form_responses from string: {form_responses}")
+            except json.JSONDecodeError:
+                raise serializers.ValidationError("Invalid JSON format for form_responses.")
+
+        # Validate required fields
+        required_fields = custom_link.collect_info_fields.filter(is_required=True)
+        for field in required_fields:
+            if field.label not in form_responses or not form_responses[field.label]:
+                raise serializers.ValidationError(f"Field '{field.label}' is required.")
+
+        logger.info(f"DEBUG - About to call super().create() with validated_data: {validated_data}")
+        order = super().create(validated_data)
+        logger.info(f"DEBUG - Created order: {order.order_id} with data: customer_name={order.customer_name}, customer_email={order.customer_email}, form_responses={order.form_responses}")
+        return order
+
+
+# ============================================================================
+# STRIPE CONNECT SERIALIZERS
+# ============================================================================
+
+class StripeConnectAccountSerializer(serializers.ModelSerializer):
+    """Serializer for StripeConnectAccount model"""
+    status = serializers.CharField(source='get_status', read_only=True)
+    is_active = serializers.BooleanField(read_only=True)
+    
+    class Meta:
+        model = StripeConnectAccount
+        fields = [
+            'id', 'stripe_account_id', 'status', 'is_active',
+            'charges_enabled', 'payouts_enabled', 'details_submitted',
+            'country', 'default_currency', 'email', 'platform_fee_percentage',
+            'onboarding_completed_at', 'requirements_due', 'requirements_errors',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'id', 'stripe_account_id', 'charges_enabled', 'payouts_enabled',
+            'details_submitted', 'country', 'default_currency', 'requirements_due',
+            'requirements_errors', 'onboarding_completed_at', 'created_at', 'updated_at'
+        ]
+
+
+class CreateConnectAccountSerializer(serializers.Serializer):
+    """Serializer for creating a new Connect account"""
+    email = serializers.EmailField(required=False, help_text="Email for the Stripe account")
+    
+    def validate_email(self, value):
+        """Validate email if provided"""
+        if value and not '@' in value:
+            raise serializers.ValidationError("Invalid email format")
+        return value
+
+
+class AccountLinkSerializer(serializers.Serializer):
+    """Serializer for creating account links"""
+    refresh_url = serializers.URLField(required=True, help_text="URL to redirect to if user needs to restart onboarding")
+    return_url = serializers.URLField(required=True, help_text="URL to redirect to after onboarding completion")
+    type = serializers.ChoiceField(
+        choices=['account_onboarding', 'account_update'],
+        default='account_onboarding',
+        help_text="Type of account link to create"
+    )
+
+
+class AccountLinkResponseSerializer(serializers.Serializer):
+    """Response serializer for account link creation"""
+    url = serializers.URLField(help_text="The account link URL")
+
+
+class LoginLinkResponseSerializer(serializers.Serializer):
+    """Response serializer for login link creation"""
+    url = serializers.URLField(help_text="The Express Dashboard login URL")
+
+
+class ConnectAccountStatusSerializer(serializers.Serializer):
+    """Serializer for Connect account status"""
+    account_id = serializers.CharField()
+    charges_enabled = serializers.BooleanField()
+    payouts_enabled = serializers.BooleanField()
+    details_submitted = serializers.BooleanField()
+    country = serializers.CharField()
+    default_currency = serializers.CharField()
+    is_active = serializers.BooleanField()
+    requirements = serializers.JSONField(required=False)
+    business_profile = serializers.JSONField(required=False)
+
+
+class PaymentTransactionSerializer(serializers.ModelSerializer):
+    """Serializer for PaymentTransaction model"""
+    order_id = serializers.CharField(source='order.order_id', read_only=True)
+    seller_username = serializers.CharField(source='seller_account.user.username', read_only=True)
+    product_title = serializers.CharField(source='order.custom_link.title', read_only=True)
+    display_amount = serializers.CharField(source='get_display_amount', read_only=True)
+    seller_payout = serializers.CharField(source='get_seller_payout', read_only=True)
+    platform_earnings = serializers.CharField(source='get_platform_earnings', read_only=True)
+    
+    class Meta:
+        model = PaymentTransaction
+        fields = [
+            'id', 'order_id', 'seller_username', 'product_title',
+            'stripe_checkout_session_id', 'payment_intent_id', 'charge_id', 'transfer_id',
+            'total_amount', 'platform_fee', 'seller_amount', 'stripe_processing_fee',
+            'display_amount', 'seller_payout', 'platform_earnings',
+            'currency', 'status', 'transfer_status', 'customer_email',
+            'refunded_amount', 'platform_fee_refunded', 'metadata',
+            'created_at', 'updated_at', 'paid_at', 'transferred_at'
+        ]
+        read_only_fields = [
+            'id', 'stripe_checkout_session_id', 'payment_intent_id', 'charge_id',
+            'transfer_id', 'total_amount', 'platform_fee', 'seller_amount',
+            'stripe_processing_fee', 'currency', 'status', 'transfer_status',
+            'refunded_amount', 'platform_fee_refunded', 'created_at', 'updated_at',
+            'paid_at', 'transferred_at'
+        ]
+
+
+class CreateCheckoutSessionSerializer(serializers.Serializer):
+    """Serializer for creating a product checkout session"""
+    custom_link_id = serializers.IntegerField(help_text="ID of the product/custom link")
+    success_url = serializers.URLField(help_text="URL to redirect to after successful payment")
+    cancel_url = serializers.URLField(help_text="URL to redirect to if payment is cancelled")
+    customer_email = serializers.EmailField(required=False, help_text="Pre-fill customer email")
+    metadata = serializers.JSONField(required=False, help_text="Additional metadata for the checkout session")
+    
+    def validate_custom_link_id(self, value):
+        """Validate that the custom link exists and has Stripe connected"""
+        try:
+            custom_link = CustomLink.objects.get(id=value, is_active=True)
+        except CustomLink.DoesNotExist:
+            raise serializers.ValidationError("Product not found or inactive")
+        
+        # Check if the seller has Stripe Connect set up
+        if not hasattr(custom_link.user_profile.user, 'connect_account'):
+            raise serializers.ValidationError("Seller has not set up payment processing")
+        
+        connect_account = custom_link.user_profile.user.connect_account
+        if not connect_account.is_active:
+            raise serializers.ValidationError("Seller's payment account is not fully set up")
+        
+        # Check if product has a price
+        if not custom_link.checkout_price:
+            raise serializers.ValidationError("Product must have a price set")
+        
+        return value
+
+
+class CheckoutSessionResponseSerializer(serializers.Serializer):
+    """Response serializer for checkout session creation"""
+    checkout_url = serializers.URLField(help_text="The Stripe Checkout URL")
+    session_id = serializers.CharField(help_text="The checkout session ID")
+
+
+class BalanceSerializer(serializers.Serializer):
+    """Serializer for account balance information"""
+    available = serializers.JSONField(help_text="Available balance by currency")
+    pending = serializers.JSONField(help_text="Pending balance by currency")
+    connect_reserved = serializers.JSONField(required=False, help_text="Connect reserved funds")
+    livemode = serializers.BooleanField(help_text="Whether this is live mode data")
+
+
+class RefundRequestSerializer(serializers.Serializer):
+    """Serializer for refund requests"""
+    payment_intent_id = serializers.CharField(help_text="Payment intent ID to refund")
+    amount_cents = serializers.IntegerField(required=False, help_text="Amount to refund in cents (full refund if not specified)")
+    reason = serializers.ChoiceField(
+        choices=['duplicate', 'fraudulent', 'requested_by_customer'],
+        default='requested_by_customer',
+        help_text="Reason for the refund"
+    )
+    
+    def validate_amount_cents(self, value):
+        """Validate refund amount is positive"""
+        if value is not None and value <= 0:
+            raise serializers.ValidationError("Refund amount must be positive")
+        return value
+
+
+class RefundResponseSerializer(serializers.Serializer):
+    """Response serializer for refund operations"""
+    refund_id = serializers.CharField(help_text="Stripe refund ID")
+    amount_refunded = serializers.IntegerField(help_text="Amount refunded in cents")
+    status = serializers.CharField(help_text="Refund status")
+    transaction_status = serializers.CharField(help_text="Updated transaction status")
+
+
+class ConnectEarningsSerializer(serializers.Serializer):
+    """Serializer for Connect earnings summary"""
+    total_sales = serializers.DecimalField(max_digits=10, decimal_places=2, help_text="Total sales amount")
+    total_earnings = serializers.DecimalField(max_digits=10, decimal_places=2, help_text="Total platform earnings")
+    pending_payouts = serializers.DecimalField(max_digits=10, decimal_places=2, help_text="Pending payout amount")
+    transaction_count = serializers.IntegerField(help_text="Number of transactions")
+    successful_transactions = serializers.IntegerField(help_text="Number of successful transactions")
+    failed_transactions = serializers.IntegerField(help_text="Number of failed transactions")
+
+
+class ConnectWebhookEventSerializer(serializers.ModelSerializer):
+    """Serializer for Connect webhook events"""
+    account_username = serializers.CharField(source='connect_account.user.username', read_only=True, allow_null=True)
+    transaction_order_id = serializers.CharField(source='payment_transaction.order.order_id', read_only=True, allow_null=True)
+    
+    class Meta:
+        model = ConnectWebhookEvent
+        fields = [
+            'id', 'stripe_event_id', 'event_type', 'account_id',
+            'account_username', 'transaction_order_id',
+            'processed', 'error_message', 'created_at', 'processed_at'
+        ]
+        read_only_fields = ['id', 'created_at']

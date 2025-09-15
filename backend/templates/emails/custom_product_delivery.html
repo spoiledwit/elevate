@@ -1,0 +1,69 @@
+{% extends "emails/base.html" %}
+
+{% block title %}Your Order Confirmation - Elevate Social{% endblock %}
+
+{% block header_title %}Order Confirmed!{% endblock %}
+
+{% block content %}
+<h2>Thank you for your purchase!</h2>
+
+<p>Hi {{ customer_name|default:"valued customer" }},</p>
+
+<p>Your payment for <strong>{{ product_title }}</strong> has been processed successfully. We have received your order and will be in touch with next steps shortly.</p>
+
+{% if product_subtitle %}
+<p><em>{{ product_subtitle }}</em></p>
+{% endif %}
+
+<div class="info-box">
+    <h3>📊 Order Details</h3>
+    <p><strong>Order ID:</strong> {{ order_id }}</p>
+    <p><strong>Product/Service:</strong> {{ product_title }}</p>
+    <p><strong>Order Date:</strong> {{ purchase_date|date:"F d, Y" }}</p>
+    {% if product_price %}
+    <p><strong>Amount Paid:</strong> ${{ product_price }}</p>
+    {% endif %}
+</div>
+
+{% if custom_fields %}
+<div class="custom-fields">
+    <h3>📝 Custom Information</h3>
+    <p>Here are the details you provided:</p>
+    {% for field in custom_fields %}
+    <div class="field-row">
+        <span class="field-label">{{ field.label }}:</span>
+        <span class="field-value">{{ field.value }}</span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if form_responses %}
+<div class="info-box">
+    <h3>📝 Your Information</h3>
+    {% for response in form_responses %}
+    <p><strong>{{ response.question }}:</strong> {{ response.answer }}</p>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="info-box">
+    <h3>⏰ What's Next?</h3>
+    <ul>
+        <li>We will review your order and custom requirements</li>
+        <li>You'll receive an email with detailed next steps within 24 hours</li>
+        <li>Our team will reach out if we need any additional information</li>
+        <li>You can track your order status in your dashboard</li>
+    </ul>
+</div>
+
+<div class="download-section">
+    <h3>📋 Track Your Order</h3>
+    <p>You can view your order status anytime in your dashboard:</p>
+    <a href="{{ frontend_url }}/dashboard/orders" class="download-button">View Orders</a>
+</div>
+
+<p>We appreciate your business and look forward to delivering exactly what you need!</p>
+
+<p>Best regards,<br>The Elevate Social Team</p>
+{% endblock %}

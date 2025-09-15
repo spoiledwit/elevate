@@ -1015,6 +1015,141 @@ class BannerClick(models.Model):
         return f"{self.banner.user_profile.user.username} - Banner Click - {self.timestamp}"
 
 
+class Order(models.Model):
+    """
+    Orders created when customers purchase digital products through custom links.
+    Stores all form responses and basic order information.
+    """
+    ORDER_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+    ]
+    
+    # Core order information
+    custom_link = models.ForeignKey(CustomLink, on_delete=models.CASCADE, related_name='orders')
+    order_id = models.CharField(_("order ID"), max_length=100, unique=True)
+    status = models.CharField(_("status"), max_length=20, choices=ORDER_STATUS_CHOICES, default='pending')
+    
+    # Customer information
+    customer_email = models.EmailField(_("customer email"), blank=True)
+    customer_name = models.CharField(_("customer name"), max_length=255, blank=True)
+    
+    # Form responses from checkout fields
+    form_responses = models.JSONField(_("form responses"), default=dict, help_text="JSON object with field_label: response mappings")
+    
+    # Timestamps
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("updated at"), auto_now=True)
+
+    class Meta:
+        db_table = "orders"
+        verbose_name = _("order")
+        verbose_name_plural = _("orders")
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['custom_link', '-created_at']),
+            models.Index(fields=['status']),
+            models.Index(fields=['order_id']),
+        ]
+
+    def __str__(self):
+        return f"Order {self.order_id} - {self.custom_link.title or 'Product'} - {self.status}"
+    
+    def save(self, *args, **kwargs):
+        if not self.order_id:
+            # Generate a unique order ID
+            import uuid
+            from datetime import datetime
+            timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+            unique_id = str(uuid.uuid4())[:8].upper()
+            self.order_id = f"ORD-{timestamp}-{unique_id}"
+        super().save(*args, **kwargs)
+    
+    def get_formatted_responses(self):
+        """Return form responses in a readable format"""
+        if not self.form_responses:
+            return []
+        
+        formatted = []
+        for field_label, response in self.form_responses.items():
+            if isinstance(response, list):
+                response_value = ', '.join(response)
+            else:
+                response_value = str(response)
+            formatted.append({
+                'question': field_label,
+                'answer': response_value
+            })
+        return formatted
+
+
+# Signal for Order completion to send product delivery emails
+@receiver(post_save, sender=Order)
+def send_product_delivery_on_completion(sender, instance, created, **kwargs):
+    """
+    Send product delivery email when order status changes to 'completed'.
+    Only sends email once per order to avoid duplicates.
+    """
+    # Import here to avoid circular imports
+    from .services.email_service import send_product_delivery_email
+    import logging
+
+    logger = logging.getLogger(__name__)
+    logger.info(f"Order signal triggered for order {instance.order_id}: status={instance.status}, created={created}")
+
+    if instance.status == 'completed' and not created:  # Only for updates, not new orders
+        try:
+            # Check if we need to send email (avoid duplicates)
+            # We can track this by checking if the status changed to 'completed'
+            if hasattr(instance, '_original_status'):
+                logger.info(f"Order {instance.order_id} original status: {instance._original_status}, new status: {instance.status}")
+                if instance._original_status != 'completed':
+                    logger.info(f"Sending product delivery email for order {instance.order_id}")
+                    email_sent = send_product_delivery_email(instance)
+                    if email_sent:
+                        logger.info(f"Product delivery email sent successfully for order {instance.order_id}")
+                    else:
+                        logger.warning(f"Failed to send product delivery email for order {instance.order_id}")
+                else:
+                    logger.debug(f"Order {instance.order_id} was already completed, skipping email")
+            else:
+                # Fallback: send email if we can't track previous status
+                logger.info(f"No original status tracked, sending email for order {instance.order_id}")
+                email_sent = send_product_delivery_email(instance)
+                if email_sent:
+                    logger.info(f"Product delivery email sent successfully for order {instance.order_id}")
+                else:
+                    logger.warning(f"Failed to send product delivery email for order {instance.order_id}")
+
+        except Exception as email_error:
+            logger.error(f"Error sending product delivery email for order {instance.order_id}: {email_error}")
+    else:
+        logger.info(f"Order signal skipped for {instance.order_id}: status={instance.status}, created={created}")
+
+
+# Add status tracking for Order model
+@receiver(models.signals.pre_save, sender=Order)
+def track_order_status_change(sender, instance, **kwargs):
+    """
+    Track the original status before saving to detect status changes.
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+
+    if instance.pk:
+        try:
+            original_order = sender.objects.get(pk=instance.pk)
+            instance._original_status = original_order.status
+            logger.info(f"Order {instance.order_id} pre_save: original_status={original_order.status}, new_status={instance.status}")
+        except sender.DoesNotExist:
+            instance._original_status = None
+            logger.info(f"Order {instance.order_id} pre_save: original order not found")
+    else:
+        instance._original_status = None
+        logger.info(f"Order {instance.order_id} pre_save: new order, no original status")
+
+
 class AIConfiguration(models.Model):
     """
     Global AI configuration model for customizing system prompts and settings
@@ -1136,4 +1271,213 @@ class AIConfiguration(models.Model):
                     'is_active': True,
                 }
             )
+
+
+# ============================================================================
+# STRIPE CONNECT MODELS
+# ============================================================================
+
+class StripeConnectAccount(models.Model):
+    """
+    Represents a connected Stripe Express account for a platform user.
+    Allows users to receive payments from their customers.
+    """
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='connect_account')
+    stripe_account_id = models.CharField(_("Stripe account ID"), max_length=255, unique=True)
+    
+    # Account status
+    charges_enabled = models.BooleanField(_("charges enabled"), default=False, help_text="Whether the account can create charges")
+    payouts_enabled = models.BooleanField(_("payouts enabled"), default=False, help_text="Whether Stripe can send payouts to the account")
+    details_submitted = models.BooleanField(_("details submitted"), default=False, help_text="Whether account details have been submitted")
+    
+    # Account info
+    country = models.CharField(_("country"), max_length=2, blank=True, help_text="Two-letter country code")
+    default_currency = models.CharField(_("default currency"), max_length=3, default='usd')
+    email = models.EmailField(_("account email"), blank=True)
+    
+    # Commission settings
+    platform_fee_percentage = models.DecimalField(
+        _("platform fee percentage"), 
+        max_digits=5, 
+        decimal_places=2, 
+        default=10.00,
+        help_text="Percentage of each transaction kept as platform fee"
+    )
+    
+    # Onboarding
+    onboarding_completed_at = models.DateTimeField(_("onboarding completed at"), null=True, blank=True)
+    requirements_due = models.JSONField(_("requirements due"), null=True, blank=True, help_text="Currently due requirements for the account")
+    requirements_errors = models.JSONField(_("requirements errors"), null=True, blank=True, help_text="Requirements that need to be fixed")
+    
+    # Timestamps
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("updated at"), auto_now=True)
+    
+    class Meta:
+        db_table = "stripe_connect_accounts"
+        verbose_name = _("Stripe Connect account")
+        verbose_name_plural = _("Stripe Connect accounts")
+        indexes = [
+            models.Index(fields=['user']),
+            models.Index(fields=['stripe_account_id']),
+            models.Index(fields=['charges_enabled', 'payouts_enabled']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.stripe_account_id[:15]}... ({self.get_status()})"
+    
+    def get_status(self):
+        """Get human-readable account status"""
+        if self.charges_enabled and self.payouts_enabled:
+            return "Active"
+        elif self.details_submitted:
+            return "Pending Verification"
+        else:
+            return "Incomplete"
+    
+    @property
+    def is_active(self):
+        """Check if account is fully active and can process payments"""
+        return self.charges_enabled and self.payouts_enabled
+    
+    def calculate_platform_fee(self, amount: int) -> int:
+        """
+        Calculate platform fee for a given amount (in cents).
+        Returns fee amount in cents.
+        """
+        from decimal import Decimal, ROUND_UP
+        fee_decimal = Decimal(str(amount)) * (self.platform_fee_percentage / 100)
+        return int(fee_decimal.quantize(Decimal('1'), rounding=ROUND_UP))
+
+
+class PaymentTransaction(models.Model):
+    """
+    Records payment transactions for products sold through the platform.
+    Tracks the flow of money from customer to platform to seller.
+    """
+    TRANSACTION_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('processing', 'Processing'),
+        ('succeeded', 'Succeeded'),
+        ('failed', 'Failed'),
+        ('refunded', 'Refunded'),
+        ('partially_refunded', 'Partially Refunded'),
+    ]
+    
+    # Relationships
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='payment_transaction')
+    seller_account = models.ForeignKey(StripeConnectAccount, on_delete=models.PROTECT, related_name='transactions')
+    
+    # Stripe IDs
+    stripe_checkout_session_id = models.CharField(_("checkout session ID"), max_length=255, unique=True, null=True, blank=True)
+    payment_intent_id = models.CharField(_("payment intent ID"), max_length=255, unique=True, null=True, blank=True)
+    charge_id = models.CharField(_("charge ID"), max_length=255, blank=True)
+    transfer_id = models.CharField(_("transfer ID"), max_length=255, blank=True, help_text="ID of transfer to connected account")
+    
+    # Amounts (all in cents/smallest currency unit)
+    total_amount = models.IntegerField(_("total amount"), help_text="Total amount paid by customer (in cents)")
+    platform_fee = models.IntegerField(_("platform fee"), help_text="Platform commission (in cents)")
+    seller_amount = models.IntegerField(_("seller amount"), help_text="Amount transferred to seller (in cents)")
+    stripe_processing_fee = models.IntegerField(_("Stripe processing fee"), default=0, help_text="Stripe's processing fee (in cents)")
+    
+    # Currency
+    currency = models.CharField(_("currency"), max_length=3, default='usd')
+    
+    # Status tracking
+    status = models.CharField(_("status"), max_length=20, choices=TRANSACTION_STATUS_CHOICES, default='pending')
+    transfer_status = models.CharField(_("transfer status"), max_length=50, blank=True, help_text="Status of transfer to seller")
+    
+    # Customer info (for reference)
+    customer_email = models.EmailField(_("customer email"), blank=True)
+    
+    # Refund tracking
+    refunded_amount = models.IntegerField(_("refunded amount"), default=0, help_text="Amount refunded to customer (in cents)")
+    platform_fee_refunded = models.IntegerField(_("platform fee refunded"), default=0, help_text="Platform fee refunded (in cents)")
+    
+    # Metadata
+    metadata = models.JSONField(_("metadata"), default=dict, blank=True)
+    
+    # Timestamps
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("updated at"), auto_now=True)
+    paid_at = models.DateTimeField(_("paid at"), null=True, blank=True)
+    transferred_at = models.DateTimeField(_("transferred at"), null=True, blank=True)
+    
+    class Meta:
+        db_table = "payment_transactions"
+        verbose_name = _("payment transaction")
+        verbose_name_plural = _("payment transactions")
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['order']),
+            models.Index(fields=['seller_account', '-created_at']),
+            models.Index(fields=['payment_intent_id']),
+            models.Index(fields=['status']),
+            models.Index(fields=['-created_at']),
+        ]
+    
+    def __str__(self):
+        payment_id = self.payment_intent_id[:15] + "..." if self.payment_intent_id else "Pending"
+        return f"Transaction {payment_id} - {self.get_display_amount()} ({self.status})"
+    
+    def get_display_amount(self):
+        """Get formatted display amount"""
+        return f"${self.total_amount / 100:.2f} {self.currency.upper()}"
+    
+    def get_seller_payout(self):
+        """Get formatted seller payout amount"""
+        return f"${self.seller_amount / 100:.2f} {self.currency.upper()}"
+    
+    def get_platform_earnings(self):
+        """Get formatted platform earnings"""
+        return f"${self.platform_fee / 100:.2f} {self.currency.upper()}"
+
+
+class ConnectWebhookEvent(models.Model):
+    """
+    Logs Stripe Connect webhook events for debugging and auditing.
+    Separate from regular subscription webhook events.
+    """
+    stripe_event_id = models.CharField(_("Stripe event ID"), max_length=255, unique=True)
+    event_type = models.CharField(_("event type"), max_length=100)
+    account_id = models.CharField(_("account ID"), max_length=255, blank=True, help_text="Connected account ID if applicable")
+    
+    # Related models
+    connect_account = models.ForeignKey(
+        StripeConnectAccount, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='webhook_events'
+    )
+    payment_transaction = models.ForeignKey(
+        PaymentTransaction,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='webhook_events'
+    )
+    
+    # Event data
+    data = models.JSONField(_("event data"))
+    processed = models.BooleanField(_("processed"), default=False)
+    error_message = models.TextField(_("error message"), blank=True)
+    
+    # Timestamps
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    processed_at = models.DateTimeField(_("processed at"), null=True, blank=True)
+    
+    class Meta:
+        db_table = "connect_webhook_events"
+        verbose_name = _("Connect webhook event")
+        verbose_name_plural = _("Connect webhook events")
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['stripe_event_id']),
+            models.Index(fields=['event_type']),
+            models.Index(fields=['processed', '-created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.event_type} - {self.stripe_event_id[:20]}..."
 

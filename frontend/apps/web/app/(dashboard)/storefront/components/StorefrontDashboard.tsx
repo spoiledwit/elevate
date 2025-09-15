@@ -12,6 +12,8 @@ import {
   Check
 } from 'lucide-react'
 import { StorefrontEditor } from './StorefrontEditor'
+import { StorefrontHeaderPreview } from '../../custom-links/components/StorefrontHeaderPreview'
+import { ProductCard } from '../../custom-links/components/ProductCard'
 
 interface StorefrontDashboardProps {
   initialProfile: any
@@ -29,10 +31,17 @@ export function StorefrontDashboard({
   const [customLinks] = useState(initialCustomLinks)
   const [dashboardStats] = useState(initialDashboardStats)
 
+  // Preview states
+  const [previewProfileImage, setPreviewProfileImage] = useState(initialProfile?.profile_image || '')
+  const [previewDisplayName, setPreviewDisplayName] = useState(initialProfile?.display_name || 'Your Name')
+  const [previewBio, setPreviewBio] = useState(initialProfile?.bio || 'Your bio goes here')
+  const [previewSocialIcons, setPreviewSocialIcons] = useState(initialProfile?.social_icons || [])
+  const [previewVideo, setPreviewVideo] = useState(initialProfile?.embedded_video || '')
+
   return (
     <div className="flex-1 bg-gray-50">
       {/* Header */}
-      <div 
+      <div
         className="bg-white"
         style={{ boxShadow: 'rgba(0, 0, 0, 0.02) 0px 2px 8px' }}
       >
@@ -66,9 +75,9 @@ export function StorefrontDashboard({
                       navigator.clipboard.writeText(`https://elevate.social/${session?.user?.username}`)
                       toast.custom(
                         (t) => (
-                          <div 
+                          <div
                             className="text-white px-6 py-4 rounded-2xl shadow-lg flex items-center justify-between min-w-80"
-                            style={{ 
+                            style={{
                               backgroundColor: '#7c3aed',
                               border: 'none',
                               boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'
@@ -116,7 +125,7 @@ export function StorefrontDashboard({
         <div className="max-w-7xl mx-auto">
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div 
+            <div
               className="bg-white rounded-xl p-6"
               style={{ boxShadow: 'rgba(0, 0, 0, 0.02) 0px 2px 8px' }}
             >
@@ -133,7 +142,7 @@ export function StorefrontDashboard({
               </div>
             </div>
 
-            <div 
+            <div
               className="bg-white rounded-xl p-6"
               style={{ boxShadow: 'rgba(0, 0, 0, 0.02) 0px 2px 8px' }}
             >
@@ -150,7 +159,7 @@ export function StorefrontDashboard({
               </div>
             </div>
 
-            <div 
+            <div
               className="bg-white rounded-xl p-6"
               style={{ boxShadow: 'rgba(0, 0, 0, 0.02) 0px 2px 8px' }}
             >
@@ -175,30 +184,52 @@ export function StorefrontDashboard({
               <StorefrontEditor
                 profile={profile}
                 onUpdate={() => { }}
+                onPreviewUpdate={{
+                  setProfileImage: setPreviewProfileImage,
+                  setDisplayName: setPreviewDisplayName,
+                  setBio: setPreviewBio,
+                  setSocialIcons: setPreviewSocialIcons,
+                  setVideo: setPreviewVideo
+                }}
               />
             </div>
 
             {/* Mobile Preview */}
             <div className="flex items-start justify-center">
-              <div 
+              <div
                 className="w-80 h-[700px] bg-white rounded-[2rem] sticky top-6 p-4"
                 style={{
                   boxShadow: 'rgba(50, 50, 93, 0.25) 0px 50px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px, rgba(10, 37, 64, 0.35) 0px -2px 6px 0px inset'
                 }}
               >
-                <div className="w-full h-full rounded-xl overflow-hidden">
-                  <iframe
-                    src={`/${session?.user?.username}`}
-                    className="w-full h-full"
-                    style={{ 
-                      transform: 'scale(0.9)', 
-                      transformOrigin: 'top left', 
-                      width: '111%', 
-                      height: '111%',
-                      border: 'none',
-                      outline: 'none'
-                    }}
-                  />
+                <div className="w-full h-full rounded-xl overflow-hidden bg-white">
+                  <div className="h-full overflow-y-auto">
+                    <div className="p-6 space-y-6">
+                      <StorefrontHeaderPreview
+                        profileImage={previewProfileImage}
+                        displayName={previewDisplayName}
+                        bio={previewBio}
+                        socialIcons={previewSocialIcons}
+                        video={previewVideo}
+                      />
+
+                      {/* Products */}
+                      <div className="space-y-4">
+                        {customLinks.filter(link => link.is_active).map((link) => (
+                          <ProductCard
+                            key={link.id}
+                            productType={link.type?.replace('_product', '') || 'digital'}
+                            thumbnail={link.thumbnail}
+                            title={link.title || link.text}
+                            subtitle={link.subtitle}
+                            displayStyle={link.style}
+                            price={link.checkout_price}
+                            discountedPrice={link.checkout_discounted_price}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

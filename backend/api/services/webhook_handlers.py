@@ -505,3 +505,314 @@ def handle_payment_method_detached(event: stripe.Event) -> Dict[str, Any]:
     payment_method = event.data.object
     logger.info(f"Payment method {payment_method.id} detached from customer")
     return {"status": "success"}
+
+
+# ============================================================================
+# STRIPE CONNECT WEBHOOK HANDLERS
+# ============================================================================
+
+def verify_connect_webhook_signature(payload: str, sig_header: str) -> stripe.Event:
+    """
+    Verify the Connect webhook signature and construct the event.
+    Uses a separate webhook secret for Connect events.
+    """
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, settings.STRIPE_CONNECT_WEBHOOK_SECRET
+        )
+        return event
+    except ValueError as e:
+        logger.error(f"Invalid Connect webhook payload: {e}")
+        raise
+    except stripe.error.SignatureVerificationError as e:
+        logger.error(f"Invalid Connect webhook signature: {e}")
+        raise
+
+
+def handle_connect_webhook_event(event: stripe.Event) -> Dict[str, Any]:
+    """
+    Main Connect webhook handler that routes events to specific handlers.
+    """
+    logger.info(f"=== CONNECT WEBHOOK EVENT RECEIVED ===")
+    logger.info(f"Event ID: {event.id}")
+    logger.info(f"Event Type: {event.type}")
+    logger.info(f"Event Created: {event.created}")
+    logger.info(f"Event Livemode: {event.livemode}")
+
+    # Import here to avoid circular imports
+    from ..models import ConnectWebhookEvent
+
+    # Check if we've already processed this event
+    if ConnectWebhookEvent.objects.filter(stripe_event_id=event.id).exists():
+        logger.info(f"Connect event {event.id} already processed, skipping")
+        return {"status": "already_processed"}
+
+    # Map event types to handler functions
+    connect_handlers = {
+        "account.updated": handle_account_updated,
+        "account.application.authorized": handle_account_authorized,
+        "checkout.session.completed": handle_connect_checkout_session_completed,
+        "payment_intent.succeeded": handle_connect_payment_succeeded,
+        "payment_intent.payment_failed": handle_connect_payment_failed,
+        "transfer.created": handle_transfer_created,
+        "transfer.updated": handle_transfer_updated,
+        "payout.created": handle_payout_created,
+        "payout.updated": handle_payout_updated,
+        "charge.dispute.created": handle_charge_dispute_created,
+    }
+
+    handler = connect_handlers.get(event.type)
+    if handler:
+        try:
+            result = handler(event)
+            
+            # Log the event
+            _log_connect_event(event, processed=True)
+            
+            logger.info(f"Successfully processed Connect {event.type} event {event.id}")
+            return result
+        except Exception as e:
+            # Log the event with error
+            _log_connect_event(event, processed=False, error_message=str(e))
+            logger.error(f"Error processing Connect {event.type} event {event.id}: {e}")
+            raise
+    else:
+        # Log unhandled event
+        _log_connect_event(event, processed=False, error_message=f"Unhandled event type: {event.type}")
+        logger.info(f"Unhandled Connect event type: {event.type}")
+        return {"status": "unhandled"}
+
+
+def _log_connect_event(event: stripe.Event, processed: bool = True, error_message: str = ""):
+    """
+    Log the Connect webhook event to database.
+    """
+    try:
+        from ..models import ConnectWebhookEvent, StripeConnectAccount, PaymentTransaction
+
+        # Extract account ID if present
+        account_id = ""
+        connect_account = None
+        payment_transaction = None
+
+        # Try to get account ID from event data
+        event_data = event.data.object
+        if hasattr(event_data, 'account'):
+            account_id = event_data.account
+        elif hasattr(event_data, 'destination'):
+            account_id = event_data.destination
+        elif hasattr(event_data, 'metadata') and event_data.metadata.get('connect_account_id'):
+            account_id = event_data.metadata.get('connect_account_id')
+
+        # Try to find related models
+        if account_id:
+            try:
+                connect_account = StripeConnectAccount.objects.get(stripe_account_id=account_id)
+            except StripeConnectAccount.DoesNotExist:
+                pass
+
+        # Try to find related payment transaction
+        if hasattr(event_data, 'payment_intent'):
+            try:
+                payment_transaction = PaymentTransaction.objects.get(payment_intent_id=event_data.payment_intent)
+            except PaymentTransaction.DoesNotExist:
+                pass
+        elif hasattr(event_data, 'metadata') and event_data.metadata.get('order_id'):
+            try:
+                payment_transaction = PaymentTransaction.objects.get(order_id=event_data.metadata.get('order_id'))
+            except PaymentTransaction.DoesNotExist:
+                pass
+
+        # Create webhook event record
+        ConnectWebhookEvent.objects.create(
+            stripe_event_id=event.id,
+            event_type=event.type,
+            account_id=account_id,
+            connect_account=connect_account,
+            payment_transaction=payment_transaction,
+            data=event.data.object,
+            processed=processed,
+            error_message=error_message,
+            processed_at=timezone.now() if processed else None
+        )
+
+    except Exception as e:
+        logger.error(f"Error logging Connect webhook event {event.id}: {e}")
+
+
+def handle_account_updated(event: stripe.Event) -> Dict[str, Any]:
+    """
+    Handle account.updated events - when a connected account's status changes.
+    """
+    from .stripe_connect_service import stripe_connect_service
+    
+    account = event.data.object
+    logger.info(f"Account {account.id} updated")
+
+    try:
+        # Update account status in our database
+        account_status = stripe_connect_service.get_account_status(account.id)
+        
+        logger.info(f"Updated account {account.id} - charges_enabled: {account_status['charges_enabled']}, payouts_enabled: {account_status['payouts_enabled']}")
+        return {"status": "success", "account_status": account_status}
+    except Exception as e:
+        logger.error(f"Error updating account {account.id}: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+def handle_account_authorized(event: stripe.Event) -> Dict[str, Any]:
+    """
+    Handle account.application.authorized - when a user authorizes the platform.
+    """
+    account = event.data.object
+    logger.info(f"Account {account.id} authorized the application")
+    return {"status": "success"}
+
+
+def handle_connect_checkout_session_completed(event: stripe.Event) -> Dict[str, Any]:
+    """
+    Handle completed checkout sessions for Connect payments.
+    """
+    from ..models import PaymentTransaction
+    from django.utils import timezone
+    
+    session = event.data.object
+    logger.info(f"Connect checkout session {session.id} completed")
+    logger.info(f"Payment intent: {session.payment_intent}")
+
+    try:
+        # Find the payment transaction
+        transaction = PaymentTransaction.objects.get(stripe_checkout_session_id=session.id)
+        
+        # Update transaction with payment intent ID and customer details
+        if session.payment_intent:
+            transaction.payment_intent_id = session.payment_intent
+        
+        if session.customer_details and session.customer_details.email:
+            transaction.customer_email = session.customer_details.email
+            transaction.order.customer_email = session.customer_details.email
+            transaction.order.save()
+        
+        # Update transaction status to succeeded since checkout completed
+        transaction.status = 'succeeded'
+        transaction.paid_at = timezone.now()
+        transaction.save()
+        
+        # Update order status to completed
+        transaction.order.status = 'completed'
+        transaction.order.save()
+        
+        logger.info(f"Updated transaction {transaction.id} to succeeded status")
+        logger.info(f"Updated order {transaction.order.order_id} to completed status")
+        
+        return {"status": "success", "transaction_id": transaction.id}
+
+    except PaymentTransaction.DoesNotExist:
+        logger.error(f"PaymentTransaction not found for checkout session {session.id}")
+        return {"status": "error", "error": "Transaction not found"}
+
+
+def handle_connect_payment_succeeded(event: stripe.Event) -> Dict[str, Any]:
+    """
+    Handle successful payments for Connect transactions.
+    """
+    from .stripe_connect_service import stripe_connect_service
+    
+    payment_intent = event.data.object
+    logger.info(f"Connect payment {payment_intent.id} succeeded")
+
+    try:
+        transaction = stripe_connect_service.handle_successful_payment(payment_intent.id)
+        if transaction:
+            return {"status": "success", "transaction_id": transaction.id}
+        else:
+            return {"status": "error", "error": "Transaction not found"}
+    except Exception as e:
+        logger.error(f"Error handling successful Connect payment {payment_intent.id}: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+def handle_connect_payment_failed(event: stripe.Event) -> Dict[str, Any]:
+    """
+    Handle failed payments for Connect transactions.
+    """
+    from ..models import PaymentTransaction
+    
+    payment_intent = event.data.object
+    logger.info(f"Connect payment {payment_intent.id} failed")
+
+    try:
+        transaction = PaymentTransaction.objects.get(payment_intent_id=payment_intent.id)
+        transaction.status = 'failed'
+        transaction.save()
+
+        # Update order status
+        transaction.order.status = 'cancelled'
+        transaction.order.save()
+
+        logger.info(f"Marked transaction {transaction.id} as failed")
+        return {"status": "success", "transaction_id": transaction.id}
+
+    except PaymentTransaction.DoesNotExist:
+        logger.error(f"PaymentTransaction not found for payment intent {payment_intent.id}")
+        return {"status": "error", "error": "Transaction not found"}
+
+
+def handle_transfer_created(event: stripe.Event) -> Dict[str, Any]:
+    """
+    Handle transfer.created events - when funds are transferred to connected accounts.
+    """
+    from .stripe_connect_service import stripe_connect_service
+    
+    transfer = event.data.object
+    logger.info(f"Transfer {transfer.id} created to {transfer.destination}")
+
+    try:
+        transaction = stripe_connect_service.handle_transfer_created(transfer.id)
+        if transaction:
+            return {"status": "success", "transaction_id": transaction.id}
+        else:
+            return {"status": "warning", "error": "Transaction not found"}
+    except Exception as e:
+        logger.error(f"Error handling transfer {transfer.id}: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+def handle_transfer_updated(event: stripe.Event) -> Dict[str, Any]:
+    """
+    Handle transfer.updated events.
+    """
+    transfer = event.data.object
+    logger.info(f"Transfer {transfer.id} updated - status: {transfer.status}")
+    
+    # Could update transfer status in PaymentTransaction here if needed
+    return {"status": "success"}
+
+
+def handle_payout_created(event: stripe.Event) -> Dict[str, Any]:
+    """
+    Handle payout.created events - when Stripe initiates a payout to connected account.
+    """
+    payout = event.data.object
+    logger.info(f"Payout {payout.id} created for account {getattr(payout, 'account', 'unknown')}")
+    return {"status": "success"}
+
+
+def handle_payout_updated(event: stripe.Event) -> Dict[str, Any]:
+    """
+    Handle payout.updated events.
+    """
+    payout = event.data.object
+    logger.info(f"Payout {payout.id} updated - status: {payout.status}")
+    return {"status": "success"}
+
+
+def handle_charge_dispute_created(event: stripe.Event) -> Dict[str, Any]:
+    """
+    Handle charge.dispute.created events.
+    """
+    dispute = event.data.object
+    logger.info(f"Dispute {dispute.id} created for charge {dispute.charge}")
+    
+    # Could notify platform admin and/or seller about the dispute
+    return {"status": "success"}

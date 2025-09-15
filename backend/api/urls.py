@@ -31,6 +31,21 @@ from .apis.subscriptions import (
     CurrentSubscriptionView,
     CancelSubscriptionView,
 )
+from .apis.stripe_connect import (
+    StripeConnectAccountView,
+    ConnectAccountLinkView,
+    ConnectLoginLinkView,
+    ConnectAccountStatusView,
+    ConnectCheckoutView,
+    ConnectTransactionsView,
+    ConnectBalanceView,
+    ConnectRefundView,
+    ConnectEarningsView,
+    ConnectWebhookView,
+    ConnectWebhookEventsView,
+    connect_onboarding_status,
+    connect_dashboard_info,
+)
 from .apis.integrations import (
     MetaAuthUrlView,
     MetaOAuthCallbackView,
@@ -156,6 +171,21 @@ urlpatterns = [
     # Webhook URLs
     path("api/webhooks/stripe/", StripeWebhookView.as_view(), name="stripe_webhook"),
     path("api/webhooks/facebook/", FacebookWebhookView.as_view(), name="facebook_webhook"),
+    
+    # Stripe Connect URLs
+    path("api/stripe-connect/account/", StripeConnectAccountView.as_view(), name="stripe_connect_account"),
+    path("api/stripe-connect/account-link/", ConnectAccountLinkView.as_view(), name="connect_account_link"),
+    path("api/stripe-connect/login-link/", ConnectLoginLinkView.as_view(), name="connect_login_link"),
+    path("api/stripe-connect/status/", ConnectAccountStatusView.as_view(), name="connect_account_status"),
+    path("api/stripe-connect/checkout/", ConnectCheckoutView.as_view(), name="connect_checkout"),
+    path("api/stripe-connect/transactions/", ConnectTransactionsView.as_view(), name="connect_transactions"),
+    path("api/stripe-connect/balance/", ConnectBalanceView.as_view(), name="connect_balance"),
+    path("api/stripe-connect/refund/", ConnectRefundView.as_view(), name="connect_refund"),
+    path("api/stripe-connect/earnings/", ConnectEarningsView.as_view(), name="connect_earnings"),
+    path("api/stripe-connect/webhook/", ConnectWebhookView.as_view(), name="connect_webhook"),
+    path("api/stripe-connect/webhook-events/", ConnectWebhookEventsView.as_view(), name="connect_webhook_events"),
+    path("api/stripe-connect/onboarding-status/", connect_onboarding_status, name="connect_onboarding_status"),
+    path("api/stripe-connect/dashboard-info/", connect_dashboard_info, name="connect_dashboard_info"),
     
     # Meta Integration URLs
     path("api/integrations/meta/auth/", MetaAuthUrlView.as_view(), name="meta_auth_url"),

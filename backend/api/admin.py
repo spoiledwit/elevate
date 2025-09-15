@@ -5,6 +5,7 @@ from django.contrib.auth.models import Group
 from unfold.admin import ModelAdmin
 from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
 from django.utils.translation import gettext_lazy as _
+from django.utils.html import format_html
 from .services.stripe_service import stripe_service
 from django.contrib import messages
 from import_export.admin import ImportExportModelAdmin
@@ -12,9 +13,10 @@ from unfold.contrib.import_export.forms import ExportForm, ImportForm
 
 from .models import (
     User, UserProfile, UserSocialLinks, UserPermissions, SocialIcon, CustomLink, CollectInfoField, CollectInfoResponse, CTABanner, Subscription,
-    ProfileView, LinkClick, BannerClick,
+    ProfileView, LinkClick, BannerClick, Order,
     SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, PaymentEvent, Plan, PlanFeature, StripeCustomer,
-    Folder, Media, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply, AIConfiguration
+    Folder, Media, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply, AIConfiguration,
+    StripeConnectAccount, PaymentTransaction, ConnectWebhookEvent
 )
 from tinymce.widgets import TinyMCE
 from django import forms
@@ -320,6 +322,62 @@ class CollectInfoResponseAdmin(ModelAdmin, ImportExportModelAdmin):
             'fields': ('submitted_at',)
         }),
     )
+
+
+@admin.register(Order)
+class OrderAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    list_display = ['order_id', 'custom_link_product', 'customer_email', 'customer_name', 'status', 'created_at']
+    list_filter = ['status', 'created_at', 'custom_link__type']
+    search_fields = ['order_id', 'customer_email', 'customer_name', 'custom_link__title', 'custom_link__checkout_title']
+    readonly_fields = ['order_id', 'created_at', 'updated_at', 'formatted_responses']
+    date_hierarchy = 'created_at'
+    
+    fieldsets = (
+        ('Order Information', {
+            'fields': ('order_id', 'custom_link', 'status')
+        }),
+        ('Customer Details', {
+            'fields': ('customer_name', 'customer_email')
+        }),
+        ('Form Responses', {
+            'fields': ('form_responses', 'formatted_responses'),
+            'classes': ('collapse',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def custom_link_product(self, obj):
+        """Display product title from custom link"""
+        if obj.custom_link.checkout_title:
+            return obj.custom_link.checkout_title
+        elif obj.custom_link.title:
+            return obj.custom_link.title
+        else:
+            return f"Product #{obj.custom_link.id}"
+    custom_link_product.short_description = 'Product'
+    custom_link_product.admin_order_field = 'custom_link__checkout_title'
+    
+    def formatted_responses(self, obj):
+        """Display formatted responses in a readable format"""
+        responses = obj.get_formatted_responses()
+        if not responses:
+            return "No responses"
+        
+        formatted_html = "<ul>"
+        for response in responses:
+            formatted_html += f"<li><strong>{response['question']}:</strong> {response['answer']}</li>"
+        formatted_html += "</ul>"
+        return formatted_html
+    formatted_responses.short_description = 'Form Responses'
+    formatted_responses.allow_tags = True
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('custom_link')
 
 
 @admin.register(CTABanner)
@@ -1124,3 +1182,253 @@ class AIConfigurationAdmin(ModelAdmin, ImportExportModelAdmin):
 
 # Backward compatibility aliases are already registered via the @admin.register decorators above
 # since CommentAutomationRule = AutomationRule and CommentAutomationSettings = AutomationSettings
+
+
+# ============================================================================
+# STRIPE CONNECT ADMIN CLASSES
+# ============================================================================
+
+@admin.register(StripeConnectAccount)
+class StripeConnectAccountAdmin(ModelAdmin, ImportExportModelAdmin):
+    """Admin interface for Stripe Connect accounts"""
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    
+    list_display = [
+        'user', 'stripe_account_id_short', 'get_status', 'charges_enabled', 
+        'payouts_enabled', 'details_submitted', 'country', 'default_currency',
+        'platform_fee_percentage', 'onboarding_completed_at', 'created_at'
+    ]
+    list_filter = [
+        'charges_enabled', 'payouts_enabled', 'details_submitted', 
+        'country', 'default_currency', 'created_at', 'onboarding_completed_at'
+    ]
+    search_fields = [
+        'user__username', 'user__email', 'stripe_account_id', 'email'
+    ]
+    readonly_fields = [
+        'stripe_account_id', 'charges_enabled', 'payouts_enabled', 
+        'details_submitted', 'country', 'default_currency', 'requirements_due',
+        'requirements_errors', 'onboarding_completed_at', 'created_at', 'updated_at'
+    ]
+    
+    fieldsets = (
+        (_('Account Information'), {
+            'fields': ('user', 'stripe_account_id', 'email')
+        }),
+        (_('Account Status'), {
+            'fields': (
+                'charges_enabled', 'payouts_enabled', 'details_submitted',
+                'country', 'default_currency', 'onboarding_completed_at'
+            )
+        }),
+        (_('Platform Settings'), {
+            'fields': ('platform_fee_percentage',)
+        }),
+        (_('Requirements'), {
+            'fields': ('requirements_due', 'requirements_errors'),
+            'classes': ('collapse',)
+        }),
+        (_('Timestamps'), {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def stripe_account_id_short(self, obj):
+        """Display shortened account ID"""
+        if obj.stripe_account_id:
+            return f"{obj.stripe_account_id[:15]}..."
+        return "-"
+    stripe_account_id_short.short_description = "Stripe Account"
+    
+    def get_status(self, obj):
+        """Display account status with color coding"""
+        status = obj.get_status()
+        if status == "Active":
+            return format_html('<span style="color: green;">✓ {}</span>', status)
+        elif status == "Pending Verification":
+            return format_html('<span style="color: orange;">⏳ {}</span>', status)
+        else:
+            return format_html('<span style="color: red;">❌ {}</span>', status)
+    get_status.short_description = "Status"
+    
+    def has_add_permission(self, request):
+        """Prevent manual creation of Connect accounts"""
+        return False
+
+
+@admin.register(PaymentTransaction)
+class PaymentTransactionAdmin(ModelAdmin, ImportExportModelAdmin):
+    """Admin interface for payment transactions"""
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    
+    list_display = [
+        'order_id_short', 'seller_username', 'product_title_short',
+        'get_display_amount', 'get_platform_earnings', 'status',
+        'transfer_status', 'customer_email', 'paid_at', 'created_at'
+    ]
+    list_filter = [
+        'status', 'transfer_status', 'currency', 'created_at', 'paid_at'
+    ]
+    search_fields = [
+        'order__order_id', 'seller_account__user__username', 
+        'order__custom_link__title', 'customer_email',
+        'payment_intent_id', 'charge_id', 'transfer_id'
+    ]
+    readonly_fields = [
+        'order', 'seller_account', 'stripe_checkout_session_id',
+        'payment_intent_id', 'charge_id', 'transfer_id', 'total_amount',
+        'platform_fee', 'seller_amount', 'stripe_processing_fee',
+        'currency', 'status', 'transfer_status', 'customer_email',
+        'refunded_amount', 'platform_fee_refunded', 'metadata',
+        'created_at', 'updated_at', 'paid_at', 'transferred_at'
+    ]
+    
+    fieldsets = (
+        (_('Transaction Details'), {
+            'fields': (
+                'order', 'seller_account', 'customer_email', 'status'
+            )
+        }),
+        (_('Stripe Information'), {
+            'fields': (
+                'stripe_checkout_session_id', 'payment_intent_id', 
+                'charge_id', 'transfer_id'
+            )
+        }),
+        (_('Amounts'), {
+            'fields': (
+                'total_amount', 'platform_fee', 'seller_amount',
+                'stripe_processing_fee', 'currency'
+            )
+        }),
+        (_('Transfer Status'), {
+            'fields': ('transfer_status', 'transferred_at')
+        }),
+        (_('Refunds'), {
+            'fields': ('refunded_amount', 'platform_fee_refunded'),
+            'classes': ('collapse',)
+        }),
+        (_('Additional Data'), {
+            'fields': ('metadata',),
+            'classes': ('collapse',)
+        }),
+        (_('Timestamps'), {
+            'fields': ('created_at', 'updated_at', 'paid_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def order_id_short(self, obj):
+        """Display shortened order ID"""
+        if obj.order and obj.order.order_id:
+            return f"{obj.order.order_id[:8]}..."
+        return "-"
+    order_id_short.short_description = "Order"
+    
+    def seller_username(self, obj):
+        """Display seller username"""
+        return obj.seller_account.user.username if obj.seller_account else "-"
+    seller_username.short_description = "Seller"
+    
+    def product_title_short(self, obj):
+        """Display shortened product title"""
+        if obj.order and obj.order.custom_link and obj.order.custom_link.title:
+            title = obj.order.custom_link.title
+            return title[:30] + "..." if len(title) > 30 else title
+        return "-"
+    product_title_short.short_description = "Product"
+    
+    def get_display_amount(self, obj):
+        """Display formatted total amount"""
+        return obj.get_display_amount()
+    get_display_amount.short_description = "Amount"
+    
+    def get_platform_earnings(self, obj):
+        """Display formatted platform earnings"""
+        return obj.get_platform_earnings()
+    get_platform_earnings.short_description = "Platform Fee"
+    
+    def has_add_permission(self, request):
+        """Prevent manual creation of transactions"""
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        """Make transactions read-only"""
+        return False
+
+
+@admin.register(ConnectWebhookEvent)
+class ConnectWebhookEventAdmin(ModelAdmin, ImportExportModelAdmin):
+    """Admin interface for Connect webhook events"""
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    
+    list_display = [
+        'stripe_event_id_short', 'event_type', 'account_username',
+        'transaction_order_id_short', 'processed', 'created_at', 'processed_at'
+    ]
+    list_filter = [
+        'event_type', 'processed', 'created_at', 'processed_at'
+    ]
+    search_fields = [
+        'stripe_event_id', 'event_type', 'account_id',
+        'connect_account__user__username'
+    ]
+    readonly_fields = [
+        'stripe_event_id', 'event_type', 'account_id', 'connect_account',
+        'payment_transaction', 'data', 'processed', 'error_message',
+        'created_at', 'processed_at'
+    ]
+    
+    fieldsets = (
+        (_('Event Information'), {
+            'fields': ('stripe_event_id', 'event_type', 'account_id', 'processed')
+        }),
+        (_('Related Objects'), {
+            'fields': ('connect_account', 'payment_transaction')
+        }),
+        (_('Processing'), {
+            'fields': ('error_message', 'processed_at')
+        }),
+        (_('Event Data'), {
+            'fields': ('data',),
+            'classes': ('collapse',)
+        }),
+        (_('Timestamps'), {
+            'fields': ('created_at',),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def stripe_event_id_short(self, obj):
+        """Display shortened event ID"""
+        if obj.stripe_event_id:
+            return f"{obj.stripe_event_id[:20]}..."
+        return "-"
+    stripe_event_id_short.short_description = "Event ID"
+    
+    def account_username(self, obj):
+        """Display related account username"""
+        if obj.connect_account:
+            return obj.connect_account.user.username
+        return "-"
+    account_username.short_description = "Account"
+    
+    def transaction_order_id_short(self, obj):
+        """Display shortened transaction order ID"""
+        if obj.payment_transaction and obj.payment_transaction.order:
+            order_id = obj.payment_transaction.order.order_id
+            return f"{order_id[:8]}..." if order_id else "-"
+        return "-"
+    transaction_order_id_short.short_description = "Order"
+    
+    def has_add_permission(self, request):
+        """Prevent manual creation of webhook events"""
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        """Make webhook events read-only except for processed status"""
+        return request.user.is_superuser

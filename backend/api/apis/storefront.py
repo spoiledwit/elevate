@@ -15,14 +15,14 @@ from django.contrib.auth import get_user_model
 
 from ..models import (
     UserProfile, CustomLink, CollectInfoField, CollectInfoResponse, SocialIcon, CTABanner, 
-    LinkClick, ProfileView, BannerClick
+    LinkClick, ProfileView, BannerClick, Order
 )
 from ..serializers import (
     UserProfileSerializer, UserProfilePublicSerializer,
     CustomLinkSerializer, CustomLinkCreateUpdateSerializer,
     CollectInfoFieldCreateUpdateSerializer, CollectInfoResponseCreateSerializer,
     SocialIconSerializer, CTABannerSerializer,
-    ProfileAnalyticsSerializer
+    ProfileAnalyticsSerializer, OrderSerializer
 )
 from ..utils import (
     get_client_ip, anonymize_ip, should_track_analytics, 
@@ -841,6 +841,140 @@ class CustomLinkViewSet(viewsets.ModelViewSet):
             'total_responses': link.collect_info_responses.count(),
             'responses': response_data
         })
+
+    @extend_schema(
+        summary="Create order for digital product",
+        request=OrderSerializer,
+        responses={201: OrderSerializer}
+    )
+    @action(["post"], detail=True, url_path="create-order", permission_classes=[AllowAny])
+    def create_order(self, request, pk=None):
+        """
+        Create an order for a digital product with form responses.
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.info(f"DEBUG - Creating order for link ID: {pk}")
+        logger.info(f"DEBUG - Request data: {request.data}")
+        
+        link = get_object_or_404(CustomLink, pk=pk, is_active=True)
+        logger.info(f"DEBUG - Found link: {link.title}, type: {link.type}, owner: {link.user_profile.user.username}")
+        
+        # Check if link has a price (indicating it's a paid product)
+        if not link.checkout_price or link.checkout_price <= 0:
+            logger.warning(f"DEBUG - Link {pk} is not a paid product, checkout_price: {link.checkout_price}")
+            return Response(
+                {"detail": "This link is not a paid product"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Rate limiting check
+        client_ip = get_client_ip(request)
+        if is_rate_limited(f"{client_ip}:{link.id}", 'order_create', limit=3, window=300):
+            return Response(
+                {"detail": "Rate limit exceeded"}, 
+                status=status.HTTP_429_TOO_MANY_REQUESTS
+            )
+        
+        # Prepare order data
+        order_data = request.data.copy()
+        order_data['custom_link'] = link.id
+        logger.info(f"DEBUG - Prepared order data: {order_data}")
+        
+        # Create serializer with custom link context
+        serializer = OrderSerializer(
+            data=order_data,
+            context={'request': request, 'custom_link': link}
+        )
+        
+        
+        print("DEBUG - Order serializer data:", serializer.initial_data)
+
+        try:
+            serializer.is_valid(raise_exception=True)
+            logger.info("DEBUG - Order serializer is valid")
+        except Exception as e:
+            logger.error(f"DEBUG - Order serializer validation failed: {e}")
+            logger.error(f"DEBUG - Serializer errors: {serializer.errors}")
+            raise
+        
+        # Save the order
+        order = serializer.save()
+        logger.info(f"DEBUG - Created order: {order.order_id}")
+        
+        # Create Stripe Connect checkout session
+        try:
+            from ..services.stripe_connect_service import StripeConnectService
+            
+            # Get the seller's Connect account
+            seller_user = link.user_profile.user
+            logger.info(f"DEBUG - Seller user: {seller_user.username}")
+            
+            connect_account = getattr(seller_user, 'connect_account', None)
+            logger.info(f"DEBUG - Connect account found: {connect_account is not None}")
+            
+            if not connect_account:
+                logger.error("DEBUG - No Stripe Connect account found for seller")
+                return Response({
+                    "error": "Seller has not connected their Stripe account"
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            logger.info(f"DEBUG - Connect account details: ID={connect_account.stripe_account_id}, charges_enabled={connect_account.charges_enabled}")
+            
+            if not connect_account.charges_enabled:
+                logger.error("DEBUG - Stripe account not ready for charges")
+                return Response({
+                    "error": "Seller's Stripe account is not yet ready to accept payments"
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Create checkout session
+            logger.info("DEBUG - Creating Stripe checkout session")
+            stripe_service = StripeConnectService()
+            
+            from django.conf import settings
+            frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+            success_url = f"{frontend_url}/order-success?order_id={order.order_id}"
+            cancel_url = f"{frontend_url}/order-cancelled?order_id={order.order_id}"
+            
+            logger.info(f"DEBUG - Success URL: {success_url}")
+            logger.info(f"DEBUG - Cancel URL: {cancel_url}")
+            
+            checkout_url, session_id = stripe_service.create_checkout_session_for_product(
+                custom_link=link,
+                connect_account=connect_account,
+                success_url=success_url,
+                cancel_url=cancel_url,
+                order_id=order.order_id,  # Pass the existing order ID
+                customer_email=order.customer_email,
+                metadata={'order_id': order.order_id}
+            )
+            
+            logger.info(f"DEBUG - Checkout session created: {session_id}")
+            
+            # PaymentTransaction is now created by the StripeConnectService
+            
+            return Response({
+                "success": True,
+                "order": OrderSerializer(order).data,
+                "checkout_url": checkout_url,
+                "message": "Order created successfully. Redirecting to payment..."
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            # If Stripe checkout fails, we still have the order created
+            # Log the error but don't fail the entire request
+            logger.error(f"DEBUG - Failed to create Stripe checkout session for order {order.order_id}: {str(e)}")
+            logger.error(f"DEBUG - Exception type: {type(e).__name__}")
+            import traceback
+            logger.error(f"DEBUG - Full traceback: {traceback.format_exc()}")
+            
+            return Response({
+                "success": True,
+                "order": OrderSerializer(order).data,
+                "error": f"Order created but payment setup failed: {str(e)}",
+                "message": "Order created but payment processing is currently unavailable"
+            }, status=status.HTTP_201_CREATED)
 
 
 class SocialIconViewSet(viewsets.ModelViewSet):

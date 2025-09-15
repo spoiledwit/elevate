@@ -1,110 +1,20 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import {
-  User,
-  ExternalLink,
-  MousePointerClick,
-  Heart,
-  Globe
-} from 'lucide-react'
-import {
-  FaInstagram,
-  FaFacebook,
-  FaTwitter,
-  FaLinkedin,
-  FaYoutube,
-  FaTiktok,
-  FaSnapchat,
-  FaPinterest,
-  FaTwitch,
-  FaDiscord,
-  FaTelegram,
-  FaWhatsapp,
-  FaReddit,
-  FaTumblr,
-  FaMedium,
-  FaGithub,
-  FaDribbble,
-  FaBehance,
-  FaSpotify,
-  FaSoundcloud,
-  FaEnvelope
-} from 'react-icons/fa'
-import { trackProfileViewAction, trackLinkClickAction, trackBannerClickAction } from '@/actions'
+import { ArrowLeft } from 'lucide-react'
+import { StorefrontHeaderPreview } from '../../(dashboard)/custom-links/components/StorefrontHeaderPreview'
+import { ProductCard } from '../../(dashboard)/custom-links/components/ProductCard'
+import { CheckoutForm } from '../../(dashboard)/custom-links/components/CheckoutForm'
+import { trackProfileViewAction, trackLinkClickAction } from '@/actions'
 
 interface PublicStorefrontProps {
   username: string
   profile: any
 }
 
-// Custom X (Twitter) icon component
-const XIcon = ({ className }: { className?: string }) => (
-  <svg
-    className={className}
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-  </svg>
-)
-
-const socialIcons = {
-  instagram: { icon: FaInstagram, color: '#E4405F' },
-  facebook: { icon: FaFacebook, color: '#1877F2' },
-  twitter: { icon: XIcon, color: '#000000' },
-  linkedin: { icon: FaLinkedin, color: '#0A66C2' },
-  youtube: { icon: FaYoutube, color: '#FF0000' },
-  tiktok: { icon: FaTiktok, color: '#000000' },
-  snapchat: { icon: FaSnapchat, color: '#FFFC00' },
-  pinterest: { icon: FaPinterest, color: '#BD081C' },
-  twitch: { icon: FaTwitch, color: '#9146FF' },
-  discord: { icon: FaDiscord, color: '#5865F2' },
-  telegram: { icon: FaTelegram, color: '#0088CC' },
-  whatsapp: { icon: FaWhatsapp, color: '#25D366' },
-  reddit: { icon: FaReddit, color: '#FF4500' },
-  tumblr: { icon: FaTumblr, color: '#001935' },
-  medium: { icon: FaMedium, color: '#000000' },
-  github: { icon: FaGithub, color: '#181717' },
-  dribbble: { icon: FaDribbble, color: '#EA4C89' },
-  behance: { icon: FaBehance, color: '#1769FF' },
-  spotify: { icon: FaSpotify, color: '#1DB954' },
-  soundcloud: { icon: FaSoundcloud, color: '#FF3300' },
-  email: { icon: FaEnvelope, color: '#6B7280' },
-  website: { icon: Globe, color: '#6B7280' },
-}
-
-const bannerStyles = {
-  'gradient-purple': {
-    className: 'bg-gradient-to-r from-purple-500 to-purple-600',
-    textColor: 'text-white'
-  },
-  'gradient-blue': {
-    className: 'bg-gradient-to-r from-blue-500 to-blue-600',
-    textColor: 'text-white'
-  },
-  'gradient-green': {
-    className: 'bg-gradient-to-r from-green-500 to-green-600',
-    textColor: 'text-white'
-  },
-  'gradient-orange': {
-    className: 'bg-gradient-to-r from-orange-500 to-orange-600',
-    textColor: 'text-white'
-  },
-  'solid-black': {
-    className: 'bg-gray-900',
-    textColor: 'text-white'
-  },
-  'solid-white': {
-    className: 'bg-white border-2 border-gray-300',
-    textColor: 'text-gray-900'
-  }
-}
-
 export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
   const [hasTrackedView, setHasTrackedView] = useState(false)
-  const [clickedLinks, setClickedLinks] = useState<Set<string>>(new Set())
+  const [selectedProduct, setSelectedProduct] = useState<any>(null)
 
   // Track profile view on mount
   useEffect(() => {
@@ -124,215 +34,185 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
     }
   }
 
-  const handleLinkClick = async (link: any) => {
+  const trackLinkClick = async (linkId: number) => {
     try {
-      // Track the click
       const userAgent = navigator.userAgent
-      const referrer = window.location.href
-      await trackLinkClickAction(link.id.toString(), link.id, userAgent, referrer)
-
-      // Mark as clicked for visual feedback
-      //@ts-ignore
-      setClickedLinks(prev => new Set([...prev, link.id.toString()]))
-
-      // Navigate to the link
-      window.open(link.url, '_blank', 'noopener,noreferrer')
+      const referrer = document.referrer
+      await trackLinkClickAction(linkId.toString(), userAgent as any, referrer)
     } catch (error) {
       console.error('Failed to track link click:', error)
-      // Still navigate even if tracking fails
-      window.open(link.url, '_blank', 'noopener,noreferrer')
     }
   }
 
-  const activeSocialIcons = profile.social_icons?.filter((icon: any) => icon.is_active && icon.url) || []
-  const activeCustomLinks = profile.custom_links?.filter((link: any) => link.is_active) || []
-  const activeCTABanner = profile.cta_banner && profile.cta_banner.is_active ? profile.cta_banner : null
+  const handleBackToProducts = () => {
+    setSelectedProduct(null)
+  }
 
-  // Get the banner style or default to gradient-purple
-  const bannerStyle = activeCTABanner?.style ? bannerStyles[activeCTABanner.style as keyof typeof bannerStyles] : bannerStyles['gradient-purple']
+  const handleOrderSuccess = () => {
+    // Just navigate back to products list
+    setSelectedProduct(null)
+  }
+
+  const activeCustomLinks = profile.custom_links?.filter((link: any) => link.is_active) || []
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Modern Hero Section */}
-      <div className="relative">
+      {/* Desktop Layout */}
+      <div className="hidden md:flex h-screen">
+        {/* Fixed Header - Left Side */}
+        <div className="w-[35%] bg-white fixed left-0 top-0 h-full overflow-y-auto border-r border-gray-200">
+          <div className="h-full flex items-center justify-center p-8">
+            <StorefrontHeaderPreview
+              profileImage={profile?.profile_image}
+              displayName={profile?.display_name || username}
+              bio={profile?.bio}
+              socialIcons={profile?.social_icons || []}
+              video={profile?.embedded_video}
+              size="large"
+            />
+          </div>
+        </div>
 
-        <div className="relative container mx-auto px-6 pt-16 max-w-lg">
-          {/* Profile Header */}
-          <div className="text-center mb-12">
-            {/* Profile Image */}
-            <div className="relative mb-8">
-              <div className="w-36 h-36 mx-auto rounded-full overflow-hidden border-4 border-white bg-white">
-                {profile.profile_image ? (
-                  <img
-                    src={profile.profile_image}
-                    alt={profile.display_name}
-                    className="w-full h-full object-cover"
+        {/* Scrollable Products/Checkout - Right Side */}
+        <div className="flex-1 ml-[35%] bg-white overflow-y-auto">
+          {selectedProduct ? (
+            // Checkout View
+            <div className="h-full">
+              {/* Checkout Form - No Shadows */}
+              <div className="flex-1 flex items-center justify-center p-8">
+                <div className="max-w-2xl w-full relative">
+                  {/* Back Button - Top Left of Image */}
+                  <div className="absolute top-6 left-6 z-10">
+                    <button
+                      onClick={handleBackToProducts}
+                      className="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center text-gray-600 hover:text-gray-900 hover:shadow-lg transition-all"
+                    >
+                      <ArrowLeft className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  <CheckoutForm
+                    linkId={selectedProduct.id.toString()}
+                    productType={selectedProduct.type || 'digital'}
+                    thumbnail={selectedProduct.checkout_image || selectedProduct.thumbnail}
+                    title={selectedProduct.title || selectedProduct.text}
+                    subtitle={selectedProduct.subtitle}
+                    checkoutTitle={selectedProduct.checkout_title}
+                    checkoutDescription={selectedProduct.checkout_description}
+                    checkoutBottomTitle={selectedProduct.checkout_bottom_title}
+                    checkoutCtaButtonText={selectedProduct.checkout_cta_button_text}
+                    price={selectedProduct.checkout_price}
+                    discountedPrice={selectedProduct.checkout_discounted_price}
+                    customFields={[]}
+                    collectInfoFields={selectedProduct.collect_info_fields || []}
+                    isActive={true}
+                    className="overflow-hidden"
+                    onOrderSuccess={handleOrderSuccess}
                   />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
-                    <User className="w-12 h-12 text-slate-500" />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Name and Bio */}
-            <div className="space-y-4">
-              <h1 className="text-3xl font-light text-slate-800 tracking-tight">
-                {profile.display_name || username}
-              </h1>
-
-              {profile.bio && (
-                <p className="text-slate-600 text-lg leading-relaxed max-w-md mx-auto font-light">
-                  {profile.bio}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Social Icons */}
-          {activeSocialIcons.length > 0 && (
-            <div className="flex justify-center gap-4 mb-12 flex-wrap">
-              {activeSocialIcons.map((socialIcon: any, index: number) => {
-                const iconData = socialIcons[socialIcon.platform as keyof typeof socialIcons]
-                if (!iconData) return null
-
-                const IconComponent = iconData.icon
-                return (
-                  <a
-                    key={index}
-                    href={socialIcon.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center hover:bg-slate-100 transition-all duration-300 border border-slate-200 hover:border-slate-300 hover:shadow-sm"
-                    style={{ color: iconData.color }}
-                  >
-                    <IconComponent className="w-5 h-5" />
-                  </a>
-                )
-              })}
-            </div>
-          )}
-
-          {/* Embedded Video */}
-          {profile.embedded_video && (
-            <div className="mb-12">
-              <div className="rounded-3xl overflow-hidden border border-slate-200 bg-white">
-                <div className="aspect-video">
-                  <iframe
-                    src={profile.embedded_video}
-                    title="Embedded Video"
-                    className="w-full h-full"
-                    style={{ border: 0 }}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  ></iframe>
                 </div>
               </div>
             </div>
-          )}
-        </div>
-      </div>
-
-      {/* Content Section */}
-      <div className="bg-slate-50 py-4">
-        <div className="container mx-auto px-6 max-w-lg">
-
-          {/* CTA Banner */}
-          {activeCTABanner && bannerStyle && (
-            <div className="mb-10">
-              <div className={`${bannerStyle.className} rounded-2xl p-8 text-center relative overflow-hidden`}>
-                <div className="relative z-10">
-                  <p className={`${bannerStyle.textColor} text-xl font-light mb-6 leading-relaxed`}>
-                    {activeCTABanner.text}
-                  </p>
-                  <button
-                    onClick={async () => {
-                      // Track the banner click and redirect
-                      try {
-                        const result = await trackBannerClickAction(activeCTABanner.id.toString())
-
-                        // Check if tracking was successful and we got a redirect URL
-                        if (result && !('error' in result) && (result as any).banner_url) {
-                          window.location.href = (result as any).banner_url
-                        } else if (activeCTABanner.button_url && activeCTABanner.button_url.trim()) {
-                          // Fallback to original URL if tracking failed
-                          window.location.href = activeCTABanner.button_url
-                        } else {
-                          console.warn('Banner URL is empty or invalid')
-                        }
-                      } catch (error) {
-                        console.error('Failed to track banner click:', error)
-                        // Fallback to original URL on error
-                        if (activeCTABanner.button_url && activeCTABanner.button_url.trim()) {
-                          window.location.href = activeCTABanner.button_url
-                        }
-                      }
+          ) : (
+            // Products List View
+            <div className={`h-full flex justify-center p-8 pb-16 ${activeCustomLinks.length === 1 ? 'items-center' : ''}`}>
+              <div className="max-w-xs space-y-4 w-full">
+                {activeCustomLinks.map((link: any) => (
+                  <div key={link.id}
+                    onClick={() => {
+                      setSelectedProduct(link);
+                      trackLinkClick(link.id);
                     }}
-                    className={`${bannerStyle.textColor === 'text-white' ? 'bg-white text-slate-900 hover:bg-slate-50' : 'bg-slate-900 text-white hover:bg-slate-800'} px-8 py-4 rounded-xl font-medium transition-colors`}
                   >
-                    {activeCTABanner.button_text}
-                  </button>
-                </div>
+                    <ProductCard
+                      productType={link.type || 'digital'}
+                      thumbnail={link.thumbnail}
+                      title={link.title || link.text}
+                      subtitle={link.subtitle}
+                      displayStyle={link.style}
+                      price={link.checkout_price}
+                      discountedPrice={link.checkout_discounted_price}
+                    />
+                  </div>
+                ))}
               </div>
             </div>
           )}
-
-          {/* Custom Links */}
-          <div className="space-y-3">
-            {activeCustomLinks.length > 0 ? (
-              activeCustomLinks.slice(0, 10).map((link: any, index: number) => (
-                <button
-                  key={index}
-                  onClick={() => handleLinkClick(link)}
-                  className={`w-full bg-white rounded-2xl border border-slate-200 hover:border-slate-300 transition-all duration-300 p-6 group text-left ${clickedLinks.has(link.id.toString()) ? 'border-blue-300 bg-blue-50' : ''
-                    }`}
-                >
-                  <div className="flex items-center gap-5">
-                    {/* Thumbnail */}
-                    {link.thumbnail && (
-                      <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
-                        <img
-                          src={link.thumbnail}
-                          alt=""
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    )}
-
-                    {/* Link Content */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-slate-900 group-hover:text-slate-700 transition-colors truncate text-lg">
-                        {link.text}
-                      </h3>
-                      {link.description && (
-                        <p className="text-slate-500 truncate text-sm mt-1">
-                          {link.description}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Arrow */}
-                    <div className="flex-shrink-0">
-                      <ExternalLink className="w-5 h-5 text-slate-400 group-hover:text-slate-600 transition-colors" />
-                    </div>
-                  </div>
-                </button>
-              ))
-            ) : (
-              <div className="text-center py-16">
-                <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <ExternalLink className="w-8 h-8 text-slate-400" />
-                </div>
-                <p className="text-slate-500 font-light">No links available yet</p>
-              </div>
-            )}
-          </div>
         </div>
       </div>
 
+      {/* Mobile Layout */}
+      <div className="md:hidden">
+        {selectedProduct ? (
+          // Mobile Checkout View
+          <div className="min-h-screen flex flex-col">
+            {/* Back Button */}
+            <div className="p-4 border-b border-gray-200 bg-white">
+              <button
+                onClick={handleBackToProducts}
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to Products
+              </button>
+            </div>
 
+            {/* Mobile Checkout Form */}
+            <div className="flex-1 overflow-y-auto p-4">
+              <CheckoutForm
+                linkId={selectedProduct.id.toString()}
+                productType={selectedProduct.type || 'digital'}
+                thumbnail={selectedProduct.checkout_image || selectedProduct.thumbnail}
+                title={selectedProduct.title || selectedProduct.text}
+                subtitle={selectedProduct.subtitle}
+                checkoutTitle={selectedProduct.checkout_title}
+                checkoutDescription={selectedProduct.checkout_description}
+                checkoutBottomTitle={selectedProduct.checkout_bottom_title}
+                checkoutCtaButtonText={selectedProduct.checkout_cta_button_text}
+                price={selectedProduct.checkout_price}
+                discountedPrice={selectedProduct.checkout_discounted_price}
+                customFields={[]}
+                collectInfoFields={selectedProduct.collect_info_fields || []}
+                isActive={true}
+                className="rounded-xl shadow-lg overflow-hidden"
+                onOrderSuccess={handleOrderSuccess}
+              />
+            </div>
+          </div>
+        ) : (
+          // Mobile Products List View
+          <div className="max-w-sm mx-auto py-8">
+            <div className="space-y-6">
+              {/* Header */}
+              <StorefrontHeaderPreview
+                profileImage={profile?.profile_image}
+                displayName={profile?.display_name || username}
+                bio={profile?.bio}
+                socialIcons={profile?.social_icons || []}
+                video={profile?.embedded_video}
+              />
 
+              {/* Products */}
+              <div className="space-y-4 px-4">
+                {activeCustomLinks.map((link: any) => (
+                  <div key={link.id}
+                    className='mb-8'
+                  >
+                    <ProductCard
+                      productType={link.type || 'digital'}
+                      thumbnail={link.thumbnail}
+                      title={link.title || link.text}
+                      subtitle={link.subtitle}
+                      displayStyle="callout"
+                      price={link.checkout_price}
+                      discountedPrice={link.checkout_discounted_price}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

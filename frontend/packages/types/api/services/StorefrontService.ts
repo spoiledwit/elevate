@@ -7,6 +7,7 @@ import type { CollectInfoResponseCreate } from '../models/CollectInfoResponseCre
 import type { CTABanner } from '../models/CTABanner';
 import type { CustomLink } from '../models/CustomLink';
 import type { CustomLinkCreateUpdate } from '../models/CustomLinkCreateUpdate';
+import type { Order } from '../models/Order';
 import type { PaginatedCollectInfoFieldCreateUpdateList } from '../models/PaginatedCollectInfoFieldCreateUpdateList';
 import type { PaginatedCollectInfoResponseCreateList } from '../models/PaginatedCollectInfoResponseCreateList';
 import type { PaginatedCTABannerList } from '../models/PaginatedCTABannerList';
@@ -376,8 +377,30 @@ export class StorefrontService {
         });
     }
     /**
+     * Create order for digital product
+     * Create an order for a digital product with form responses.
+     * @param id
+     * @param formData
+     * @returns Order
+     * @throws ApiError
+     */
+    public storefrontLinksCreateOrderCreate(
+        id: string,
+        formData: Order,
+    ): CancelablePromise<Order> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/api/storefront/links/{id}/create-order/',
+            path: {
+                'id': id,
+            },
+            formData: formData,
+            mediaType: 'multipart/form-data',
+        });
+    }
+    /**
      * Get form responses for a collect info link
-     * Get form responses for a collect info custom link (owner only).
+     * Get form responses for a custom link with collect info fields (owner only).
      * @param id
      * @param page A page number within the paginated result set.
      * @returns PaginatedCollectInfoResponseCreateList
@@ -400,7 +423,7 @@ export class StorefrontService {
     }
     /**
      * Submit collect info form
-     * Submit a form for a collect_info style custom link.
+     * Submit a form for a custom link with collect info fields.
      * @param id
      * @param formData
      * @returns CollectInfoResponseCreate

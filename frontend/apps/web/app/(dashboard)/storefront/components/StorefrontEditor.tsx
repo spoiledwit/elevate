@@ -50,6 +50,13 @@ import {
 interface StorefrontEditorProps {
   profile: any
   onUpdate: () => void
+  onPreviewUpdate?: {
+    setProfileImage: (image: string) => void
+    setDisplayName: (name: string) => void
+    setBio: (bio: string) => void
+    setSocialIcons: (icons: any[]) => void
+    setVideo: (video: string) => void
+  }
 }
 
 // Custom X (Twitter) icon component
@@ -89,7 +96,7 @@ const socialPlatforms = [
   { key: 'website', label: 'Website', icon: Globe, color: '#6B7280', placeholder: 'https://yourwebsite.com' },
 ]
 
-export function StorefrontEditor({ profile, onUpdate }: StorefrontEditorProps) {
+export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: StorefrontEditorProps) {
   const [formData, setFormData] = useState({
     display_name: profile?.display_name || '',
     bio: profile?.bio || '',
@@ -126,7 +133,14 @@ export function StorefrontEditor({ profile, onUpdate }: StorefrontEditorProps) {
 
     // Show preview immediately
     const reader = new FileReader()
-    reader.onload = (e) => setImagePreview(e.target?.result as string)
+    reader.onload = (e) => {
+      const imageUrl = e.target?.result as string
+      setImagePreview(imageUrl)
+      // Update preview in real-time
+      if (onPreviewUpdate) {
+        onPreviewUpdate.setProfileImage(imageUrl)
+      }
+    }
     reader.readAsDataURL(file)
 
     try {
@@ -216,16 +230,61 @@ export function StorefrontEditor({ profile, onUpdate }: StorefrontEditorProps) {
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+    
+    // Update preview in real-time
+    if (onPreviewUpdate) {
+      if (field === 'display_name' && typeof value === 'string') {
+        onPreviewUpdate.setDisplayName(value)
+      } else if (field === 'bio' && typeof value === 'string') {
+        onPreviewUpdate.setBio(value)
+      } else if (field === 'embedded_video' && typeof value === 'string') {
+        onPreviewUpdate.setVideo(value)
+      }
+    }
   }
 
   const handleSocialLinkChange = (platform: string, url: string) => {
     setSocialLinks(prev => ({ ...prev, [platform]: url }))
+    
+    // Update existing social icons state
+    if (url) {
+      setExistingSocialIcons(prev => ({
+        ...prev,
+        [platform]: { platform, url, is_active: true }
+      }))
+    } else {
+      // Remove icon if URL is empty
+      setExistingSocialIcons(prev => {
+        const updated = { ...prev }
+        delete updated[platform]
+        return updated
+      })
+    }
+    
+    // Update preview social icons in real-time
+    if (onPreviewUpdate) {
+      // Get all current social icons including the one being updated
+      const allIcons = { ...existingSocialIcons }
+      
+      if (url) {
+        allIcons[platform] = { platform, url, is_active: true }
+      } else {
+        delete allIcons[platform]
+      }
+      
+      const updatedSocialIcons = Object.values(allIcons).filter((icon: any) => icon.is_active && icon.url)
+      onPreviewUpdate.setSocialIcons(updatedSocialIcons)
+    }
   }
 
   const removeImage = () => {
     setImagePreview('')
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
+    }
+    // Update preview to remove image
+    if (onPreviewUpdate) {
+      onPreviewUpdate.setProfileImage('')
     }
   }
 

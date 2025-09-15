@@ -1,0 +1,56 @@
+{% extends "emails/base.html" %}
+
+{% block title %}Order Confirmation - Elevate Social{% endblock %}
+
+{% block header_title %}Order Received!{% endblock %}
+
+{% block content %}
+<h2>Thank you for your purchase!</h2>
+
+<p>Hi {{ customer_name|default:"valued customer" }},</p>
+
+<p>Your payment for <strong>{{ product_title }}</strong> has been processed successfully. We have received your order and are processing it now.</p>
+
+{% if product_subtitle %}
+<p><em>{{ product_subtitle }}</em></p>
+{% endif %}
+
+<div class="info-box">
+    <h3>📊 Order Details</h3>
+    <p><strong>Order ID:</strong> {{ order_id }}</p>
+    <p><strong>Product:</strong> {{ product_title }}</p>
+    <p><strong>Order Date:</strong> {{ purchase_date|date:"F d, Y" }}</p>
+    {% if product_price %}
+    <p><strong>Amount Paid:</strong> ${{ product_price }}</p>
+    {% endif %}
+</div>
+
+{% if form_responses %}
+<div class="info-box">
+    <h3>📝 Your Information</h3>
+    {% for response in form_responses %}
+    <p><strong>{{ response.question }}:</strong> {{ response.answer }}</p>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="info-box">
+    <h3>⏰ What's Next?</h3>
+    <ul>
+        <li>We are processing your order</li>
+        <li>You'll receive updates via email as we progress</li>
+        <li>Expected delivery/completion details will follow</li>
+        <li>Contact support if you have any questions</li>
+    </ul>
+</div>
+
+<div class="download-section">
+    <h3>📋 Order Management</h3>
+    <p>You can view your order status anytime in your dashboard:</p>
+    <a href="{{ frontend_url }}/dashboard" class="download-button">View Dashboard</a>
+</div>
+
+<p>We appreciate your business and will keep you updated on your order progress!</p>
+
+<p>Best regards,<br>The Elevate Social Team</p>
+{% endblock %}

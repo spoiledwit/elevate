@@ -23,6 +23,7 @@ import { PostsService } from './services/PostsService';
 import { ProfilesService } from './services/ProfilesService';
 import { SchemaService } from './services/SchemaService';
 import { StorefrontService } from './services/StorefrontService';
+import { StripeConnectService } from './services/StripeConnectService';
 import { SubscriptionsService } from './services/SubscriptionsService';
 import { TokenService } from './services/TokenService';
 import { UploadService } from './services/UploadService';
@@ -48,6 +49,7 @@ export class ApiClient {
     public readonly profiles: ProfilesService;
     public readonly schema: SchemaService;
     public readonly storefront: StorefrontService;
+    public readonly stripeConnect: StripeConnectService;
     public readonly subscriptions: SubscriptionsService;
     public readonly token: TokenService;
     public readonly upload: UploadService;
@@ -84,6 +86,7 @@ export class ApiClient {
         this.profiles = new ProfilesService(this.request);
         this.schema = new SchemaService(this.request);
         this.storefront = new StorefrontService(this.request);
+        this.stripeConnect = new StripeConnectService(this.request);
         this.subscriptions = new SubscriptionsService(this.request);
         this.token = new TokenService(this.request);
         this.upload = new UploadService(this.request);

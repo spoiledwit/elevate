@@ -274,6 +274,9 @@ EMAIL_HOST_USER = environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = environ.get('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = environ.get('DEFAULT_FROM_EMAIL', 'noreply@govara.com')
 
+# Resend API Configuration
+RESEND_API_KEY = environ.get('RESEND_API_KEY', '')
+
 ######################################################################
 # Logging Configuration
 ######################################################################
@@ -316,6 +319,7 @@ LOGGING = {
 STRIPE_PUBLISHABLE_KEY = environ.get("STRIPE_PUBLISHABLE_KEY", "")
 STRIPE_SECRET_KEY = environ.get("STRIPE_SECRET_KEY", "")
 STRIPE_WEBHOOK_SECRET = environ.get("STRIPE_WEBHOOK_SECRET", "")
+STRIPE_CONNECT_WEBHOOK_SECRET = environ.get("STRIPE_CONNECT_WEBHOOK_SECRET", "")
 FRONTEND_URL=environ.get("FRONTEND_URL", "http://localhost:3000")
 
 ######################################################################
@@ -476,6 +480,11 @@ UNFOLD = {
                         "icon": "feedback",
                         "link": reverse_lazy("admin:api_collectinforesponse_changelist"),
                     },
+                    {
+                        "title": _("Orders"),
+                        "icon": "shopping_cart",
+                        "link": reverse_lazy("admin:api_order_changelist"),
+                    },
                 ],
             },
             {
@@ -543,6 +552,21 @@ UNFOLD = {
                         "title": _("Payment Events"),
                         "icon": "receipt",
                         "link": reverse_lazy("admin:api_paymentevent_changelist"),
+                    },
+                    {
+                        "title": _("Connect Accounts"),
+                        "icon": "account_balance",
+                        "link": reverse_lazy("admin:api_stripeconnectaccount_changelist"),
+                    },
+                    {
+                        "title": _("Payment Transactions"),
+                        "icon": "swap_horiz",
+                        "link": reverse_lazy("admin:api_paymenttransaction_changelist"),
+                    },
+                    {
+                        "title": _("Connect Webhook Events"),
+                        "icon": "webhook",
+                        "link": reverse_lazy("admin:api_connectwebhookevent_changelist"),
                     },
                 ],
             },

@@ -38,6 +38,7 @@ dependencies = [
     # Django import/export
     "django-import-export>=4.2.0",
     "django-tinymce>=4.1.0",
+    "resend>=2.13.1",
 ]
 
 [dependency-groups]

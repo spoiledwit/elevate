@@ -728,8 +728,8 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         }
 
         const result = await updateCustomLinkAction(link.id.toString(), updateData)
-        
-        if (result.error) {
+
+        if ('error' in result) {
           toast.error(`Failed to update product: ${result.error}`)
         } else {
           toast.success('Product updated successfully!')

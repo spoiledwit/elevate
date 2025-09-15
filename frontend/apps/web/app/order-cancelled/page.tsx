@@ -40,7 +40,7 @@ function OrderCancelledContent({ searchParams }: { searchParams: { order_id?: st
               Try Payment Again
             </button>
 
-            <Link 
+            <Link
               href="/"
               className="inline-flex items-center justify-center w-full border border-gray-300 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors hover:bg-gray-50"
             >
@@ -54,14 +54,16 @@ function OrderCancelledContent({ searchParams }: { searchParams: { order_id?: st
   )
 }
 
-export default function OrderCancelledPage({ searchParams }: { searchParams: { order_id?: string } }) {
+export default async function OrderCancelledPage({ searchParams }: { searchParams: Promise<{ order_id?: string }> }) {
+  const params = await searchParams
+
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
       </div>
     }>
-      <OrderCancelledContent searchParams={searchParams} />
+      <OrderCancelledContent searchParams={params} />
     </Suspense>
   )
 }

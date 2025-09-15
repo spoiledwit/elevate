@@ -49,6 +49,7 @@ RUN pnpm --filter web build
 # Production stage
 FROM node:21-alpine AS runner
 RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN apk add --no-cache curl
 WORKDIR /app
 
 # Create non-root user
@@ -75,6 +76,9 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
+# Health check - simple port check using curl
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:3000 || exit 1
 
 # Start the application
 CMD ["node", "apps/web/server.js"]

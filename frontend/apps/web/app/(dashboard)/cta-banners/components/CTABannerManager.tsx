@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { 
-  Megaphone, 
-  Plus, 
-  Edit, 
-  Eye, 
+import {
+  Megaphone,
+  Plus,
+  Edit,
+  Eye,
   EyeOff,
   Trash2,
   Sparkles,
@@ -23,7 +23,7 @@ import {
 
 const bannerStyles = {
   'gradient-purple': {
-    className: 'bg-gradient-to-r from-purple-500 to-purple-600',
+    className: 'bg-gradient-to-r from-brand-500 to-brand-600',
     textColor: 'text-white'
   },
   'gradient-blue': {
@@ -53,9 +53,9 @@ interface CTABannerManagerProps {
   initialActiveBanner: any
 }
 
-export function CTABannerManager({ 
-  initialBanners, 
-  initialActiveBanner 
+export function CTABannerManager({
+  initialBanners,
+  initialActiveBanner
 }: CTABannerManagerProps) {
   const [banners, setBanners] = useState(initialBanners)
   const [activeBanner, setActiveBanner] = useState(initialActiveBanner)
@@ -144,7 +144,7 @@ export function CTABannerManager({
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setShowTemplates(true)}
@@ -155,7 +155,7 @@ export function CTABannerManager({
                 </button>
                 <button
                   onClick={handleCreateBanner}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium"
                 >
                   <Plus className="w-4 h-4" />
                   Create Banner
@@ -199,7 +199,7 @@ export function CTABannerManager({
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <MousePointerClick className="w-5 h-5 text-purple-600" />
+                  <MousePointerClick className="w-5 h-5 text-brand-600" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-600">Banner Clicks</p>
@@ -227,7 +227,7 @@ export function CTABannerManager({
                 <div className="flex gap-3 mt-4">
                   <button
                     onClick={() => handleEditBanner(activeBanner)}
-                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                    className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium"
                   >
                     <Edit className="w-4 h-4" />
                     Edit Banner
@@ -258,33 +258,30 @@ export function CTABannerManager({
                 <div className="space-y-4">
                   {banners.map((banner) => {
                     const bannerStyle = banner.style ? bannerStyles[banner.style as keyof typeof bannerStyles] : bannerStyles['gradient-purple']
-                    
+
                     return (
                       <div
                         key={banner.id}
-                        className={`flex items-center gap-4 p-4 rounded-lg border-2 transition-all ${
-                          banner.is_active 
-                            ? 'border-green-200 bg-green-50' 
-                            : 'border-gray-200 bg-white'
-                        }`}
+                        className={`flex items-center gap-4 p-4 rounded-lg border-2 transition-all ${banner.is_active
+                          ? 'border-green-200 bg-green-50'
+                          : 'border-gray-200 bg-white'
+                          }`}
                       >
                         {/* Banner Preview */}
                         <div className="flex-1 min-w-0">
-                          <div className={`p-4 rounded-lg ${
-                            banner.is_active ? bannerStyle.className : 'bg-gray-100'
-                          }`}>
+                          <div className={`p-4 rounded-lg ${banner.is_active ? bannerStyle.className : 'bg-gray-100'
+                            }`}>
                             <p className={`font-medium mb-2 ${banner.is_active ? bannerStyle.textColor : 'text-gray-700'}`}>
                               {banner.text}
                             </p>
-                            <div className={`inline-block px-4 py-2 rounded-md font-semibold text-sm ${
-                              banner.is_active 
-                                ? (bannerStyle.textColor === 'text-white' ? 'bg-white text-slate-900' : 'bg-slate-900 text-white')
-                                : 'bg-gray-300 text-gray-700'
-                            }`}>
+                            <div className={`inline-block px-4 py-2 rounded-md font-semibold text-sm ${banner.is_active
+                              ? (bannerStyle.textColor === 'text-white' ? 'bg-white text-slate-900' : 'bg-slate-900 text-white')
+                              : 'bg-gray-300 text-gray-700'
+                              }`}>
                               {banner.button_text}
                             </div>
                           </div>
-                          
+
                           <div className="flex items-center gap-4 mt-3">
                             <span className="text-sm text-gray-600">
                               URL: {banner.button_url}
@@ -299,11 +296,10 @@ export function CTABannerManager({
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleToggleActive(banner)}
-                            className={`p-2 rounded-lg transition-colors ${
-                              banner.is_active
-                                ? 'text-green-600 hover:bg-green-100'
-                                : 'text-gray-400 hover:bg-gray-100'
-                            }`}
+                            className={`p-2 rounded-lg transition-colors ${banner.is_active
+                              ? 'text-green-600 hover:bg-green-100'
+                              : 'text-gray-400 hover:bg-gray-100'
+                              }`}
                             title={banner.is_active ? 'Hide banner' : 'Show banner'}
                           >
                             {banner.is_active ? (
@@ -352,7 +348,7 @@ export function CTABannerManager({
                     </button>
                     <button
                       onClick={handleCreateBanner}
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium"
                     >
                       <Plus className="w-4 h-4" />
                       Create From Scratch

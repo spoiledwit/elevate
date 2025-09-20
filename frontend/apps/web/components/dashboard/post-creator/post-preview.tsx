@@ -34,7 +34,7 @@ const platformConfig = {
   instagram: {
     icon: FaInstagram,
     name: 'Instagram',
-    color: 'bg-gradient-to-br from-purple-600 to-pink-600',
+    color: 'bg-gradient-to-br from-brand-600 to-pink-600',
     maxChars: 2200
   },
   linkedin: {
@@ -108,7 +108,7 @@ export function PostPreview({
               className="w-8 h-8 rounded-full object-cover"
             />
           ) : (
-            <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full"></div>
+            <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-brand-600 rounded-full"></div>
           )}
           <div className="flex-1">
             <p className="text-sm font-semibold">@{username}</p>

@@ -29,7 +29,7 @@ export function ComingSoon() {
 
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
                     <div className="mb-6 sm:mb-8">
-                        <span className="inline-block px-3 py-1.5 sm:px-4 sm:py-2 bg-purple-100 text-purple-600 rounded-full text-xs sm:text-sm font-semibold mb-6 sm:mb-8">
+                        <span className="inline-block px-3 py-1.5 sm:px-4 sm:py-2 bg-purple-100 text-brand-600 rounded-full text-xs sm:text-sm font-semibold mb-6 sm:mb-8">
                             ✨ SOMETHING AMAZING IS COMING
                         </span>
 
@@ -40,7 +40,7 @@ export function ComingSoon() {
                             <br />
                             <span className="relative inline-block">
                                 <span className="text-black">Stay</span>
-                                <span className="text-purple-500 ml-2 sm:ml-3 relative">
+                                <span className="text-brand-500 ml-2 sm:ml-3 relative">
                                     Tuned
                                     <svg className="absolute -bottom-1 sm:-bottom-2 left-0 w-full" height="8" viewBox="0 0 150 12" fill="none">
                                         <path d="M2 8C40 3 110 3 148 8" stroke="url(#gradient)" strokeWidth="3" strokeLinecap="round" />

@@ -16,10 +16,10 @@ const productTypeIcons = {
   'url-media': ExternalLink,
 }
 
-export function ProductButtonCard({ 
-  productType, 
-  thumbnail, 
-  title, 
+export function ProductButtonCard({
+  productType,
+  thumbnail,
+  title,
   subtitle
 }: ProductButtonCardProps) {
   const IconComponent = productType ? productTypeIcons[productType] : Package
@@ -28,15 +28,15 @@ export function ProductButtonCard({
     <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer border border-gray-200">
       {thumbnail ? (
         <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
-          <img 
-            src={thumbnail} 
+          <img
+            src={thumbnail}
             alt=""
             className="w-full h-full object-cover"
           />
         </div>
       ) : (
         <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-          <IconComponent className="w-6 h-6 text-purple-600" />
+          <IconComponent className="w-6 h-6 text-brand-600" />
         </div>
       )}
       <div className="flex-1 min-w-0">

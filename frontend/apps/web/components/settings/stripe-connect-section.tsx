@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { 
+import {
   getStripeConnectAccountAction,
   createStripeConnectAccountAction,
   createAccountLinkAction,
@@ -22,18 +22,18 @@ export function StripeConnectSection() {
   // Load account data on component mount and handle URL parameters
   useEffect(() => {
     loadAccountData()
-    
+
     // Handle URL parameters from Stripe onboarding
     const urlParams = new URLSearchParams(window.location.search)
     const success = urlParams.get('success')
     const refresh = urlParams.get('refresh')
-    
+
     if (success === 'true') {
       // Clean up URL and show success message
       window.history.replaceState({}, document.title, window.location.pathname)
       // Account data will be loaded automatically, status will update
     }
-    
+
     if (refresh === 'true') {
       // Clean up URL and refresh account status
       window.history.replaceState({}, document.title, window.location.pathname)
@@ -52,10 +52,10 @@ export function StripeConnectSection() {
   const loadAccountData = async () => {
     setIsInitialLoading(true)
     setError(null)
-    
+
     try {
       const result = await getStripeConnectAccountAction()
-      
+
       if (result && 'error' in result) {
         setError(result.error)
         setConnectStatus('not_connected')
@@ -87,30 +87,30 @@ export function StripeConnectSection() {
   const handleConnectStripe = async () => {
     setIsLoading(true)
     setError(null)
-    
+
     try {
       // First create the account if it doesn't exist
       if (connectStatus === 'not_connected') {
         const createResult = await createStripeConnectAccountAction()
-        
+
         if (createResult && 'error' in createResult) {
           setError(createResult.error)
           return
         }
       }
-      
+
       // Create account link for onboarding
       const linkResult = await createAccountLinkAction({
         refresh_url: `${window.location.origin}/settings?refresh=true`,
         return_url: `${window.location.origin}/settings?success=true`,
         type: 'account_onboarding' as any // Type will be fixed when backend types are updated
       })
-      
+
       if (linkResult && 'error' in linkResult) {
         setError(linkResult.error)
         return
       }
-      
+
       if (linkResult.url) {
         // Redirect to Stripe onboarding
         window.location.href = linkResult.url
@@ -126,15 +126,15 @@ export function StripeConnectSection() {
   const handleGoToDashboard = async () => {
     setIsLoading(true)
     setError(null)
-    
+
     try {
       const result = await createDashboardLoginLinkAction()
-      
+
       if (result && 'error' in result) {
         setError(result.error)
         return
       }
-      
+
       if (result.url) {
         window.open(result.url, '_blank')
       }
@@ -149,15 +149,15 @@ export function StripeConnectSection() {
   const handleRefreshStatus = async () => {
     setIsLoading(true)
     setError(null)
-    
+
     try {
       const result = await refreshStripeConnectStatusAction()
-      
+
       if (result && 'error' in result) {
         setError(result.error)
         return
       }
-      
+
       // Reload account data after refresh
       await loadAccountData()
     } catch (err) {
@@ -252,7 +252,7 @@ export function StripeConnectSection() {
               </h3>
               <div className="mt-2 text-sm text-blue-700">
                 <p>
-                  To receive payments from customers, you'll need to connect your Stripe account. 
+                  To receive payments from customers, you'll need to connect your Stripe account.
                   This allows us to securely process payments and transfer funds to you.
                 </p>
               </div>
@@ -275,7 +275,7 @@ export function StripeConnectSection() {
             <button
               onClick={handleConnectStripe}
               disabled={isLoading}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <>
@@ -323,7 +323,7 @@ export function StripeConnectSection() {
           <div className="flex items-start space-x-3">
             <div className="flex-shrink-0">
               <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 text-brand-600" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                 </svg>
               </div>
@@ -382,7 +382,7 @@ export function StripeConnectSection() {
               {accountData.charges_enabled ? 'Enabled' : 'Disabled - Complete account setup'}
             </p>
           </div>
-          
+
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
             <div className="flex items-center">
               <div className={`flex-shrink-0 w-2 h-2 rounded-full mr-2 ${accountData.payouts_enabled ? 'bg-purple-400' : 'bg-red-400'}`}></div>
@@ -401,14 +401,14 @@ export function StripeConnectSection() {
           <>
             <button
               onClick={handleGoToDashboard}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500"
             >
               <svg className="-ml-1 mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
               </svg>
               View Stripe Dashboard
             </button>
-            
+
             <button
               onClick={handleDisconnect}
               disabled={isLoading}
@@ -465,11 +465,11 @@ export function StripeConnectSection() {
                 </div>
               )}
             </div>
-            
+
             <button
               onClick={handleConnectStripe}
               disabled={isLoading}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <>
@@ -495,8 +495,8 @@ export function StripeConnectSection() {
       {/* Recent Transactions Preview */}
       {connectStatus === 'connected' && (
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">          <div className="mb-4">
-            <h4 className="text-lg font-medium text-gray-900">Recent Activity</h4>
-          </div>
+          <h4 className="text-lg font-medium text-gray-900">Recent Activity</h4>
+        </div>
           <div className="text-sm text-gray-500">
             Transaction history will appear here once you start receiving payments.
           </div>

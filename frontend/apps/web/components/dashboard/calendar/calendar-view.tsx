@@ -86,7 +86,7 @@ export function CalendarView({ posts, selectedDate, onDateSelect }: CalendarView
   const getPostsForDate = (date: Date) => {
     return posts.filter(post => {
       let postDate: Date | null = null
-      
+
       // Determine which date to use based on post status
       switch (post.status) {
         case 'scheduled':
@@ -107,7 +107,7 @@ export function CalendarView({ posts, selectedDate, onDateSelect }: CalendarView
         default:
           postDate = post.scheduledFor || new Date()
       }
-      
+
       if (!postDate) return false
       return postDate.toDateString() === date.toDateString()
     })
@@ -145,7 +145,7 @@ export function CalendarView({ posts, selectedDate, onDateSelect }: CalendarView
           </button>
           <button
             onClick={() => setCurrentMonth(new Date())}
-            className="px-3 py-1 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            className="px-3 py-1 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
           >
             Today
           </button>
@@ -184,15 +184,15 @@ export function CalendarView({ posts, selectedDate, onDateSelect }: CalendarView
                   isCurrentMonth
                     ? "bg-white border-gray-200 hover:border-gray-300"
                     : "bg-gray-50 border-gray-100 text-gray-400",
-                  isSelectedDate && "ring-2 ring-purple-500 border-purple-500",
+                  isSelectedDate && "ring-2 ring-brand-500 border-brand-500",
                   isTodayDate && !isSelectedDate && "border-purple-300 bg-purple-50"
                 )}
               >
                 {/* Date Number */}
                 <div className={cn(
                   "text-sm font-medium mb-1",
-                  isTodayDate && "text-purple-600",
-                  isSelectedDate && "text-purple-600"
+                  isTodayDate && "text-brand-600",
+                  isSelectedDate && "text-brand-600"
                 )}>
                   {date.getDate()}
                 </div>
@@ -240,7 +240,7 @@ export function CalendarView({ posts, selectedDate, onDateSelect }: CalendarView
                         e.stopPropagation()
                         setExpandedDate(date)
                       }}
-                      className="w-full text-xs text-purple-600 px-2 py-1 hover:bg-purple-50 rounded transition-colors font-medium"
+                      className="w-full text-xs text-brand-600 px-2 py-1 hover:bg-purple-50 rounded transition-colors font-medium"
                     >
                       +{dayPosts.length - 3} more
                     </button>
@@ -258,7 +258,7 @@ export function CalendarView({ posts, selectedDate, onDateSelect }: CalendarView
                           e.stopPropagation()
                           setExpandedDate(date)
                         }}
-                        className="w-full p-1 mt-1 text-xs text-purple-600 hover:bg-purple-50 rounded transition-colors flex items-center justify-center gap-1"
+                        className="w-full p-1 mt-1 text-xs text-brand-600 hover:bg-purple-50 rounded transition-colors flex items-center justify-center gap-1"
                       >
                         <Eye className="w-3 h-3" />
                         View All
@@ -374,7 +374,7 @@ export function CalendarView({ posts, selectedDate, onDateSelect }: CalendarView
                     <p className="text-sm">No posts scheduled for this date</p>
                     <Link
                       href="/post-creator"
-                      className="text-sm text-purple-600 hover:text-purple-700 font-medium mt-2 inline-block"
+                      className="text-sm text-brand-600 hover:text-purple-700 font-medium mt-2 inline-block"
                       onClick={() => setExpandedDate(null)}
                     >
                       Schedule a post
@@ -392,7 +392,7 @@ export function CalendarView({ posts, selectedDate, onDateSelect }: CalendarView
                 </div>
                 <Link
                   href="/post-creator"
-                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
+                  className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors text-sm"
                   onClick={() => setExpandedDate(null)}
                 >
                   <Plus className="w-4 h-4" />
@@ -459,7 +459,7 @@ export function CalendarView({ posts, selectedDate, onDateSelect }: CalendarView
                 <p className="text-sm">No posts scheduled for this date</p>
                 <Link
                   href="/post-creator"
-                  className="text-sm text-purple-600 hover:text-purple-700 font-medium mt-1">
+                  className="text-sm text-brand-600 hover:text-purple-700 font-medium mt-1">
                   Schedule a post
                 </Link>
               </div>

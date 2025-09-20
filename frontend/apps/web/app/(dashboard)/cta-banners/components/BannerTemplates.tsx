@@ -1,12 +1,12 @@
 'use client'
 
-import { 
-  X, 
-  ShoppingCart, 
-  Zap, 
-  Gift, 
-  Star, 
-  Users, 
+import {
+  X,
+  ShoppingCart,
+  Zap,
+  Gift,
+  Star,
+  Users,
   BookOpen,
   Calendar,
   Download
@@ -49,7 +49,7 @@ const templates = [
     button_text: 'Subscribe Now',
     button_url: 'https://example.com/subscribe',
     style: 'gradient-purple',
-    preview_bg: 'bg-gradient-to-r from-purple-500 to-purple-600'
+    preview_bg: 'bg-gradient-to-r from-brand-500 to-brand-600'
   },
   {
     id: 'course-launch',
@@ -105,7 +105,7 @@ const templates = [
     button_text: 'Join Now',
     button_url: 'https://example.com/community',
     style: 'gradient-purple',
-    preview_bg: 'bg-gradient-to-r from-pink-500 to-purple-600'
+    preview_bg: 'bg-gradient-to-r from-pink-500 to-brand-600'
   }
 ]
 
@@ -175,11 +175,10 @@ export function BannerTemplates({ onClose, onTemplateSelect }: BannerTemplatesPr
                         <p className="font-medium mb-3 text-sm leading-relaxed">
                           {template.text}
                         </p>
-                        <button className={`px-4 py-2 rounded-md font-semibold text-sm ${
-                          template.text_color === 'text-gray-900'
-                            ? 'bg-gray-900 text-white'
-                            : 'bg-white text-purple-600'
-                        } transition-colors`}>
+                        <button className={`px-4 py-2 rounded-md font-semibold text-sm ${template.text_color === 'text-gray-900'
+                          ? 'bg-gray-900 text-white'
+                          : 'bg-white text-brand-600'
+                          } transition-colors`}>
                           {template.button_text}
                         </button>
                       </div>
@@ -197,13 +196,13 @@ export function BannerTemplates({ onClose, onTemplateSelect }: BannerTemplatesPr
                         <p className="text-xs text-gray-500">{template.category}</p>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center justify-between mt-3">
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
                         {template.category}
                       </span>
-                      <button 
-                        className="text-sm font-medium text-purple-600 hover:text-purple-700 group-hover:underline"
+                      <button
+                        className="text-sm font-medium text-brand-600 hover:text-purple-700 group-hover:underline"
                         onClick={(e) => {
                           e.stopPropagation()
                           handleTemplateSelect(template)

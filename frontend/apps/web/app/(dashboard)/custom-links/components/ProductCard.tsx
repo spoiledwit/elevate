@@ -44,7 +44,7 @@ export function ProductCard({
           </div>
         ) : (
           <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-            <IconComponent className="w-6 h-6 text-purple-600" />
+            <IconComponent className="w-6 h-6 text-brand-600" />
           </div>
         )}
         <div className="flex-1 min-w-0">
@@ -91,10 +91,10 @@ export function ProductCard({
             {hasDiscount ? (
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-500 line-through">${price}</span>
-                <span className="text-lg font-bold text-purple-600">${discountedPrice}</span>
+                <span className="text-lg font-bold text-brand-600">${discountedPrice}</span>
               </div>
             ) : (
-              <span className="text-lg font-bold text-purple-600">${price}</span>
+              <span className="text-lg font-bold text-brand-600">${price}</span>
             )}
           </div>
         )}

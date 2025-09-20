@@ -50,7 +50,7 @@ export function VoiceChatWidget({ onTranscript }: VoiceChatWidgetProps) {
             <div className="flex items-center gap-3">
                 <button
                     onClick={isRecording ? stop : start}
-                    className={`px-4 py-1.5 rounded-md text-sm font-medium text-white transition-colors ${isRecording ? 'bg-red-600 hover:bg-red-700' : 'bg-purple-600 hover:bg-purple-700'}`}
+                    className={`px-4 py-1.5 rounded-md text-sm font-medium text-white transition-colors ${isRecording ? 'bg-red-600 hover:bg-red-700' : 'bg-brand-600 hover:bg-brand-700'}`}
                 >{isRecording ? 'Stop' : 'Record'}</button>
                 <span className={`w-3 h-3 rounded-full ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-gray-300'}`} />
             </div>

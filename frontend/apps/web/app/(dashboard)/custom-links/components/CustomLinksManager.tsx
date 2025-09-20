@@ -209,7 +209,7 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
 
               <NextLink
                 href="/custom-links/create"
-                className={`inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium ${links.length >= 10 ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''
+                className={`inline-flex items-center gap-2 px-4 py-2.5 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium ${links.length >= 10 ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''
                   }`}
               >
                 <Plus className="w-4 h-4" />
@@ -251,7 +251,7 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
             <div className="bg-white rounded-xl p-6" style={{ boxShadow: 'rgba(0, 0, 0, 0.02) 0px 2px 8px' }}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <MousePointerClick className="w-5 h-5 text-purple-600" />
+                  <MousePointerClick className="w-5 h-5 text-brand-600" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Clicks</p>
@@ -431,7 +431,7 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
                       </div>
                       <NextLink
                         href="/custom-links/create"
-                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-base"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium text-base"
                       >
                         <Plus className="w-5 h-5" />
                         Add Your First Product

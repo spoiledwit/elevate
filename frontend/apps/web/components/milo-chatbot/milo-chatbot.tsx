@@ -40,8 +40,8 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
   })
 
   const isConnected = connectionState === RealtimeConnectionState.CONNECTED ||
-                      connectionState === RealtimeConnectionState.LISTENING ||
-                      connectionState === RealtimeConnectionState.SPEAKING
+    connectionState === RealtimeConnectionState.LISTENING ||
+    connectionState === RealtimeConnectionState.SPEAKING
 
   const isListening = connectionState === RealtimeConnectionState.LISTENING
   const isSpeaking = connectionState === RealtimeConnectionState.SPEAKING
@@ -119,7 +119,7 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
         className={cn(
           "fixed bottom-6 right-6 z-50 group",
           "w-16 h-16 rounded-full",
-          "bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700",
+          "bg-gradient-to-br from-violet-600 via-brand-600 to-indigo-700",
           "shadow-[0_0_40px_rgba(139,92,246,0.5)]",
           "hover:shadow-[0_0_60px_rgba(139,92,246,0.8)]",
           "transition-all duration-500 transform hover:scale-110",
@@ -133,7 +133,7 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
           <Sparkles className="w-7 h-7 text-white/90" />
           {/* Glow pulse */}
           <div className="absolute -inset-2">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-violet-500 to-purple-500 animate-ping opacity-30"></div>
+            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-violet-500 to-brand-500 animate-ping opacity-30"></div>
           </div>
           <div className="absolute -inset-3">
             <div className="w-12 h-12 rounded-full bg-gradient-to-r from-violet-400 to-purple-400 animate-ping animation-delay-200 opacity-20"></div>
@@ -160,7 +160,7 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
         <div className="flex items-center justify-between p-6 pb-4">
           <div className="flex items-center gap-3">
             <div className="relative">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/50">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-brand-600 flex items-center justify-center shadow-lg shadow-brand-500/50">
                 <Sparkles className="w-6 h-6 text-white" />
               </div>
               {/* Animated status dot */}
@@ -188,10 +188,10 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
             <div className={cn(
               "w-64 h-64 rounded-full transition-all duration-1000",
               isConnected
-                ? "bg-gradient-to-r from-violet-600/20 to-purple-600/20 blur-3xl animate-pulse"
+                ? "bg-gradient-to-r from-violet-600/20 to-brand-600/20 blur-3xl animate-pulse"
                 : isConnecting
-                ? "bg-gradient-to-r from-blue-600/15 to-violet-600/15 blur-3xl animate-pulse"
-                : "bg-gradient-to-r from-violet-600/10 to-purple-600/10 blur-3xl"
+                  ? "bg-gradient-to-r from-blue-600/15 to-violet-600/15 blur-3xl animate-pulse"
+                  : "bg-gradient-to-r from-violet-600/10 to-brand-600/10 blur-3xl"
             )}></div>
           </div>
 
@@ -246,10 +246,10 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
                       className={cn(
                         "w-1 rounded-full transition-all duration-75",
                         isListening
-                          ? "bg-gradient-to-t from-violet-500 to-purple-400 shadow-lg shadow-purple-500/50"
+                          ? "bg-gradient-to-t from-violet-500 to-purple-400 shadow-lg shadow-brand-500/50"
                           : isSpeaking
-                          ? "bg-gradient-to-t from-green-500 to-emerald-400 shadow-lg shadow-green-500/50"
-                          : "bg-gradient-to-t from-violet-500/50 to-purple-400/50"
+                            ? "bg-gradient-to-t from-green-500 to-emerald-400 shadow-lg shadow-green-500/50"
+                            : "bg-gradient-to-t from-violet-500/50 to-purple-400/50"
                       )}
                       style={{ height: `${height}px` }}
                     ></div>
@@ -294,7 +294,7 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
             <div className="relative text-center space-y-6 z-10">
               {/* Futuristic orb */}
               <div className="relative w-32 h-32 mx-auto">
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-violet-500/20 to-purple-600/20 backdrop-blur-xl animate-pulse"></div>
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-violet-500/20 to-brand-600/20 backdrop-blur-xl animate-pulse"></div>
                 <div className="absolute inset-2 rounded-full bg-gradient-to-br from-violet-600/30 to-purple-700/30 backdrop-blur-xl"></div>
                 <div className="absolute inset-4 rounded-full bg-gradient-to-br from-violet-700/40 to-purple-800/40 backdrop-blur-xl flex items-center justify-center">
                   <Sparkles className="w-10 h-10 text-purple-300" />
@@ -304,7 +304,7 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
               {/* Minimal text */}
               <div className="space-y-4">
                 <h3 className="text-white font-light tracking-widest uppercase text-sm">Milo</h3>
-                <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-purple-500 to-transparent mx-auto"></div>
+                <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-brand-500 to-transparent mx-auto"></div>
 
                 {/* Control Icons */}
                 <div className="flex items-center justify-center gap-6 pt-2">

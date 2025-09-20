@@ -1,8 +1,8 @@
 'use client'
 
-import { 
-  User, 
-  ExternalLink, 
+import {
+  User,
+  ExternalLink,
   Instagram,
   Facebook,
   Twitter,
@@ -65,8 +65,8 @@ export function StorefrontPreview({ profile, customLinks, ctaBanner }: Storefron
               <div className="text-center">
                 <div className="w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
                   {profile.profile_image ? (
-                    <img 
-                      src={profile.profile_image} 
+                    <img
+                      src={profile.profile_image}
                       alt={profile.display_name}
                       className="w-full h-full object-cover"
                     />
@@ -74,11 +74,11 @@ export function StorefrontPreview({ profile, customLinks, ctaBanner }: Storefron
                     <User className="w-8 h-8 text-gray-400" />
                   )}
                 </div>
-                
+
                 <h1 className="text-xl font-bold text-gray-900 mb-2">
                   {profile.display_name || 'Your Name'}
                 </h1>
-                
+
                 {profile.bio && (
                   <p className="text-gray-600 text-sm leading-relaxed">
                     {profile.bio}
@@ -123,9 +123,9 @@ export function StorefrontPreview({ profile, customLinks, ctaBanner }: Storefron
               {ctaBanner && ctaBanner.is_active && (() => {
                 const bannerStyles = {
                   'gradient-purple': {
-                    className: 'bg-gradient-to-r from-purple-500 to-purple-600',
+                    className: 'bg-gradient-to-r from-brand-500 to-brand-600',
                     textColor: 'text-white',
-                    buttonStyle: 'bg-white text-purple-600'
+                    buttonStyle: 'bg-white text-brand-600'
                   },
                   'gradient-blue': {
                     className: 'bg-gradient-to-r from-blue-500 to-blue-600',
@@ -153,11 +153,11 @@ export function StorefrontPreview({ profile, customLinks, ctaBanner }: Storefron
                     buttonStyle: 'bg-gray-900 text-white'
                   }
                 }
-                
-                const bannerStyle = ctaBanner.style && bannerStyles[ctaBanner.style as keyof typeof bannerStyles] 
-                  ? bannerStyles[ctaBanner.style as keyof typeof bannerStyles] 
+
+                const bannerStyle = ctaBanner.style && bannerStyles[ctaBanner.style as keyof typeof bannerStyles]
+                  ? bannerStyles[ctaBanner.style as keyof typeof bannerStyles]
                   : bannerStyles['gradient-purple']
-                
+
                 return (
                   <div className={`${bannerStyle.className} rounded-lg p-4 text-center`}>
                     <p className={`font-medium mb-2 ${bannerStyle.textColor}`}>{ctaBanner.text}</p>
@@ -178,8 +178,8 @@ export function StorefrontPreview({ profile, customLinks, ctaBanner }: Storefron
                     >
                       {link.thumbnail && (
                         <div className="w-10 h-10 rounded-md overflow-hidden bg-gray-200 flex-shrink-0">
-                          <img 
-                            src={link.thumbnail} 
+                          <img
+                            src={link.thumbnail}
                             alt=""
                             className="w-full h-full object-cover"
                           />

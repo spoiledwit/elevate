@@ -106,7 +106,7 @@ export function SettingsPage({
           {activeTab === 'payments' && (
             <div>
               <div className="mb-6">
-                <h2 className="text-xl font-semibold text-purple-600">Payment Settings</h2>
+                <h2 className="text-xl font-semibold text-brand-600">Payment Settings</h2>
                 <p className="text-gray-600 mt-1">
                   Connect your Stripe account to receive payments from customers.
                 </p>

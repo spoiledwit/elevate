@@ -8,7 +8,7 @@ export function SignInLink() {
     <button
       type="button"
       onClick={() => signIn()}
-      className="cursor-pointer text-purple-600 underline"
+      className="cursor-pointer text-brand-600 underline"
     >
       Login
     </button>
@@ -20,7 +20,7 @@ export function SignOutLink() {
     <button
       type="button"
       onClick={() => signOut()}
-      className="cursor-pointer text-purple-600 underline"
+      className="cursor-pointer text-brand-600 underline"
     >
       Logout
     </button>
@@ -35,19 +35,19 @@ export function PagesOverview() {
 
         <ul className="flex flex-row gap-6">
           <li>
-            <Link href="/profile" className="text-purple-600 underline">
+            <Link href="/profile" className="text-brand-600 underline">
               Profile
             </Link>
           </li>
 
           <li>
-            <Link href="/change-password" className="text-purple-600 underline">
+            <Link href="/change-password" className="text-brand-600 underline">
               Change password
             </Link>
           </li>
 
           <li>
-            <Link href="/delete-account" className="text-purple-600 underline">
+            <Link href="/delete-account" className="text-brand-600 underline">
               Delete account
             </Link>
           </li>
@@ -63,7 +63,7 @@ export function PagesOverview() {
           </li>
 
           <li>
-            <a href="/register" className="text-purple-600 underline">
+            <a href="/register" className="text-brand-600 underline">
               Register
             </a>
           </li>

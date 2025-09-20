@@ -30,9 +30,9 @@ function OrderSuccessContent({ searchParams }: { searchParams: { order_id?: stri
             You will receive an email with your digital product shortly.
           </div>
 
-          <Link 
+          <Link
             href="/"
-            className="inline-flex items-center justify-center w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+            className="inline-flex items-center justify-center w-full bg-brand-600 hover:bg-brand-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Home
@@ -49,7 +49,7 @@ export default async function OrderSuccessPage({ searchParams }: { searchParams:
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
       </div>
     }>
       <OrderSuccessContent searchParams={params} />

@@ -21,34 +21,34 @@ const platforms = [
 ]
 
 const statuses = [
-  { 
-    id: 'published', 
-    name: 'Published', 
-    icon: CheckCircle, 
+  {
+    id: 'published',
+    name: 'Published',
+    icon: CheckCircle,
     color: 'text-green-600',
     bgColor: 'bg-green-50',
     borderColor: 'border-green-200'
   },
-  { 
-    id: 'scheduled', 
-    name: 'Scheduled', 
-    icon: Clock, 
+  {
+    id: 'scheduled',
+    name: 'Scheduled',
+    icon: Clock,
     color: 'text-blue-600',
     bgColor: 'bg-blue-50',
     borderColor: 'border-blue-200'
   },
-  { 
-    id: 'draft', 
-    name: 'Draft', 
-    icon: FileText, 
+  {
+    id: 'draft',
+    name: 'Draft',
+    icon: FileText,
     color: 'text-gray-600',
     bgColor: 'bg-gray-50',
     borderColor: 'border-gray-200'
   },
-  { 
-    id: 'failed', 
-    name: 'Failed', 
-    icon: AlertCircle, 
+  {
+    id: 'failed',
+    name: 'Failed',
+    icon: AlertCircle,
     color: 'text-red-600',
     bgColor: 'bg-red-50',
     borderColor: 'border-red-200'
@@ -63,7 +63,7 @@ export function CalendarFilters({
   totalPosts,
   filteredPosts
 }: CalendarFiltersProps) {
-  
+
   const togglePlatform = (platformId: string) => {
     if (selectedPlatforms.includes(platformId)) {
       onPlatformChange(selectedPlatforms.filter(id => id !== platformId))
@@ -96,7 +96,7 @@ export function CalendarFilters({
         {(selectedPlatforms.length > 0 || selectedStatus.length > 0) && (
           <button
             onClick={clearAllFilters}
-            className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+            className="text-sm text-brand-600 hover:text-purple-700 font-medium"
           >
             Clear all
           </button>
@@ -118,7 +118,7 @@ export function CalendarFilters({
           {platforms.map((platform) => {
             const Icon = platform.icon
             const isSelected = selectedPlatforms.includes(platform.id)
-            
+
             return (
               <button
                 key={platform.id}
@@ -130,10 +130,10 @@ export function CalendarFilters({
                     : "text-gray-600 hover:bg-gray-50 border-transparent hover:border-gray-200"
                 )}
               >
-                <Icon className={cn("w-4 h-4", isSelected ? "text-purple-600" : platform.color)} />
+                <Icon className={cn("w-4 h-4", isSelected ? "text-brand-600" : platform.color)} />
                 <span className="flex-1 text-left">{platform.name}</span>
                 {isSelected && (
-                  <CheckCircle className="w-4 h-4 text-purple-600" />
+                  <CheckCircle className="w-4 h-4 text-brand-600" />
                 )}
               </button>
             )
@@ -148,7 +148,7 @@ export function CalendarFilters({
           {statuses.map((status) => {
             const Icon = status.icon
             const isSelected = selectedStatus.includes(status.id)
-            
+
             return (
               <button
                 key={status.id}

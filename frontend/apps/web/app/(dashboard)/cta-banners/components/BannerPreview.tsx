@@ -8,7 +8,7 @@ interface BannerPreviewProps {
 
 const bannerStyles = {
   'gradient-purple': {
-    className: 'bg-gradient-to-r from-purple-500 to-purple-600',
+    className: 'bg-gradient-to-r from-brand-500 to-brand-600',
     textColor: 'text-white'
   },
   'gradient-blue': {
@@ -44,7 +44,7 @@ export function BannerPreview({ banner }: BannerPreviewProps) {
 
   // Get the banner style or default to gradient-purple
   const selectedBannerStyle = banner.style ? bannerStyles[banner.style as keyof typeof bannerStyles] : bannerStyles['gradient-purple']
-  const bannerStyle = selectedBannerStyle?.className || 'bg-gradient-to-r from-purple-500 to-purple-600'
+  const bannerStyle = selectedBannerStyle?.className || 'bg-gradient-to-r from-brand-500 to-brand-600'
   const textColor = selectedBannerStyle?.textColor || 'text-white'
 
   return (
@@ -59,11 +59,10 @@ export function BannerPreview({ banner }: BannerPreviewProps) {
                 <p className="font-medium mb-3 text-sm leading-relaxed">
                   {banner.text || 'Your banner message will appear here'}
                 </p>
-                <button className={`px-4 py-2 rounded-md font-semibold text-sm ${
-                  textColor === 'text-white' 
-                    ? 'bg-white text-purple-600 hover:bg-gray-100' 
-                    : 'bg-gray-900 text-white hover:bg-gray-800'
-                } transition-colors`}>
+                <button className={`px-4 py-2 rounded-md font-semibold text-sm ${textColor === 'text-white'
+                  ? 'bg-white text-brand-600 hover:bg-gray-100'
+                  : 'bg-gray-900 text-white hover:bg-gray-800'
+                  } transition-colors`}>
                   {banner.button_text || 'Button Text'}
                 </button>
               </div>
@@ -79,11 +78,10 @@ export function BannerPreview({ banner }: BannerPreviewProps) {
           <p className="font-medium mb-4 text-lg leading-relaxed">
             {banner.text || 'Your banner message will appear here'}
           </p>
-          <button className={`inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold ${
-            textColor === 'text-white' 
-              ? 'bg-white text-purple-600 hover:bg-gray-100' 
-              : 'bg-gray-900 text-white hover:bg-gray-800'
-          } transition-colors`}>
+          <button className={`inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold ${textColor === 'text-white'
+            ? 'bg-white text-brand-600 hover:bg-gray-100'
+            : 'bg-gray-900 text-white hover:bg-gray-800'
+            } transition-colors`}>
             {banner.button_text || 'Button Text'}
             <ExternalLink className="w-4 h-4" />
           </button>
@@ -114,11 +112,10 @@ export function BannerPreview({ banner }: BannerPreviewProps) {
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Status:</span>
-            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-              banner.is_active 
-                ? 'bg-green-100 text-green-800' 
-                : 'bg-gray-100 text-gray-600'
-            }`}>
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${banner.is_active
+              ? 'bg-green-100 text-green-800'
+              : 'bg-gray-100 text-gray-600'
+              }`}>
               {banner.is_active ? 'Active' : 'Inactive'}
             </span>
           </div>

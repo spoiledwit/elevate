@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { 
-  X, 
-  Save, 
-  Type, 
-  Link, 
+import {
+  X,
+  Save,
+  Type,
+  Link,
   Eye,
   EyeOff,
   Loader2,
@@ -13,7 +13,7 @@ import {
   Sparkles
 } from 'lucide-react'
 import { BannerPreview } from './BannerPreview'
-import { 
+import {
   createCTABannerAction,
   updateCTABannerAction
 } from '@/actions'
@@ -29,8 +29,8 @@ const bannerStyles = [
   {
     id: 'gradient-purple',
     name: 'Purple Gradient',
-    preview: 'bg-gradient-to-r from-purple-500 to-purple-600',
-    className: 'bg-gradient-to-r from-purple-500 to-purple-600'
+    preview: 'bg-gradient-to-r from-brand-500 to-brand-600',
+    className: 'bg-gradient-to-r from-brand-500 to-brand-600'
   },
   {
     id: 'gradient-blue',
@@ -73,7 +73,7 @@ export function BannerEditor({ banner, onClose, onComplete }: BannerEditorProps)
     is_active: banner?.is_active ?? true,
     style: banner?.style || 'gradient-purple'
   })
-  
+
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [activeTab, setActiveTab] = useState<'content' | 'design'>('content')
@@ -113,7 +113,7 @@ export function BannerEditor({ banner, onClose, onComplete }: BannerEditorProps)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!validateForm()) {
       return
     }
@@ -191,22 +191,20 @@ export function BannerEditor({ banner, onClose, onComplete }: BannerEditorProps)
             <div className="flex bg-gray-100 rounded-lg p-1 mb-6">
               <button
                 onClick={() => setActiveTab('content')}
-                className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                  activeTab === 'content'
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
+                className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'content'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+                  }`}
               >
                 <Type className="w-4 h-4 mr-2 inline" />
                 Content
               </button>
               <button
                 onClick={() => setActiveTab('design')}
-                className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                  activeTab === 'design'
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
+                className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'design'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+                  }`}
               >
                 <Palette className="w-4 h-4 mr-2 inline" />
                 Design
@@ -235,9 +233,8 @@ export function BannerEditor({ banner, onClose, onComplete }: BannerEditorProps)
                         onChange={(e) => handleInputChange('text', e.target.value)}
                         placeholder="e.g., Get 20% off your first order! Limited time offer."
                         rows={3}
-                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none ${
-                          errors.text ? 'border-red-300' : 'border-gray-300'
-                        }`}
+                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none ${errors.text ? 'border-red-300' : 'border-gray-300'
+                          }`}
                         maxLength={100}
                       />
                     </div>
@@ -264,9 +261,8 @@ export function BannerEditor({ banner, onClose, onComplete }: BannerEditorProps)
                         value={formData.button_text}
                         onChange={(e) => handleInputChange('button_text', e.target.value)}
                         placeholder="e.g., Shop Now, Get Started, Learn More"
-                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                          errors.button_text ? 'border-red-300' : 'border-gray-300'
-                        }`}
+                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent ${errors.button_text ? 'border-red-300' : 'border-gray-300'
+                          }`}
                         maxLength={30}
                       />
                     </div>
@@ -293,9 +289,8 @@ export function BannerEditor({ banner, onClose, onComplete }: BannerEditorProps)
                         value={formData.button_url}
                         onChange={(e) => handleInputChange('button_url', e.target.value)}
                         placeholder="https://example.com/offer"
-                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                          errors.button_url ? 'border-red-300' : 'border-gray-300'
-                        }`}
+                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent ${errors.button_url ? 'border-red-300' : 'border-gray-300'
+                          }`}
                       />
                     </div>
                     {errors.button_url && (
@@ -320,11 +315,10 @@ export function BannerEditor({ banner, onClose, onComplete }: BannerEditorProps)
                           key={style.id}
                           type="button"
                           onClick={() => handleInputChange('style', style.id)}
-                          className={`p-3 rounded-lg border-2 transition-all ${
-                            formData.style === style.id
-                              ? 'border-purple-500 ring-2 ring-purple-200'
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
+                          className={`p-3 rounded-lg border-2 transition-all ${formData.style === style.id
+                            ? 'border-brand-500 ring-2 ring-purple-200'
+                            : 'border-gray-200 hover:border-gray-300'
+                            }`}
                         >
                           <div className={`w-full h-12 rounded-md mb-2 ${style.preview}`}></div>
                           <p className="text-xs font-medium text-gray-900">{style.name}</p>
@@ -347,7 +341,7 @@ export function BannerEditor({ banner, onClose, onComplete }: BannerEditorProps)
                     )}
                   </div>
                   <p className="text-sm text-gray-600">
-                    {formData.is_active 
+                    {formData.is_active
                       ? 'This banner will appear on your storefront'
                       : 'This banner will be hidden from your storefront'
                     }
@@ -356,14 +350,12 @@ export function BannerEditor({ banner, onClose, onComplete }: BannerEditorProps)
                 <button
                   type="button"
                   onClick={() => handleInputChange('is_active', !formData.is_active)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    formData.is_active ? 'bg-purple-600' : 'bg-gray-200'
-                  }`}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData.is_active ? 'bg-brand-600' : 'bg-gray-200'
+                    }`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      formData.is_active ? 'translate-x-6' : 'translate-x-1'
-                    }`}
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.is_active ? 'translate-x-6' : 'translate-x-1'
+                      }`}
                   />
                 </button>
               </div>
@@ -380,7 +372,7 @@ export function BannerEditor({ banner, onClose, onComplete }: BannerEditorProps)
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
                 >
                   {isLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -397,10 +389,10 @@ export function BannerEditor({ banner, onClose, onComplete }: BannerEditorProps)
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Live Preview</h3>
             <div className="sticky top-6">
-              <BannerPreview 
+              <BannerPreview
                 banner={formData}
               />
-              
+
               <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-600 mb-2">
                   <strong>Preview Notes:</strong>

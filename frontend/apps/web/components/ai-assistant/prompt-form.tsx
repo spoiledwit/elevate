@@ -48,7 +48,7 @@ export function PromptForm({ useCase, onSubmit, isGenerating }: PromptFormProps)
                 onChange={e => setPrompt(e.target.value)}
                 placeholder={meta.placeholder}
                 rows={4}
-                className="w-full resize-y rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                className="w-full resize-y rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
             />
             {meta.supportsImages && (
                 <div className="border border-dashed rounded-md p-3 bg-gray-50">
@@ -88,7 +88,7 @@ export function PromptForm({ useCase, onSubmit, isGenerating }: PromptFormProps)
                 <button
                     onClick={submit}
                     disabled={!prompt.trim() || isGenerating}
-                    className="px-5 py-2 rounded-md bg-purple-600 text-white text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-purple-700 transition-colors"
+                    className="px-5 py-2 rounded-md bg-brand-600 text-white text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-brand-700 transition-colors"
                 >{isGenerating ? 'Generating...' : 'Generate'}</button>
             </div>
         </div>

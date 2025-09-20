@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { 
-  X, 
-  BarChart3, 
-  MousePointerClick, 
-  TrendingUp, 
+import {
+  X,
+  BarChart3,
+  MousePointerClick,
+  TrendingUp,
   Calendar,
   ExternalLink,
   Users,
@@ -31,7 +31,7 @@ export function LinkAnalytics({ linkId, onClose }: LinkAnalyticsProps) {
     try {
       setIsLoading(true)
       const result = await getCustomLinkAnalyticsAction(linkId)
-      
+
       if (result.success) {
         setAnalytics(result.data)
       } else {
@@ -59,20 +59,20 @@ export function LinkAnalytics({ linkId, onClose }: LinkAnalyticsProps) {
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-              <BarChart3 className="w-5 h-5 text-purple-600" />
+              <BarChart3 className="w-5 h-5 text-brand-600" />
             </div>
             <div>
               <h2 className="text-xl font-semibold text-gray-900">Product Analytics</h2>
               <p className="text-sm text-gray-600">Performance metrics for your product</p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-3">
             {/* Time Range Selector */}
             <select
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             >
               {timeRangeOptions.map(option => (
                 <option key={option.value} value={option.value}>
@@ -80,7 +80,7 @@ export function LinkAnalytics({ linkId, onClose }: LinkAnalyticsProps) {
                 </option>
               ))}
             </select>
-            
+
             <button
               onClick={onClose}
               className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
@@ -94,7 +94,7 @@ export function LinkAnalytics({ linkId, onClose }: LinkAnalyticsProps) {
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
-                <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <div className="w-8 h-8 border-2 border-brand-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                 <p className="text-gray-600">Loading analytics...</p>
               </div>
             </div>
@@ -129,10 +129,10 @@ export function LinkAnalytics({ linkId, onClose }: LinkAnalyticsProps) {
                 <div className="bg-purple-50 rounded-xl p-6">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                      <TrendingUp className="w-5 h-5 text-purple-600" />
+                      <TrendingUp className="w-5 h-5 text-brand-600" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-purple-600">Click Rate</p>
+                      <p className="text-sm font-medium text-brand-600">Click Rate</p>
                       <p className="text-2xl font-bold text-purple-900">{analytics.click_through_rate}%</p>
                     </div>
                   </div>
@@ -154,9 +154,9 @@ export function LinkAnalytics({ linkId, onClose }: LinkAnalyticsProps) {
                           title={`${day.clicks} clicks on ${day.date}`}
                         ></div>
                         <div className="mt-2 text-xs text-gray-500 text-center">
-                          {new Date(day.date).toLocaleDateString('en-US', { 
-                            month: 'short', 
-                            day: 'numeric' 
+                          {new Date(day.date).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric'
                           })}
                         </div>
                         <div className="text-xs font-medium text-gray-700">
@@ -187,7 +187,7 @@ export function LinkAnalytics({ linkId, onClose }: LinkAnalyticsProps) {
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2">
                             <div
-                              className="bg-purple-500 h-2 rounded-full transition-all duration-300"
+                              className="bg-brand-500 h-2 rounded-full transition-all duration-300"
                               style={{ width: `${percentage}%` }}
                             ></div>
                           </div>
@@ -207,7 +207,7 @@ export function LinkAnalytics({ linkId, onClose }: LinkAnalyticsProps) {
                     <div>
                       <p className="font-medium text-gray-900">Peak Day</p>
                       <p className="text-sm text-gray-600">
-                        {analytics.daily_clicks.reduce((prev: any, current: any) => 
+                        {analytics.daily_clicks.reduce((prev: any, current: any) =>
                           prev.clicks > current.clicks ? prev : current
                         ).date}
                       </p>

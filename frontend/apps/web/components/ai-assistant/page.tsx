@@ -47,7 +47,7 @@ export function AIAssistantPage() {
                         <button
                             key={c.key}
                             onClick={() => setActiveUseCase(c.key)}
-                            className={`px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${activeUseCase === c.key ? 'bg-purple-600 text-white border-purple-600' : 'bg-white hover:bg-gray-100'}`}
+                            className={`px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${activeUseCase === c.key ? 'bg-brand-600 text-white border-brand-600' : 'bg-white hover:bg-gray-100'}`}
                         >{c.name}</button>
                     ))}
                 </div>

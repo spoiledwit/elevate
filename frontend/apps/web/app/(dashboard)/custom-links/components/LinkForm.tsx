@@ -133,7 +133,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       title: 'Custom Product',
       description: 'Create a custom product with your own fields and pricing',
       icon: Package,
-      color: 'bg-purple-50 border-purple-200 text-purple-600',
+      color: 'bg-purple-50 border-purple-200 text-brand-600',
       image: customProductImg
     },
     {
@@ -158,12 +158,12 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
   useEffect(() => {
     if (link) {
       setIsEditMode(true)
-      
+
       // Map product type from backend format to frontend format
       const getProductTypeFromBackend = (backendType: string): ProductType => {
         switch (backendType) {
           case 'digital_product': return 'digital'
-          case 'custom_product': return 'custom'  
+          case 'custom_product': return 'custom'
           case 'ecourse': return 'ecourse'
           case 'url_media': return 'url-media'
           default: return 'digital'
@@ -174,36 +174,36 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       const productType = getProductTypeFromBackend(link.type || 'digital_product')
       setSelectedType(productType)
       setStep(2) // Skip product type selection step
-      
+
       // Set basic information
       setTitle(link.title || '')
       setSubtitle(link.subtitle || '')
       setSelectedStyle(link.style || 'callout')
-      
+
       // Set thumbnail
       if (link.thumbnail) {
         setThumbnailPreview(link.thumbnail)
       }
-      
+
       // Set pricing
       setCheckoutPrice(link.checkout_price?.toString() || '')
       setCheckoutDiscountedPrice(link.checkout_discounted_price?.toString() || '')
-      
+
       // Set checkout information
       setCheckoutTitle(link.checkout_title || '')
       setCheckoutDescription(link.checkout_description || '')
       setCheckoutBottomTitle(link.checkout_bottom_title || '')
       setCheckoutCtaButtonText(link.checkout_cta_button_text || 'Buy Now')
-      
+
       // Set checkout image
       if (link.checkout_image) {
         setCheckoutImagePreview(link.checkout_image)
       }
-      
+
       // Set product-specific data from additional_info
       if (link.additional_info) {
         const additionalInfo = link.additional_info
-        
+
         if (productType === 'digital') {
           setDigitalFileUrl(additionalInfo.digital_file_url || '')
           setDownloadInstructions(additionalInfo.download_instructions || '')
@@ -217,7 +217,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
           setButtonText(additionalInfo.button_text || 'View Content')
         }
       }
-      
+
       // Set collect info fields
       if (link.collect_info_fields && link.collect_info_fields.length > 0) {
         setCollectInfoFields(link.collect_info_fields)
@@ -227,12 +227,12 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
 
   const handleTypeSelect = async (type: ProductType) => {
     setSelectedType(type)
-    
+
     // Auto-set fields for digital product
     if (type === 'digital') {
       // Step 2: Basic info
       setThumbnailPreview(digitalProductImg.src)
-      
+
       // Convert SVG to File object for thumbnail
       try {
         const response = await fetch(digitalProductImg.src)
@@ -242,18 +242,18 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       } catch (error) {
         console.error('Failed to convert thumbnail to file:', error)
       }
-      
+
       setTitle('Download Your Digital Product Today!')
       setSubtitle('Instant access to premium content that will transform your journey')
       setCheckoutPrice('49.99')
       setCheckoutDiscountedPrice('29.99')
-      
+
       // Step 3: Checkout details
       setCheckoutTitle('Get Instant Access to Your Digital Product')
       setCheckoutDescription('<h3>What You\'ll Get:</h3><ul><li>✅ Immediate download after purchase</li><li>✅ Lifetime access to all updates</li><li>✅ Professional quality content</li><li>✅ 30-day money-back guarantee</li></ul><p>Transform your skills with our premium digital content. Join thousands of satisfied customers who have already upgraded their journey!</p>')
       setCheckoutBottomTitle('Ready to Get Started?')
       setCheckoutCtaButtonText('Get Instant Access Now')
-      
+
       // Also set checkout image to the same
       setCheckoutImagePreview(digitalProductImg.src)
       try {
@@ -265,12 +265,12 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         console.error('Failed to convert checkout image to file:', error)
       }
     }
-    
+
     // Auto-set fields for custom product
     if (type === 'custom') {
       // Step 2: Basic info
       setThumbnailPreview(customProductImg.src)
-      
+
       // Convert SVG to File object for thumbnail
       try {
         const response = await fetch(customProductImg.src)
@@ -280,18 +280,18 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       } catch (error) {
         console.error('Failed to convert thumbnail to file:', error)
       }
-      
+
       setTitle('Get Your Custom Product Today!')
       setSubtitle('Premium quality product tailored just for you')
       setCheckoutPrice('99.99')
       setCheckoutDiscountedPrice('79.99')
-      
+
       // Step 3: Checkout details
       setCheckoutTitle('Order Your Custom Product')
       setCheckoutDescription('<h3>What Makes This Special:</h3><ul><li>✅ Completely customized to your needs</li><li>✅ Premium materials and craftsmanship</li><li>✅ Personal consultation included</li><li>✅ Satisfaction guaranteed</li></ul><p>Experience the difference of a product made specifically for you. Join our community of satisfied customers who chose quality and personalization!</p>')
       setCheckoutBottomTitle('Ready to Order?')
       setCheckoutCtaButtonText('Order Custom Product')
-      
+
       // Also set checkout image to the same
       setCheckoutImagePreview(customProductImg.src)
       try {
@@ -303,12 +303,12 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         console.error('Failed to convert checkout image to file:', error)
       }
     }
-    
+
     // Auto-set fields for URL/Media
     if (type === 'url-media') {
       // Step 2: Basic info
       setThumbnailPreview(urlMediaImg.src)
-      
+
       // Convert SVG to File object for thumbnail
       try {
         const response = await fetch(urlMediaImg.src)
@@ -318,22 +318,22 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       } catch (error) {
         console.error('Failed to convert thumbnail to file:', error)
       }
-      
+
       setTitle('Access Premium Content')
       setSubtitle('Exclusive media and resources for your success')
       setCheckoutPrice('19.99')
       setCheckoutDiscountedPrice('14.99')
-      
+
       // Step 3: Checkout details
       setCheckoutTitle('Get Access to Premium Media')
       setCheckoutDescription('<h3>Exclusive Access Includes:</h3><ul><li>✅ High-quality media content</li><li>✅ Instant online access</li><li>✅ Compatible with all devices</li><li>✅ Regular content updates</li></ul><p>Unlock premium content that will elevate your knowledge and skills. Join our community and start your journey today!</p>')
       setCheckoutBottomTitle('Ready to Access?')
       setCheckoutCtaButtonText('Get Access Now')
-      
+
       // Set default media URL
       setMediaUrl('https://example.com/your-premium-content')
       setButtonText('Access Content')
-      
+
       // Also set checkout image to the same
       setCheckoutImagePreview(urlMediaImg.src)
       try {
@@ -345,12 +345,12 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         console.error('Failed to convert checkout image to file:', error)
       }
     }
-    
+
     // Auto-set fields for eCourse
     if (type === 'ecourse') {
       // Step 2: Basic info
       setThumbnailPreview(eCourseImg.src)
-      
+
       // Convert SVG to File object for thumbnail
       try {
         const response = await fetch(eCourseImg.src)
@@ -360,18 +360,18 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       } catch (error) {
         console.error('Failed to convert thumbnail to file:', error)
       }
-      
+
       setTitle('Master New Skills with Our eCourse')
       setSubtitle('Comprehensive online course with expert guidance')
       setCheckoutPrice('199.99')
       setCheckoutDiscountedPrice('149.99')
-      
+
       // Step 3: Checkout details
       setCheckoutTitle('Enroll in Our Premium eCourse')
       setCheckoutDescription('<h3>What You\'ll Learn:</h3><ul><li>✅ Step-by-step video lessons</li><li>✅ Downloadable resources and worksheets</li><li>✅ Interactive assignments and quizzes</li><li>✅ Certificate of completion</li><li>✅ Lifetime access to course materials</li><li>✅ Direct access to instructor support</li></ul><p>Transform your skills with our comprehensive online course. Join thousands of successful students who have already mastered these valuable skills!</p>')
       setCheckoutBottomTitle('Ready to Start Learning?')
       setCheckoutCtaButtonText('Enroll Now')
-      
+
       // Set default course info
       setCourseDuration('8 weeks • Self-paced')
       setCourseModules([
@@ -381,7 +381,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         'Practical Applications and Case Studies',
         'Final Project and Certification'
       ])
-      
+
       // Also set checkout image to the same
       setCheckoutImagePreview(eCourseImg.src)
       try {
@@ -393,7 +393,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         console.error('Failed to convert checkout image to file:', error)
       }
     }
-    
+
     setStep(2) // Immediately go to next step
   }
 
@@ -612,23 +612,23 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
     try {
       // Handle file upload for digital products if a new file is selected
       let finalDigitalFileUrl = digitalFileUrl
-      
+
       if (selectedType === 'digital' && digitalFile) {
         setIsUploadingFile(true)
-        
+
         const uploadResult = await uploadDocumentAction(digitalFile, 'digital-products')
-        
+
         if (uploadResult.error) {
           toast.error(`Failed to upload file: ${uploadResult.error}`)
           setIsSubmitting(false)
           setIsUploadingFile(false)
           return
         }
-        
+
         if (uploadResult.data) {
           finalDigitalFileUrl = uploadResult.data.secure_url
         }
-        
+
         setIsUploadingFile(false)
       }
 
@@ -673,7 +673,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       if (hasFileUploads) {
         // Use FormData for file uploads
         const formData = new FormData()
-        
+
         // Basic data
         formData.append('type', getProductTypeKey(selectedType))
         formData.append('title', title.trim())
@@ -698,7 +698,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         }
 
         const result = await updateCustomLinkWithFileAction(link.id.toString(), formData)
-        
+
         if (result.error) {
           toast.error(`Failed to update product: ${result.error}`)
         } else {
@@ -757,23 +757,23 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
     try {
       // Handle file upload for digital products if a file is selected
       let finalDigitalFileUrl = digitalFileUrl
-      
+
       if (selectedType === 'digital' && digitalFile) {
         setIsUploadingFile(true)
-        
+
         const uploadResult = await uploadDocumentAction(digitalFile, 'digital-products')
-        
+
         if (uploadResult.error) {
           toast.error(`Failed to upload file: ${uploadResult.error}`)
           setIsSubmitting(false)
           setIsUploadingFile(false)
           return
         }
-        
+
         if (uploadResult.data) {
           finalDigitalFileUrl = uploadResult.data.secure_url
         }
-        
+
         setIsUploadingFile(false)
       }
 
@@ -988,7 +988,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Enter a catchy title for your product"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-300"
                   maxLength={100}
                 />
                 <p className="mt-1 text-xs text-gray-500">
@@ -1007,7 +1007,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                   value={subtitle}
                   onChange={(e) => setSubtitle(e.target.value)}
                   placeholder="Brief description or tagline"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-300"
                   maxLength={150}
                 />
                 <p className="mt-1 text-xs text-gray-500">
@@ -1094,7 +1094,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                         placeholder="99.00"
                         step="0.01"
                         min="0"
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-300"
                       />
                     </div>
                   </div>
@@ -1114,7 +1114,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                         placeholder="79.00"
                         step="0.01"
                         min="0"
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-300"
                       />
                     </div>
                     {checkoutDiscountedPrice && checkoutPrice && parseFloat(checkoutDiscountedPrice) >= parseFloat(checkoutPrice) && (
@@ -1155,7 +1155,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
               type="button"
               onClick={handleContinue}
               disabled={!title.trim() || !selectedStyle || !checkoutPrice}
-              className={`${!(isEditMode && step === 2) ? 'flex-1' : 'w-full'} flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium`}
+              className={`${!(isEditMode && step === 2) ? 'flex-1' : 'w-full'} flex items-center justify-center gap-2 px-4 py-3 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium`}
             >
               Continue
               <ArrowRight className="w-4 h-4" />
@@ -1235,7 +1235,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                   value={checkoutTitle}
                   onChange={(e) => setCheckoutTitle(e.target.value)}
                   placeholder="e.g., Premium Course Bundle"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-300"
                   maxLength={100}
                 />
                 <p className="mt-1 text-xs text-gray-500">
@@ -1271,7 +1271,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                     value={checkoutBottomTitle}
                     onChange={(e) => setCheckoutBottomTitle(e.target.value)}
                     placeholder="e.g., What's included?"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-300"
                     maxLength={100}
                   />
                   <p className="mt-1 text-xs text-gray-500">
@@ -1290,7 +1290,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                     value={checkoutCtaButtonText}
                     onChange={(e) => setCheckoutCtaButtonText(e.target.value)}
                     placeholder="Buy Now"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-300"
                     maxLength={50}
                   />
                   <p className="mt-1 text-xs text-gray-500">
@@ -1332,7 +1332,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
               type="button"
               onClick={handleContinue}
               disabled={false}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
               Continue
               <ArrowRight className="w-4 h-4" />
@@ -1532,7 +1532,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
             <button
               type="button"
               onClick={handleContinue}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium"
             >
               Continue
               <ArrowRight className="w-4 h-4" />
@@ -1564,7 +1564,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                   <label className="block text-sm font-semibold text-gray-900 mb-2">
                     Digital File <span className="text-red-500">*</span>
                   </label>
-                  
+
                   {/* Upload Option */}
                   <div className="mb-4">
                     {digitalFile || digitalFileUrl ? (
@@ -1611,7 +1611,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                         </p>
                       </div>
                     )}
-                    
+
                     <input
                       ref={digitalFileInputRef}
                       type="file"
@@ -1627,7 +1627,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                       accept="*/*"
                     />
                   </div>
-                  
+
                   {/* OR Divider */}
                   <div className="relative mb-4">
                     <div className="absolute inset-0 flex items-center">
@@ -1637,7 +1637,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                       <span className="bg-white px-2 text-gray-500">Or enter URL directly</span>
                     </div>
                   </div>
-                  
+
                   {/* URL Input */}
                   <div>
                     <div className="relative">
@@ -1652,7 +1652,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                           setDigitalFileName('')
                         }}
                         placeholder="https://example.com/download/file.zip"
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-300"
                         disabled={!!digitalFile}
                       />
                     </div>
@@ -1672,7 +1672,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                     onChange={(e) => setDownloadInstructions(e.target.value)}
                     placeholder="After purchase, you'll receive an email with the download link..."
                     rows={3}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300 resize-none"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-300 resize-none"
                     maxLength={300}
                   />
                   <p className="mt-1 text-xs text-gray-500">
@@ -1693,7 +1693,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                     <button
                       type="button"
                       onClick={() => setCustomFields([...customFields, { label: '', value: '' }])}
-                      className="inline-flex items-center gap-1 text-sm text-purple-600 hover:text-purple-700"
+                      className="inline-flex items-center gap-1 text-sm text-brand-600 hover:text-purple-700"
                     >
                       <PlusCircle className="w-4 h-4" />
                       Add Field
@@ -1707,7 +1707,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                       <button
                         type="button"
                         onClick={() => setCustomFields([{ label: '', value: '' }])}
-                        className="mt-2 text-sm text-purple-600 hover:text-purple-700"
+                        className="mt-2 text-sm text-brand-600 hover:text-purple-700"
                       >
                         Add your first field
                       </button>
@@ -1725,7 +1725,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                               setCustomFields(updated)
                             }}
                             placeholder="Label (e.g., Size)"
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                           />
                           <input
                             type="text"
@@ -1736,7 +1736,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                               setCustomFields(updated)
                             }}
                             placeholder="Value (e.g., Large)"
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                           />
                           <button
                             type="button"
@@ -1771,7 +1771,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                       value={courseDuration}
                       onChange={(e) => setCourseDuration(e.target.value)}
                       placeholder="e.g., 8 weeks, 30 hours, Self-paced"
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-300"
                     />
                   </div>
                 </div>
@@ -1784,7 +1784,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                     <button
                       type="button"
                       onClick={() => setCourseModules([...courseModules, ''])}
-                      className="inline-flex items-center gap-1 text-sm text-purple-600 hover:text-purple-700"
+                      className="inline-flex items-center gap-1 text-sm text-brand-600 hover:text-purple-700"
                     >
                       <PlusCircle className="w-4 h-4" />
                       Add Module
@@ -1805,7 +1805,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                               setCourseModules(updated)
                             }}
                             placeholder={`Module ${index + 1}: Introduction to...`}
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                           />
                         </div>
                         {courseModules.length > 1 && (
@@ -1842,7 +1842,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                       value={mediaUrl}
                       onChange={(e) => setMediaUrl(e.target.value)}
                       placeholder="https://example.com/content"
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-300"
                     />
                   </div>
                   <p className="mt-1 text-xs text-gray-500">
@@ -1860,7 +1860,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                     value={buttonText}
                     onChange={(e) => setButtonText(e.target.value)}
                     placeholder="View Content"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-300"
                     maxLength={50}
                   />
                   <p className="mt-1 text-xs text-gray-500">
@@ -1888,7 +1888,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                 (selectedType === 'digital' && !digitalFileUrl && !digitalFile) ||
                 (selectedType === 'url-media' && !mediaUrl)
               }
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
               <Plus className="w-4 h-4" />
               {isSubmitting ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Product' : 'Create Product')}

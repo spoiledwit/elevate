@@ -31,7 +31,7 @@ export function GeneratedContent({ items, isGenerating }: GeneratedContentProps)
                 {items.map(item => (
                     <div key={item.id} className="bg-white border rounded-lg p-4 shadow-sm">
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-purple-600">{item.useCase}</span>
+                            <span className="text-xs font-semibold uppercase tracking-wide text-brand-600">{item.useCase}</span>
                             <span className="text-[10px] text-gray-400">{new Date(item.createdAt).toLocaleTimeString()}</span>
                         </div>
                         <p className="text-xs text-gray-400 italic mb-2">Prompt: {item.prompt}</p>

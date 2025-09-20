@@ -35,7 +35,7 @@ export function TextField({
           type={isPasswordField && showPassword ? 'text' : type}
           placeholder={placeholder}
           className={twMerge(
-            'block h-10 w-full rounded bg-white px-4 font-medium shadow-sm outline outline-1 outline-gray-900/10 focus:outline-purple-600 focus:ring-4 focus:ring-purple-300',
+            'block h-10 w-full rounded bg-white px-4 font-medium shadow-sm outline outline-1 outline-gray-900/10 focus:outline-brand-600 focus:ring-4 focus:ring-purple-300',
             hasError && 'outline-red-700 focus:outline-red-600 focus:ring-red-300',
             isPasswordField && 'pr-10'
           )}

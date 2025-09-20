@@ -93,7 +93,7 @@ export function CommentsManager({ initialComments, facebookPages }: CommentsMana
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                  <MessageSquare className="w-7 h-7 text-purple-600" />
+                  <MessageSquare className="w-7 h-7 text-brand-600" />
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">Comments</h1>
@@ -160,7 +160,7 @@ export function CommentsManager({ initialComments, facebookPages }: CommentsMana
                 placeholder="Search comments by message or user name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
               />
             </div>
           </div>

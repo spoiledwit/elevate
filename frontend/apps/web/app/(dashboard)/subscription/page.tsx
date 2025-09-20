@@ -57,12 +57,12 @@ export default function SubscriptionPage() {
     setPortalLoading(true)
     try {
       const result = await createPortalSessionAction()
-      
+
       if ('error' in result) {
         alert(`Error: ${result.error}`)
         return
       }
-      
+
       // Redirect to Stripe Customer Portal
       window.location.href = result.portal_url
     } catch (error) {
@@ -77,7 +77,7 @@ export default function SubscriptionPage() {
     return (
       <div className="flex-1 bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600 mx-auto"></div>
           <p className="mt-2 text-gray-600">Loading subscription data...</p>
         </div>
       </div>
@@ -89,11 +89,10 @@ export default function SubscriptionPage() {
       {/* Success/Error Notifications */}
       {showNotification && (
         <div className="fixed top-4 right-4 z-50 max-w-md">
-          <div className={`p-4 rounded-lg shadow-lg border ${
-            notificationType === 'success' 
-              ? 'bg-green-50 border-green-200 text-green-800' 
-              : 'bg-red-50 border-red-200 text-red-800'
-          }`}>
+          <div className={`p-4 rounded-lg shadow-lg border ${notificationType === 'success'
+            ? 'bg-green-50 border-green-200 text-green-800'
+            : 'bg-red-50 border-red-200 text-red-800'
+            }`}>
             <div className="flex items-start gap-3">
               {notificationType === 'success' ? (
                 <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
@@ -105,7 +104,7 @@ export default function SubscriptionPage() {
                   {notificationType === 'success' ? 'Subscription Successful!' : 'Subscription Canceled'}
                 </h4>
                 <p className="text-sm mt-1">
-                  {notificationType === 'success' 
+                  {notificationType === 'success'
                     ? 'Your subscription has been activated successfully. You now have access to all plan features.'
                     : 'You canceled the subscription process. No charges have been made to your account.'
                   }
@@ -142,7 +141,7 @@ export default function SubscriptionPage() {
                 <button
                   onClick={handlePortalClick}
                   disabled={portalLoading}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {portalLoading ? (
                     <>
@@ -162,7 +161,7 @@ export default function SubscriptionPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <CreditCard className="w-5 h-5 text-purple-600" />
+                    <CreditCard className="w-5 h-5 text-brand-600" />
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Plan</p>
@@ -173,16 +172,14 @@ export default function SubscriptionPage() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    currentSubscription.status === 'ACTIVE' ? 'bg-green-100' : 
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${currentSubscription.status === 'ACTIVE' ? 'bg-green-100' :
                     currentSubscription.status === 'TRIALING' ? 'bg-blue-100' :
-                    'bg-yellow-100'
-                  }`}>
-                    <div className={`w-3 h-3 rounded-full ${
-                      currentSubscription.status === 'ACTIVE' ? 'bg-green-500' :
+                      'bg-yellow-100'
+                    }`}>
+                    <div className={`w-3 h-3 rounded-full ${currentSubscription.status === 'ACTIVE' ? 'bg-green-500' :
                       currentSubscription.status === 'TRIALING' ? 'bg-blue-500' :
-                      'bg-yellow-500'
-                    }`}></div>
+                        'bg-yellow-500'
+                      }`}></div>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Status</p>
@@ -201,7 +198,7 @@ export default function SubscriptionPage() {
                       {currentSubscription.is_trialing ? 'Trial Ends' : 'Next Billing'}
                     </p>
                     <p className="font-semibold text-gray-900">
-                      {currentSubscription.current_period_end 
+                      {currentSubscription.current_period_end
                         ? new Date(currentSubscription.current_period_end).toLocaleDateString()
                         : 'N/A'
                       }
@@ -217,7 +214,7 @@ export default function SubscriptionPage() {
                     <p className="text-sm font-medium text-yellow-800">Subscription Canceled</p>
                     <p className="text-sm text-yellow-700">
                       Your subscription is scheduled to end on {' '}
-                      {currentSubscription.current_period_end 
+                      {currentSubscription.current_period_end
                         ? new Date(currentSubscription.current_period_end).toLocaleDateString()
                         : 'the next billing date'
                       }. You'll retain access until then.
@@ -244,8 +241,8 @@ export default function SubscriptionPage() {
           )}
 
           {/* Pricing Plans */}
-          <PricingPlans 
-            plansData={plansData} 
+          <PricingPlans
+            plansData={plansData}
             isDashboard={true}
             currentSubscription={currentSubscription}
           />

@@ -49,7 +49,7 @@ export function AutomationRulesManager({ initialRules, facebookPages }: Automati
   const handleFiltersChange = async (filters: any) => {
     setConnectionFilter(filters.connection_id || 'all')
     setLoading(true)
-    
+
     try {
       const result = await getAutomationRulesAction({
         connection_id: filters.connection_id || undefined
@@ -67,10 +67,10 @@ export function AutomationRulesManager({ initialRules, facebookPages }: Automati
   const filteredRules = rules?.results?.filter((rule: any) => {
     if (searchQuery) {
       return rule.rule_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-             rule.reply_template.toLowerCase().includes(searchQuery.toLowerCase()) ||
-             rule.keywords?.some((keyword: string) => 
-               keyword.toLowerCase().includes(searchQuery.toLowerCase())
-             )
+        rule.reply_template.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        rule.keywords?.some((keyword: string) =>
+          keyword.toLowerCase().includes(searchQuery.toLowerCase())
+        )
     }
     return true
   }) || []
@@ -78,7 +78,7 @@ export function AutomationRulesManager({ initialRules, facebookPages }: Automati
   const getStatusCount = (status: string) => {
     if (!rules?.results) return 0
     if (status === 'all') return rules.results.length
-    return rules.results.filter((r: any) => 
+    return rules.results.filter((r: any) =>
       status === 'active' ? r.is_active : !r.is_active
     ).length
   }
@@ -105,16 +105,15 @@ export function AutomationRulesManager({ initialRules, facebookPages }: Automati
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${
-                    showFilters
+                  className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${showFilters
                       ? 'bg-[#714efe1a] text-[#714efe]'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                    }`}
                 >
                   <Filter className="w-4 h-4" />
                   Filters
                 </button>
-                
+
                 <button
                   onClick={handleRefresh}
                   disabled={loading}
@@ -167,7 +166,7 @@ export function AutomationRulesManager({ initialRules, facebookPages }: Automati
                 placeholder="Search rules by name, keywords, or reply template..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -181,7 +180,7 @@ export function AutomationRulesManager({ initialRules, facebookPages }: Automati
                 </h2>
               </div>
 
-              <RulesList 
+              <RulesList
                 rules={filteredRules}
                 loading={loading}
                 onRefresh={handleRefresh}

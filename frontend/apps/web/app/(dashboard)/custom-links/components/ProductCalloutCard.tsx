@@ -18,10 +18,10 @@ const productTypeIcons = {
   'url-media': ExternalLink,
 }
 
-export function ProductCalloutCard({ 
-  productType, 
-  thumbnail, 
-  title, 
+export function ProductCalloutCard({
+  productType,
+  thumbnail,
+  title,
   subtitle,
   price,
   discountedPrice
@@ -33,8 +33,8 @@ export function ProductCalloutCard({
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer">
       {thumbnail ? (
         <div className="aspect-square overflow-hidden bg-purple-50">
-          <img 
-            src={thumbnail} 
+          <img
+            src={thumbnail}
             alt=""
             className="w-full h-full object-cover"
           />
@@ -58,10 +58,10 @@ export function ProductCalloutCard({
             {hasDiscount ? (
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-500 line-through">${price}</span>
-                <span className="text-lg font-bold text-purple-600">${discountedPrice}</span>
+                <span className="text-lg font-bold text-brand-600">${discountedPrice}</span>
               </div>
             ) : (
-              <span className="text-lg font-bold text-purple-600">${price}</span>
+              <span className="text-lg font-bold text-brand-600">${price}</span>
             )}
           </div>
         )}

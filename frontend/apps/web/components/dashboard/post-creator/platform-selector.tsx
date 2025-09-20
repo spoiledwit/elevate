@@ -31,35 +31,35 @@ interface PlatformSelectorProps {
   onConnectionToggle: (connections: number[]) => void
 }
 
-const platformConfig: Record<string, { 
+const platformConfig: Record<string, {
   icon: React.ComponentType<any>
   color: string
 }> = {
-  facebook: { 
+  facebook: {
     icon: Facebook,
     color: 'text-blue-600'
   },
-  instagram: { 
+  instagram: {
     icon: Instagram,
     color: 'text-pink-600'
   },
-  linkedin: { 
+  linkedin: {
     icon: Linkedin,
     color: 'text-blue-700'
   },
-  pinterest: { 
+  pinterest: {
     icon: Pin,
     color: 'text-red-600'
   },
 }
 
-export function PlatformSelector({ 
-  platforms, 
-  selectedConnections, 
-  onConnectionToggle 
+export function PlatformSelector({
+  platforms,
+  selectedConnections,
+  onConnectionToggle
 }: PlatformSelectorProps) {
   const [expandedPlatform, setExpandedPlatform] = useState<string | null>(null)
-  
+
   const handleConnectionToggle = (connectionId: number) => {
     if (selectedConnections.includes(connectionId)) {
       onConnectionToggle(selectedConnections.filter(id => id !== connectionId))
@@ -140,16 +140,16 @@ export function PlatformSelector({
           const isExpanded = expandedPlatform === platform.name
           const platformConnectionIds = platform.connections.map(c => c.id)
           const selectedCount = platformConnectionIds.filter(id => selectedConnections.includes(id)).length
-          
+
           // For single account platforms, show inline
           if (platform.connections.length === 1) {
             const connection = platform.connections[0]
             const isSelected = selectedConnections.includes(connection.id)
-            const displayName = connection.facebook_page_name || 
-                              connection.instagram_username || 
-                              connection.platform_display_name || 
-                              connection.platform_username || 
-                              'Account'
+            const displayName = connection.facebook_page_name ||
+              connection.instagram_username ||
+              connection.platform_display_name ||
+              connection.platform_username ||
+              'Account'
 
             return (
               <button
@@ -173,8 +173,8 @@ export function PlatformSelector({
                 </div>
                 <div className={cn(
                   "w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
-                  isSelected 
-                    ? "bg-[#714efe] border-purple-600" 
+                  isSelected
+                    ? "bg-[#714efe] border-brand-600"
                     : "border-gray-300"
                 )}>
                   {isSelected && <Check className="w-3 h-3 text-white" />}
@@ -201,13 +201,13 @@ export function PlatformSelector({
                     </div>
                   </div>
                 </div>
-                <svg 
+                <svg
                   className={cn(
                     "w-4 h-4 text-gray-400 transition-transform",
                     isExpanded && "rotate-180"
-                  )} 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
+                  )}
+                  fill="none"
+                  viewBox="0 0 24 24"
                   stroke="currentColor"
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -219,11 +219,11 @@ export function PlatformSelector({
                 <div className="bg-gray-50 border-t border-gray-100">
                   {platform.connections.map((connection) => {
                     const isSelected = selectedConnections.includes(connection.id)
-                    const displayName = connection.facebook_page_name || 
-                                      connection.instagram_username || 
-                                      connection.platform_display_name || 
-                                      connection.platform_username || 
-                                      'Unnamed Account'
+                    const displayName = connection.facebook_page_name ||
+                      connection.instagram_username ||
+                      connection.platform_display_name ||
+                      connection.platform_username ||
+                      'Unnamed Account'
 
                     return (
                       <button
@@ -244,8 +244,8 @@ export function PlatformSelector({
                         </div>
                         <div className={cn(
                           "w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
-                          isSelected 
-                            ? "bg-[#714efe] border-purple-600" 
+                          isSelected
+                            ? "bg-[#714efe] border-brand-600"
                             : "border-gray-300"
                         )}>
                           {isSelected && <Check className="w-3 h-3 text-white" />}

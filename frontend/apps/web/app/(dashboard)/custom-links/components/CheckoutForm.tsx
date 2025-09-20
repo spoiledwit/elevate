@@ -130,10 +130,10 @@ export function CheckoutForm({
             toast.success('Redirecting to payment...', {
               duration: 2000
             })
-            
+
             // Clear form data before redirecting
             setFormData({})
-            
+
             // Redirect to Stripe checkout
             window.location.href = result.data.checkout_url
           } else {
@@ -145,7 +145,7 @@ export function CheckoutForm({
 
             // Clear form data
             setFormData({})
-            
+
             // Call success callback to navigate back
             if (onOrderSuccess) {
               onOrderSuccess(result.data)
@@ -184,10 +184,10 @@ export function CheckoutForm({
                 {hasDiscount ? (
                   <div className="flex items-center justify-center gap-3">
                     <span className="text-xl text-gray-500 line-through">${price}</span>
-                    <span className="text-3xl font-bold text-purple-600">${discountedPrice}</span>
+                    <span className="text-3xl font-bold text-brand-600">${discountedPrice}</span>
                   </div>
                 ) : (
-                  <span className="text-3xl font-bold text-purple-600">${price}</span>
+                  <span className="text-3xl font-bold text-brand-600">${price}</span>
                 )}
               </div>
             </div>
@@ -247,7 +247,7 @@ export function CheckoutForm({
                             placeholder={field.placeholder || ''}
                             value={(formData[fieldKey] as string) || ''}
                             onChange={(e) => handleInputChange(index, e.target.value)}
-                            className={`w-full px-4 py-3 border ${errorClass} rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200`}
+                            className={`w-full px-4 py-3 border ${errorClass} rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200`}
                             disabled={!isActive}
                           />
                         )}
@@ -258,7 +258,7 @@ export function CheckoutForm({
                             placeholder={field.placeholder || ''}
                             value={(formData[fieldKey] as string) || ''}
                             onChange={(e) => handleInputChange(index, e.target.value)}
-                            className={`w-full px-4 py-3 border ${errorClass} rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200`}
+                            className={`w-full px-4 py-3 border ${errorClass} rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200`}
                             disabled={!isActive}
                           />
                         )}
@@ -269,7 +269,7 @@ export function CheckoutForm({
                             placeholder={field.placeholder || ''}
                             value={(formData[fieldKey] as string) || ''}
                             onChange={(e) => handleInputChange(index, e.target.value)}
-                            className={`w-full px-4 py-3 border ${errorClass} rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200`}
+                            className={`w-full px-4 py-3 border ${errorClass} rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200`}
                             disabled={!isActive}
                           />
                         )}
@@ -280,7 +280,7 @@ export function CheckoutForm({
                             placeholder={field.placeholder || ''}
                             value={(formData[fieldKey] as string) || ''}
                             onChange={(e) => handleInputChange(index, e.target.value)}
-                            className={`w-full px-4 py-3 border ${errorClass} rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200`}
+                            className={`w-full px-4 py-3 border ${errorClass} rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200`}
                             disabled={!isActive}
                           />
                         )}
@@ -291,7 +291,7 @@ export function CheckoutForm({
                             placeholder={field.placeholder || ''}
                             value={(formData[fieldKey] as string) || ''}
                             onChange={(e) => handleInputChange(index, e.target.value)}
-                            className={`w-full px-4 py-3 border ${errorClass} rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200`}
+                            className={`w-full px-4 py-3 border ${errorClass} rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200`}
                             disabled={!isActive}
                           />
                         )}
@@ -302,7 +302,7 @@ export function CheckoutForm({
                             value={(formData[fieldKey] as string) || ''}
                             onChange={(e) => handleInputChange(index, e.target.value)}
                             rows={4}
-                            className={`w-full px-4 py-3 border ${errorClass} rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 resize-none`}
+                            className={`w-full px-4 py-3 border ${errorClass} rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200 resize-none`}
                             disabled={!isActive}
                           />
                         )}
@@ -311,7 +311,7 @@ export function CheckoutForm({
                           <select
                             value={(formData[fieldKey] as string) || ''}
                             onChange={(e) => handleInputChange(index, e.target.value)}
-                            className={`w-full px-4 py-3 border ${errorClass} rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200`}
+                            className={`w-full px-4 py-3 border ${errorClass} rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200`}
                             disabled={!isActive}
                           >
                             <option value="">{field.placeholder || 'Select an option'}</option>
@@ -337,7 +337,7 @@ export function CheckoutForm({
                                       : currentValues.filter(v => v !== option)
                                     handleInputChange(index, newValues)
                                   }}
-                                  className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                                  className="w-4 h-4 text-brand-600 border-gray-300 rounded focus:ring-brand-500"
                                   disabled={!isActive}
                                 />
                                 <span className="ml-3 text-gray-700">{option}</span>
@@ -355,7 +355,7 @@ export function CheckoutForm({
                                   name={`radio-${index}`}
                                   checked={(formData[fieldKey] as string) === option}
                                   onChange={() => handleInputChange(index, option)}
-                                  className="w-4 h-4 text-purple-600 border-gray-300 focus:ring-purple-500"
+                                  className="w-4 h-4 text-brand-600 border-gray-300 focus:ring-brand-500"
                                   disabled={!isActive}
                                 />
                                 <span className="ml-3 text-gray-700">{option}</span>
@@ -377,7 +377,7 @@ export function CheckoutForm({
               <div className="pt-6">
                 <button
                   onClick={handleBuyNow}
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-4 px-6 rounded-lg transition-colors disabled:opacity-50 text-lg"
+                  className="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-4 px-6 rounded-lg transition-colors disabled:opacity-50 text-lg"
                   disabled={!isActive || isSubmitting}
                 >
                   {isSubmitting ? 'Processing...' : (checkoutCtaButtonText || 'Buy Now')}
@@ -432,10 +432,10 @@ export function CheckoutForm({
             {hasDiscount ? (
               <div className="flex items-center gap-3">
                 <span className="text-lg text-gray-500 line-through">${price}</span>
-                <span className="text-2xl font-bold text-purple-600">${discountedPrice}</span>
+                <span className="text-2xl font-bold text-brand-600">${discountedPrice}</span>
               </div>
             ) : (
-              <span className="text-2xl font-bold text-purple-600">${price}</span>
+              <span className="text-2xl font-bold text-brand-600">${price}</span>
             )}
           </div>
 
@@ -479,7 +479,7 @@ export function CheckoutForm({
                         placeholder={field.placeholder || ''}
                         value={(formData[fieldKey] as string) || ''}
                         onChange={(e) => handleInputChange(index, e.target.value)}
-                        className={`w-full px-3 py-2 border ${errorClass} rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200`}
+                        className={`w-full px-3 py-2 border ${errorClass} rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200`}
                         disabled={!isActive}
                       />
                     )}
@@ -490,7 +490,7 @@ export function CheckoutForm({
                         placeholder={field.placeholder || ''}
                         value={(formData[fieldKey] as string) || ''}
                         onChange={(e) => handleInputChange(index, e.target.value)}
-                        className={`w-full px-3 py-2 border ${errorClass} rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200`}
+                        className={`w-full px-3 py-2 border ${errorClass} rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200`}
                         disabled={!isActive}
                       />
                     )}
@@ -501,7 +501,7 @@ export function CheckoutForm({
                         placeholder={field.placeholder || ''}
                         value={(formData[fieldKey] as string) || ''}
                         onChange={(e) => handleInputChange(index, e.target.value)}
-                        className={`w-full px-3 py-2 border ${errorClass} rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200`}
+                        className={`w-full px-3 py-2 border ${errorClass} rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200`}
                         disabled={!isActive}
                       />
                     )}
@@ -512,7 +512,7 @@ export function CheckoutForm({
                         placeholder={field.placeholder || ''}
                         value={(formData[fieldKey] as string) || ''}
                         onChange={(e) => handleInputChange(index, e.target.value)}
-                        className={`w-full px-3 py-2 border ${errorClass} rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200`}
+                        className={`w-full px-3 py-2 border ${errorClass} rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200`}
                         disabled={!isActive}
                       />
                     )}
@@ -523,7 +523,7 @@ export function CheckoutForm({
                         placeholder={field.placeholder || ''}
                         value={(formData[fieldKey] as string) || ''}
                         onChange={(e) => handleInputChange(index, e.target.value)}
-                        className={`w-full px-3 py-2 border ${errorClass} rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200`}
+                        className={`w-full px-3 py-2 border ${errorClass} rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200`}
                         disabled={!isActive}
                       />
                     )}
@@ -534,7 +534,7 @@ export function CheckoutForm({
                         value={(formData[fieldKey] as string) || ''}
                         onChange={(e) => handleInputChange(index, e.target.value)}
                         rows={3}
-                        className={`w-full px-3 py-2 border ${errorClass} rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 resize-none`}
+                        className={`w-full px-3 py-2 border ${errorClass} rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200 resize-none`}
                         disabled={!isActive}
                       />
                     )}
@@ -543,7 +543,7 @@ export function CheckoutForm({
                       <select
                         value={(formData[fieldKey] as string) || ''}
                         onChange={(e) => handleInputChange(index, e.target.value)}
-                        className={`w-full px-3 py-2 border ${errorClass} rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200`}
+                        className={`w-full px-3 py-2 border ${errorClass} rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200`}
                         disabled={!isActive}
                       >
                         <option value="">{field.placeholder || 'Select an option'}</option>
@@ -569,7 +569,7 @@ export function CheckoutForm({
                                   : currentValues.filter(v => v !== option)
                                 handleInputChange(index, newValues)
                               }}
-                              className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                              className="w-4 h-4 text-brand-600 border-gray-300 rounded focus:ring-brand-500"
                               disabled={!isActive}
                             />
                             <span className="ml-2 text-sm text-gray-700">{option}</span>
@@ -587,7 +587,7 @@ export function CheckoutForm({
                               name={`radio-${index}`}
                               checked={(formData[fieldKey] as string) === option}
                               onChange={() => handleInputChange(index, option)}
-                              className="w-4 h-4 text-purple-600 border-gray-300 focus:ring-purple-500"
+                              className="w-4 h-4 text-brand-600 border-gray-300 focus:ring-brand-500"
                               disabled={!isActive}
                             />
                             <span className="ml-2 text-sm text-gray-700">{option}</span>
@@ -609,7 +609,7 @@ export function CheckoutForm({
           <div className="pt-4">
             <button
               onClick={handleBuyNow}
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50"
+              className="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50"
               disabled={!isActive || isSubmitting}
             >
               {isSubmitting ? 'Processing...' : (checkoutCtaButtonText || 'Buy Now')}

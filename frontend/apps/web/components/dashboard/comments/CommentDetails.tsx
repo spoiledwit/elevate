@@ -50,9 +50,9 @@ export function CommentDetails({ comment, onClose, onRefresh }: CommentDetailsPr
 
   const handleSendReply = async () => {
     if (!replyText.trim()) return
-    
+
     const pageId = comment.facebook_page_id || comment.page_id
-    
+
     setSendingReply(true)
     try {
       const result = await replyToCommentAction(comment.comment_id, replyText, pageId)
@@ -115,7 +115,7 @@ export function CommentDetails({ comment, onClose, onRefresh }: CommentDetailsPr
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
-            <MessageSquare className="w-6 h-6 text-purple-600" />
+            <MessageSquare className="w-6 h-6 text-brand-600" />
             <h2 className="text-xl font-semibold text-gray-900">Comment Details</h2>
           </div>
           <button
@@ -131,10 +131,10 @@ export function CommentDetails({ comment, onClose, onRefresh }: CommentDetailsPr
           {/* Original Comment */}
           <div className="mb-6">
             <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-brand-600 rounded-full flex items-center justify-center flex-shrink-0">
                 <User className="w-5 h-5 text-white" />
               </div>
-              
+
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <h4 className="font-medium text-gray-900">{comment.from_user_name}</h4>
@@ -143,9 +143,9 @@ export function CommentDetails({ comment, onClose, onRefresh }: CommentDetailsPr
                     {comment.status.charAt(0).toUpperCase() + comment.status.slice(1)}
                   </span>
                 </div>
-                
+
                 <p className="text-gray-700 mb-3">{comment.message}</p>
-                
+
                 <div className="flex items-center gap-4 text-sm text-gray-500">
                   <div className="flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
@@ -209,13 +209,12 @@ export function CommentDetails({ comment, onClose, onRefresh }: CommentDetailsPr
                       <div className="flex items-center gap-2 text-xs text-gray-500">
                         <Calendar className="w-3 h-3" />
                         {formatDate(reply.sent_at)}
-                        <span className={`px-2 py-0.5 rounded-full text-xs ${
-                          reply.status === 'sent' 
-                            ? 'bg-green-100 text-green-800'
-                            : reply.status === 'failed'
-                            ? 'bg-red-100 text-red-800' 
+                        <span className={`px-2 py-0.5 rounded-full text-xs ${reply.status === 'sent'
+                          ? 'bg-green-100 text-green-800'
+                          : reply.status === 'failed'
+                            ? 'bg-red-100 text-red-800'
                             : 'bg-yellow-100 text-yellow-800'
-                        }`}>
+                          }`}>
                           {reply.status}
                         </span>
                       </div>
@@ -240,12 +239,12 @@ export function CommentDetails({ comment, onClose, onRefresh }: CommentDetailsPr
                 onChange={(e) => setReplyText(e.target.value)}
                 placeholder="Write a reply to this comment..."
                 rows={3}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
               />
               <button
                 onClick={handleSendReply}
                 disabled={!replyText.trim() || sendingReply}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 h-fit"
+                className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 h-fit"
               >
                 <Send className="w-4 h-4" />
                 {sendingReply ? 'Sending...' : 'Send'}

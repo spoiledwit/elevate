@@ -15,11 +15,11 @@ import {
   ChevronDown,
   ChevronUp
 } from 'lucide-react'
-import { 
-  FaInstagram, 
-  FaFacebook, 
-  FaTwitter, 
-  FaLinkedin, 
+import {
+  FaInstagram,
+  FaFacebook,
+  FaTwitter,
+  FaLinkedin,
   FaYoutube,
   FaTiktok,
   FaSnapchat,
@@ -165,23 +165,23 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
   const handleSave = async () => {
     try {
       setIsSaving(true)
-      
+
       // Save profile data first
       const profileResult = await updateProfileAction(formData)
-      
+
       if ('error' in profileResult) {
         console.error('Error saving profile:', profileResult.error)
         return
       }
-      
+
       // Save social links
       const socialLinkPromises = []
-      
+
       for (const [platform, url] of Object.entries(socialLinks)) {
         if (url && url.trim() !== '') {
           // Check if this social icon already exists
           const existingIcon = existingSocialIcons[platform]
-          
+
           if (existingIcon) {
             // Update existing social icon
             socialLinkPromises.push(
@@ -208,16 +208,16 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
           )
         }
       }
-      
+
       // Execute all social link operations
       const socialResults = await Promise.all(socialLinkPromises)
-      
+
       // Check if any social link operations failed
       const failedSocialOps = socialResults.filter(result => 'error' in result)
       if (failedSocialOps.length > 0) {
         console.error('Some social links failed to save:', failedSocialOps)
       }
-      
+
       setSaveSuccess(true)
       onUpdate()
       setTimeout(() => setSaveSuccess(false), 2000)
@@ -230,7 +230,7 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }))
-    
+
     // Update preview in real-time
     if (onPreviewUpdate) {
       if (field === 'display_name' && typeof value === 'string') {
@@ -245,7 +245,7 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
 
   const handleSocialLinkChange = (platform: string, url: string) => {
     setSocialLinks(prev => ({ ...prev, [platform]: url }))
-    
+
     // Update existing social icons state
     if (url) {
       setExistingSocialIcons(prev => ({
@@ -260,18 +260,18 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
         return updated
       })
     }
-    
+
     // Update preview social icons in real-time
     if (onPreviewUpdate) {
       // Get all current social icons including the one being updated
       const allIcons = { ...existingSocialIcons }
-      
+
       if (url) {
         allIcons[platform] = { platform, url, is_active: true }
       } else {
         delete allIcons[platform]
       }
-      
+
       const updatedSocialIcons = Object.values(allIcons).filter((icon: any) => icon.is_active && icon.url)
       onPreviewUpdate.setSocialIcons(updatedSocialIcons)
     }
@@ -289,7 +289,7 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
   }
 
   return (
-    <div 
+    <div
       className="bg-white rounded-xl"
       style={{ boxShadow: 'rgba(0, 0, 0, 0.02) 0px 2px 8px' }}
     >
@@ -302,8 +302,8 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
         <div>
           <label className="block text-sm font-semibold text-gray-900 mb-4">Profile Image</label>
           <div className="flex items-start gap-6">
-            <div 
-              className="relative group cursor-pointer" 
+            <div
+              className="relative group cursor-pointer"
               onClick={() => fileInputRef.current?.click()}
             >
               <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
@@ -364,7 +364,7 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
                 value={formData.display_name}
                 onChange={(e) => handleInputChange('display_name', e.target.value)}
                 placeholder="Your display name"
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all duration-300 ease-in-out"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all duration-300 ease-in-out"
               />
             </div>
           </div>
@@ -380,7 +380,7 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
                 value={formData.embedded_video}
                 onChange={(e) => handleInputChange('embedded_video', e.target.value)}
                 placeholder="YouTube or Vimeo URL"
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all duration-300 ease-in-out"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all duration-300 ease-in-out"
               />
             </div>
           </div>
@@ -396,7 +396,7 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
               onChange={(e) => handleInputChange('bio', e.target.value)}
               placeholder="Tell visitors about yourself..."
               rows={4}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all duration-300 ease-in-out resize-none"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all duration-300 ease-in-out resize-none"
             />
           </div>
           <div className="flex justify-end items-center mt-1">
@@ -413,8 +413,8 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
               return (
                 <div key={platform.key}>
                   <div className="relative">
-                    <IconComponent 
-                      className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" 
+                    <IconComponent
+                      className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
                       style={{ color: platform.color }}
                     />
                     <span className="absolute left-9 top-1/2 transform -translate-y-1/2 text-xs text-gray-500">
@@ -425,7 +425,7 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
                       value={socialLinks[platform.key] || ''}
                       onChange={(e) => handleSocialLinkChange(platform.key, e.target.value)}
                       placeholder={platform.placeholder}
-                      className="w-full pl-16 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all duration-300 ease-in-out"
+                      className="w-full pl-16 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all duration-300 ease-in-out"
                     />
                   </div>
                 </div>
@@ -436,7 +436,7 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
             <button
               type="button"
               onClick={() => setShowAllSocials(!showAllSocials)}
-              className="flex items-center gap-2 text-base text-purple-600 hover:text-purple-700 font-medium"
+              className="flex items-center gap-2 text-base text-brand-600 hover:text-purple-700 font-medium"
             >
               {showAllSocials ? 'Show Less' : 'View More'}
               {showAllSocials ? (
@@ -459,7 +459,7 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
             </div>
             <button
               onClick={() => handleInputChange('is_active', !formData.is_active)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData.is_active ? 'bg-purple-600' : 'bg-gray-200'
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData.is_active ? 'bg-brand-600' : 'bg-gray-200'
                 }`}
             >
               <span
@@ -477,7 +477,7 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
             disabled={isSaving}
             className={`inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${saveSuccess
               ? 'bg-green-600 text-white'
-              : 'bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed'
+              : 'bg-brand-600 hover:bg-brand-700 text-white disabled:opacity-50 disabled:cursor-not-allowed'
               }`}
           >
             {isSaving ? (

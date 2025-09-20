@@ -155,7 +155,7 @@ export function PostComposer({ content, onContentChange, selectedPlatforms, isMi
           {/* Text Area */}
           <div className="relative">
             {isMiloUpdating && (
-              <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-purple-500/5 via-violet-500/10 to-purple-500/5 animate-pulse pointer-events-none z-10"></div>
+              <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-brand-500/5 via-violet-500/10 to-brand-500/5 animate-pulse pointer-events-none z-10"></div>
             )}
             <textarea
               ref={textareaRef}

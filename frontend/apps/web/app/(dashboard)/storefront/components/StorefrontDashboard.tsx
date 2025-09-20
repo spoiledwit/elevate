@@ -50,7 +50,7 @@ export function StorefrontDashboard({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                  <Store className="w-7 h-7 text-purple-600" />
+                  <Store className="w-7 h-7 text-brand-600" />
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">My Storefront</h1>
@@ -66,7 +66,7 @@ export function StorefrontDashboard({
                     href={`/${session?.user?.username}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-purple-600 hover:text-purple-700 transition-colors font-medium text-base"
+                    className="text-brand-600 hover:text-purple-700 transition-colors font-medium text-base"
                   >
                     elevate.social/{session?.user?.username}
                   </a>
@@ -109,7 +109,7 @@ export function StorefrontDashboard({
                         }
                       )
                     }}
-                    className="p-1.5 text-purple-600 hover:text-purple-700 transition-colors"
+                    className="p-1.5 text-brand-600 hover:text-purple-700 transition-colors"
                     title="Copy link"
                   >
                     <Copy className="w-4 h-4" />
@@ -165,7 +165,7 @@ export function StorefrontDashboard({
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <Link className="w-5 h-5 text-purple-600" />
+                  <Link className="w-5 h-5 text-brand-600" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-600">Active Links</p>

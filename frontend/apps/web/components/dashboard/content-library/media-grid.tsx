@@ -132,7 +132,7 @@ export function MediaGrid({ items, viewMode, selectedItems, onSelectionChange }:
                     className="rounded border-gray-300 text-[#714efe] focus:ring-[#714efe]"
                   />
                 </div>
-                
+
                 <div className="col-span-4 flex items-center gap-3">
                   <div className="relative">
                     {item.type === 'image' ? (
@@ -155,13 +155,13 @@ export function MediaGrid({ items, viewMode, selectedItems, onSelectionChange }:
                     <p className="text-sm text-gray-500">{item.folder}</p>
                   </div>
                 </div>
-                
+
                 <div className="col-span-2 flex items-center">
                   <span className={cn("px-2 py-1 text-xs font-medium rounded border", getFileTypeColor(item.type))}>
                     {item.type.toUpperCase()}
                   </span>
                 </div>
-                
+
                 <div className="col-span-2 flex items-center text-sm text-gray-600">
                   {formatFileSize(item.size)}
                   {item.dimensions && (
@@ -175,11 +175,11 @@ export function MediaGrid({ items, viewMode, selectedItems, onSelectionChange }:
                     </span>
                   )}
                 </div>
-                
+
                 <div className="col-span-2 flex items-center text-sm text-gray-600">
                   {formatDate(item.uploadedAt)}
                 </div>
-                
+
                 <div className="col-span-1 flex items-center">
                   <button className="p-1 hover:bg-gray-100 rounded">
                     <MoreHorizontal className="w-4 h-4 text-gray-400" />
@@ -205,7 +205,7 @@ export function MediaGrid({ items, viewMode, selectedItems, onSelectionChange }:
             key={item.id}
             className={cn(
               "bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200 cursor-pointer",
-              isSelected && "ring-2 ring-purple-500 border-[#714efe]"
+              isSelected && "ring-2 ring-brand-500 border-[#714efe]"
             )}
             onMouseEnter={() => setHoveredItem(item.id)}
             onMouseLeave={() => setHoveredItem(null)}
@@ -224,7 +224,7 @@ export function MediaGrid({ items, viewMode, selectedItems, onSelectionChange }:
                   <TypeIcon className="w-12 h-12 text-gray-400" />
                 </div>
               )}
-              
+
               {/* Type Badge */}
               <div className={cn("absolute top-2 left-2 p-1.5 rounded border", getFileTypeColor(item.type))}>
                 <TypeIcon className="w-3 h-3" />
@@ -245,7 +245,7 @@ export function MediaGrid({ items, viewMode, selectedItems, onSelectionChange }:
                 <div className={cn(
                   "w-5 h-5 rounded border-2 flex items-center justify-center",
                   isSelected
-                    ? "bg-[#714efe] border-purple-600"
+                    ? "bg-[#714efe] border-brand-600"
                     : "bg-white border-white"
                 )}>
                   {isSelected && <Check className="w-3 h-3 text-white" />}
@@ -256,7 +256,7 @@ export function MediaGrid({ items, viewMode, selectedItems, onSelectionChange }:
               {isHovered && (
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                   <div className="flex items-center gap-2">
-                    <button 
+                    <button
                       className="p-2 bg-white/90 rounded-lg hover:bg-white transition-colors"
                       onClick={(e) => {
                         e.stopPropagation()
@@ -271,7 +271,7 @@ export function MediaGrid({ items, viewMode, selectedItems, onSelectionChange }:
                     >
                       <Download className="w-4 h-4 text-gray-700" />
                     </button>
-                    <button 
+                    <button
                       className="p-2 bg-white/90 rounded-lg hover:bg-white transition-colors"
                       onClick={(e) => {
                         e.stopPropagation()
@@ -292,7 +292,7 @@ export function MediaGrid({ items, viewMode, selectedItems, onSelectionChange }:
             {/* Content */}
             <div className="p-3">
               <h3 className="font-medium text-gray-900 truncate mb-1">{item.name}</h3>
-              
+
               <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
                 <FolderOpen className="w-3 h-3" />
                 <span>{item.folder}</span>

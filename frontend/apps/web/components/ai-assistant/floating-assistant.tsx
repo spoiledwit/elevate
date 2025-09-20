@@ -30,12 +30,12 @@ export function FloatingAssistant() {
         <>
             <button
                 onClick={() => setOpen(o => !o)}
-                className="fixed bottom-5 right-5 z-50 shadow-lg bg-purple-600 hover:bg-purple-700 text-white rounded-full w-14 h-14 flex items-center justify-center text-xs font-semibold"
+                className="fixed bottom-5 right-5 z-50 shadow-lg bg-brand-600 hover:bg-brand-700 text-white rounded-full w-14 h-14 flex items-center justify-center text-xs font-semibold"
                 aria-label="Toggle AI Assistant"
             >AI</button>
             {open && (
                 <div className="fixed bottom-24 right-5 z-50 w-[380px] h-[560px] bg-white border border-gray-200 rounded-xl shadow-2xl flex flex-col overflow-hidden">
-                    <div className="px-4 py-3 border-b flex items-center justify-between bg-gradient-to-r from-purple-600 to-purple-500 text-white">
+                    <div className="px-4 py-3 border-b flex items-center justify-between bg-gradient-to-r from-brand-600 to-brand-500 text-white">
                         <h3 className="text-sm font-semibold">AI Assistant</h3>
                         <button onClick={() => setOpen(false)} className="text-white/80 hover:text-white text-xs">Close</button>
                     </div>
@@ -44,7 +44,7 @@ export function FloatingAssistant() {
                             <button
                                 key={c.key}
                                 onClick={() => setActiveUseCase(c.key)}
-                                className={`px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${activeUseCase === c.key ? 'bg-purple-600 text-white border-purple-600' : 'bg-white hover:bg-gray-100'}`}
+                                className={`px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${activeUseCase === c.key ? 'bg-brand-600 text-white border-brand-600' : 'bg-white hover:bg-gray-100'}`}
                             >{c.name}</button>
                         ))}
                     </div>

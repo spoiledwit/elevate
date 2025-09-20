@@ -104,6 +104,10 @@ from .apis.comments import (
     comment_replies_for_comment,
     automation_stats,
 )
+from .apis.realtime import (
+    create_realtime_session,
+    realtime_status,
+)
 from .apis.direct_messages import (
     DirectMessageListView,
     DirectMessageDetailView,
@@ -285,7 +289,11 @@ urlpatterns = [
     
     # DM Statistics URLs
     path("api/dm-automation-stats/", dm_automation_stats, name="dm_automation_stats"),
-    
+
+    # Realtime AI URLs
+    path("api/realtime/session/", create_realtime_session, name="realtime_create_session"),
+    path("api/realtime/status/", realtime_status, name="realtime_status"),
+
     path("admin/", admin.site.urls),
     
 

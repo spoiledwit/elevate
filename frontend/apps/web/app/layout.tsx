@@ -3,7 +3,6 @@ import type { Metadata } from 'next'
 import { Poppins } from 'next/font/google'
 import { twMerge } from 'tailwind-merge'
 import { Toaster } from 'sonner'
-import { ComingSoon } from '@/components/coming-soon'
 
 import '@frontend/ui/styles/globals.css'
 
@@ -45,7 +44,7 @@ export default function RootLayout({
       >
         <AuthProvider>
           <div className="">
-            <div className=""><ComingSoon /></div>
+            <div className="">{children}</div>
           </div>
           <Toaster
             position="top-right"

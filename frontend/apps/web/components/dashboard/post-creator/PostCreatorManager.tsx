@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { PostComposer } from '@/components/dashboard/post-creator/post-composer'
 import { MediaUploader } from '@/components/dashboard/post-creator/media-uploader'
 import { PlatformSelector } from '@/components/dashboard/post-creator/platform-selector'
 import { PostScheduler } from '@/components/dashboard/post-creator/post-scheduler'
 import { PostPreview } from '@/components/dashboard/post-creator/post-preview'
+import { ImageGenerationDialog } from '@/components/dashboard/post-creator/image-generation-dialog'
+import { MiloChatbot } from '@/components/milo-chatbot/milo-chatbot'
 import {
   saveAsDraftAction,
   schedulePostAction,
@@ -49,20 +51,59 @@ export function PostCreatorManager({ initialPlatforms }: PostCreatorManagerProps
   const [platforms, setPlatforms] = useState<Platform[]>(initialPlatforms)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoadingMedia, setIsLoadingMedia] = useState(false)
+  const [showImageGenDialog, setShowImageGenDialog] = useState(false)
+  const [isMiloUpdating, setIsMiloUpdating] = useState(false)
+  const [isMiloGeneratingImage, setIsMiloGeneratingImage] = useState(false)
+
+  // Handle Milo content updates with futuristic effects
+  const handleMiloContentUpdate = useCallback((newContent: string) => {
+    if (newContent === '') {
+      // Starting update - trigger glow effect
+      setIsMiloUpdating(true)
+      setContent('')
+    } else {
+      // Update content with typewriter effect
+      setContent(newContent)
+
+      // Keep the animation going - don't end it here
+      // The animation will be ended when Milo finishes typing
+    }
+  }, [])
+
+  // Handle when Milo finishes typing
+  const handleMiloTypingComplete = useCallback(() => {
+    setIsMiloUpdating(false)
+  }, [])
+
+  // Handle when Milo starts generating an image
+  const handleMiloImageGenerationStart = useCallback(() => {
+    setIsMiloGeneratingImage(true)
+  }, [])
+
+  // Handle when Milo finishes generating an image
+  const handleMiloImageGenerationComplete = useCallback(() => {
+    setIsMiloGeneratingImage(false)
+  }, [])
+
+  // Handle generated image insertion
+  const handleGeneratedImageInsert = (imageFile: File) => {
+    setMediaFiles(prev => [...prev, imageFile])
+    toast.success('AI generated image added')
+  }
 
   // Check for preloaded media from content library
   useEffect(() => {
     const mediaUrl = sessionStorage.getItem('preloadedMediaUrl')
     const mediaName = sessionStorage.getItem('preloadedMediaName')
-    
+
     if (mediaUrl && mediaName) {
       // Clear the sessionStorage to prevent reloading on refresh
       sessionStorage.removeItem('preloadedMediaUrl')
       sessionStorage.removeItem('preloadedMediaName')
-      
+
       // Show loading state
       setIsLoadingMedia(true)
-      
+
       // Fetch the image and convert it to a File object
       fetch(mediaUrl)
         .then(response => response.blob())
@@ -293,6 +334,7 @@ export function PostCreatorManager({ initialPlatforms }: PostCreatorManagerProps
                 selectedPlatforms={platforms.filter(p =>
                   p.connections.some(c => selectedConnections.includes(c.id))
                 ).map(p => p.name)}
+                isMiloUpdating={isMiloUpdating}
               />
 
               {/* Media Uploader */}
@@ -303,6 +345,8 @@ export function PostCreatorManager({ initialPlatforms }: PostCreatorManagerProps
                   p.connections.some(c => selectedConnections.includes(c.id))
                 ).map(p => p.name)}
                 isLoadingMedia={isLoadingMedia}
+                onGenerateImage={() => setShowImageGenDialog(true)}
+                isMiloGeneratingImage={isMiloGeneratingImage}
               />
 
               {/* Scheduling */}
@@ -334,6 +378,22 @@ export function PostCreatorManager({ initialPlatforms }: PostCreatorManagerProps
           </div>
         </div>
       </div>
+
+      {/* Image Generation Dialog */}
+      <ImageGenerationDialog
+        isOpen={showImageGenDialog}
+        onClose={() => setShowImageGenDialog(false)}
+        onInsert={handleGeneratedImageInsert}
+      />
+
+      {/* Milo Chatbot */}
+      <MiloChatbot
+        onContentUpdate={handleMiloContentUpdate}
+        onTypingComplete={handleMiloTypingComplete}
+        onImageGenerated={handleGeneratedImageInsert}
+        onImageGenerationStart={handleMiloImageGenerationStart}
+        onImageGenerationComplete={handleMiloImageGenerationComplete}
+      />
     </div>
   )
 }

@@ -87,6 +87,15 @@
   animation: progress-bar 4s linear;
 }
 
+/* Animation delay classes for Milo AI effects */
+.animation-delay-200 {
+  animation-delay: 0.2s;
+}
+
+.animation-delay-400 {
+  animation-delay: 0.4s;
+}
+
 /* Custom Sonner Toast Styling */
 [data-sonner-toaster] {
   --normal-bg: 255 255 255;

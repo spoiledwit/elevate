@@ -12,6 +12,7 @@
     "@frontend/types": "workspace:^",
     "@frontend/ui": "workspace:^",
     "@hookform/resolvers": "^3.9.1",
+    "@openai/agents": "^0.1.3",
     "@tinymce/tinymce-react": "^5.1.1",
     "clsx": "^2.1.1",
     "driver.js": "^1.3.6",
@@ -23,7 +24,7 @@
     "react-icons": "^5.5.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^2.6.0",
-    "zod": "^3.24.1"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "typescript": "5.7.2"

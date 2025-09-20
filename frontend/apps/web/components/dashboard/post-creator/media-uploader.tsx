@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import { Upload, X, Image, Film, FileText, Loader2, FolderOpen, Cloud } from 'lucide-react'
+import { Upload, X, Image, Film, FileText, Loader2, Wand2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface MediaUploaderProps {
@@ -9,9 +9,11 @@ interface MediaUploaderProps {
   onMediaChange: (files: File[]) => void
   selectedPlatforms: string[]
   isLoadingMedia?: boolean
+  onGenerateImage?: () => void
+  isMiloGeneratingImage?: boolean
 }
 
-export function MediaUploader({ mediaFiles, onMediaChange, selectedPlatforms, isLoadingMedia = false }: MediaUploaderProps) {
+export function MediaUploader({ mediaFiles, onMediaChange, selectedPlatforms, isLoadingMedia = false, onGenerateImage, isMiloGeneratingImage = false }: MediaUploaderProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [previews, setPreviews] = useState<string[]>([])
@@ -128,14 +130,16 @@ export function MediaUploader({ mediaFiles, onMediaChange, selectedPlatforms, is
     <div className="bg-white rounded-lg border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-gray-900">Media</h2>
-        <div className="flex items-center gap-2">
-          <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" title="Browse files">
-            <FolderOpen className="w-5 h-5" />
+        {onGenerateImage && (
+          <button
+            onClick={onGenerateImage}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+            title="Generate image with AI"
+          >
+            <Wand2 className="w-4 h-4" />
+            Generate Image
           </button>
-          <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" title="Import from Google Drive">
-            <Cloud className="w-5 h-5" />
-          </button>
-        </div>
+        )}
       </div>
 
       {/* Drop Zone */}
@@ -146,13 +150,19 @@ export function MediaUploader({ mediaFiles, onMediaChange, selectedPlatforms, is
         className={cn(
           "relative border-2 border-dashed rounded-lg transition-all",
           isDragging ? "border-purple-500 bg-purple-50" : "border-gray-300",
-          mediaFiles.length > 0 || isLoadingMedia ? "p-4" : "p-8"
+          mediaFiles.length > 0 || isLoadingMedia || isMiloGeneratingImage ? "p-4" : "p-8"
         )}
       >
         {isLoadingMedia ? (
           <div className="text-center py-8">
             <Loader2 className="w-12 h-12 text-purple-600 animate-spin mx-auto mb-4" />
             <p className="text-gray-600">Loading image from content library...</p>
+          </div>
+        ) : isMiloGeneratingImage ? (
+          <div className="text-center py-8">
+            <Loader2 className="w-12 h-12 text-purple-600 animate-spin mx-auto mb-4" />
+            <p className="text-purple-700 font-medium">Milo is generating your image...</p>
+            <p className="text-sm text-gray-500 mt-2">This may take up to 30 seconds</p>
           </div>
         ) : mediaFiles.length === 0 ? (
           <div className="text-center">

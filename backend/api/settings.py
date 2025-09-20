@@ -27,6 +27,31 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:8000",
 ]
 
+######################################################################
+# CORS Configuration
+######################################################################
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://elevate.social",
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOWED_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+CORS_ALLOW_ALL_ORIGINS = DEBUG  # Allow all origins in development
+
 WSGI_APPLICATION = "api.wsgi.application"
 
 ROOT_URLCONF = "api.urls"
@@ -37,7 +62,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Apps
 ######################################################################
 INSTALLED_APPS = [
-    "unfold.contrib.import_export",  # Must be before unfold  
+    "unfold.contrib.import_export",  # Must be before unfold
     "unfold",
     "django.contrib.admin",
     "django.contrib.auth",
@@ -55,6 +80,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "django_celery_beat",
     "import_export",
+    "corsheaders",
     # Django Allauth
     "allauth",
     "allauth.account",
@@ -67,6 +93,7 @@ INSTALLED_APPS = [
 # Middleware
 ######################################################################
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",

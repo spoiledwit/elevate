@@ -110,14 +110,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       ]
     },
     {
-      id: 'ai-tools',
-      title: 'AI & Tools',
-      icon: Bot,
-      items: [
-        { id: 'ai-assistant', label: 'AI Assistant', icon: Bot },
-      ]
-    },
-    {
       id: 'business',
       title: 'Business',
       icon: CreditCard,
@@ -150,8 +142,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         return permissions.can_access_content
       case 'automation':
         return permissions.can_access_automation
-      case 'ai-tools':
-        return permissions.can_access_ai_tools
       case 'business':
         return permissions.can_access_business
       case 'account':
@@ -166,13 +156,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     return permissionsLoading ? [] : sidebarSections.filter(section => hasPermission(section.id))
   }, [permissionsLoading, userPermissions])
 
-  // Initialize onboarding with allowed sections
+  // Initialize onboarding with allowed sections (disabled for now)
   const { hasSeenOnboarding, startOnboarding } = useOnboarding(
     (sectionId: string) => {
       setExpandedSections([sectionId])
     },
     allowedSidebarSections.map(section => section.id)
   )
+
+  // Disable onboarding
+  const disableOnboarding = true
 
   const toggleSection = (sectionId: string) => {
     setExpandedSections(prev =>
@@ -204,8 +197,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         return { itemId: 'content-library', sectionId: 'content' }
       case '/social-accounts':
         return { itemId: 'social-accounts', sectionId: 'content' }
-      case '/ai-assistant':
-        return { itemId: 'ai-assistant', sectionId: 'ai-tools' }
       case '/comments':
         return { itemId: 'comments', sectionId: 'automation' }
       case '/automation-rules':
@@ -230,16 +221,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     setExpandedSections([sectionId])
   }, [pathname])
 
-  // Start onboarding for first-time users
+  // Start onboarding for first-time users (disabled)
   useEffect(() => {
-    if (!hasSeenOnboarding && pathname === '/dashboard') {
+    if (!disableOnboarding && !hasSeenOnboarding && pathname === '/dashboard') {
       // Small delay to ensure DOM elements are rendered
       const timer = setTimeout(() => {
         startOnboarding()
       }, 200)
       return () => clearTimeout(timer)
     }
-  }, [hasSeenOnboarding, pathname]) // Removed startOnboarding from dependencies
+  }, [hasSeenOnboarding, pathname, disableOnboarding]) // Removed startOnboarding from dependencies
 
   const handleItemClick = (itemId: string, sectionId: string) => {
     // Auto-expand this section and close others
@@ -262,9 +253,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         break
       case 'subscription':
         router.push('/subscription')
-        break
-      case 'ai-assistant':
-        router.push('/ai-assistant')
         break
       case 'comments':
         router.push('/comments')
@@ -418,8 +406,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         {children}
       </div>
 
-      {/* Onboarding help trigger */}
-      <OnboardingTrigger expandSection={(sectionId: string) => setExpandedSections([sectionId])} />
+      {/* Onboarding help trigger (disabled) */}
+      {!disableOnboarding && (
+        <OnboardingTrigger expandSection={(sectionId: string) => setExpandedSections([sectionId])} />
+      )}
     </div>
   )
 }

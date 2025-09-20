@@ -47,16 +47,6 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
   const isSpeaking = connectionState === RealtimeConnectionState.SPEAKING
   const isConnecting = connectionState === RealtimeConnectionState.CONNECTING
 
-  // Debug logs
-  console.log('MiloChatbot render:', {
-    connectionState,
-    isConnected,
-    isConnecting,
-    isListening,
-    isSpeaking,
-    error
-  })
-
   // Update audio visualization data
   useEffect(() => {
     let animationFrame: number
@@ -195,10 +185,10 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
             )}></div>
           </div>
 
-          {/* Debug: Show current state */}
-          <div className="absolute top-2 left-2 text-xs text-white/70 z-50">
+          {/* Debug: Show current state - commented out for production */}
+          {/* <div className="absolute top-2 left-2 text-xs text-white/70 z-50">
             State: {connectionState} | Connecting: {isConnecting.toString()} | Connected: {isConnected.toString()}
-          </div>
+          </div> */}
 
           {error ? (
             <div className="relative text-center space-y-6 z-10">

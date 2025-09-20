@@ -77,7 +77,7 @@ export function CalendarManager({ initialPosts }: CalendarManagerProps) {
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([])
   const [selectedStatus, setSelectedStatus] = useState<string[]>([])
   const [showFilters, setShowFilters] = useState(false)
-  
+
   // Data state
   const [posts, setPosts] = useState<CalendarPost[]>(initialPosts)
   const [loading, setLoading] = useState(false)
@@ -87,26 +87,26 @@ export function CalendarManager({ initialPosts }: CalendarManagerProps) {
   const loadPosts = async () => {
     setLoading(true)
     setError(null)
-    
+
     try {
       const result = await getPostsAction()
-      
+
       if ('error' in result) {
         setError(result.error)
         toast.error('Failed to load posts')
         return
       }
-      
+
       // Transform backend posts to calendar format
       // Handle both paginated and non-paginated responses
       const backendPosts = result.results || result || []
-      
-      const transformedPosts = Array.isArray(backendPosts) 
-        ? backendPosts.map(transformBackendPost) 
+
+      const transformedPosts = Array.isArray(backendPosts)
+        ? backendPosts.map(transformBackendPost)
         : []
-      
+
       setPosts(transformedPosts)
-      
+
     } catch (err) {
       console.error('Failed to load posts:', err)
       setError('Failed to load posts')
@@ -183,7 +183,7 @@ export function CalendarManager({ initialPosts }: CalendarManagerProps) {
 
               <Link
                 href={"post-creator"}
-                className="flex items-center gap-2 px-6 py-2 text-white rounded-lg transition-colors" style={{backgroundColor: '#714efe'}} onMouseEnter={(e) => e.target.style.backgroundColor = '#5f3fd6'} onMouseLeave={(e) => e.target.style.backgroundColor = '#714efe'}>
+                className="flex items-center gap-2 px-6 py-2 text-white rounded-lg transition-colors" style={{ backgroundColor: '#714efe' }}>
                 <Plus className="w-4 h-4" />
                 Create Post
               </Link>
@@ -217,7 +217,7 @@ export function CalendarManager({ initialPosts }: CalendarManagerProps) {
               {loading ? (
                 <div className="flex items-center justify-center py-12">
                   <div className="text-center">
-                    <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" style={{color: '#714efe'}} />
+                    <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" style={{ color: '#714efe' }} />
                     <p className="text-gray-600">Loading posts...</p>
                   </div>
                 </div>
@@ -233,7 +233,7 @@ export function CalendarManager({ initialPosts }: CalendarManagerProps) {
                     <p className="text-sm text-gray-500 mb-4">{error}</p>
                     <button
                       onClick={() => loadPosts()}
-                      className="px-4 py-2 text-white rounded-lg transition-colors" style={{backgroundColor: '#714efe'}} onMouseEnter={(e) => e.target.style.backgroundColor = '#5f3fd6'} onMouseLeave={(e) => e.target.style.backgroundColor = '#714efe'}
+                      className="px-4 py-2 text-white rounded-lg transition-colors" style={{ backgroundColor: '#714efe' }}
                     >
                       Try Again
                     </button>
@@ -251,7 +251,7 @@ export function CalendarManager({ initialPosts }: CalendarManagerProps) {
                     </p>
                     <Link
                       href="/post-creator"
-                      className="inline-flex items-center gap-2 px-6 py-2 text-white rounded-lg transition-colors" style={{backgroundColor: '#714efe'}} onMouseEnter={(e) => e.target.style.backgroundColor = '#5f3fd6'} onMouseLeave={(e) => e.target.style.backgroundColor = '#714efe'}
+                      className="inline-flex items-center gap-2 px-6 py-2 text-white rounded-lg transition-colors" style={{ backgroundColor: '#714efe' }}
                     >
                       <Plus className="w-4 h-4" />
                       Create Your First Post

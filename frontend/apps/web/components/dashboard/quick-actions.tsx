@@ -13,15 +13,15 @@ export function QuickActions() {
             <div className="font-medium text-blue-900">Manage Links</div>
             <div className="text-sm text-blue-700">Add or edit your custom links</div>
           </a>
-          
+
           <a
             href="/dashboard/cta-banners"
-            className="block w-full text-left px-4 py-3 rounded-lg border transition-colors" style={{backgroundColor: '#714efe1a', borderColor: '#714efe33'}} onMouseEnter={(e) => {e.target.style.backgroundColor = '#714efe33'}} onMouseLeave={(e) => {e.target.style.backgroundColor = '#714efe1a'}}
+            className="block w-full text-left px-4 py-3 rounded-lg border transition-colors" style={{ backgroundColor: '#714efe1a', borderColor: '#714efe33' }}
           >
-            <div className="font-medium" style={{color: '#5f3fd6'}}>Edit CTA Banner</div>
-            <div className="text-sm" style={{color: '#714efe'}}>Create promotional banners</div>
+            <div className="font-medium" style={{ color: '#5f3fd6' }}>Edit CTA Banner</div>
+            <div className="text-sm" style={{ color: '#714efe' }}>Create promotional banners</div>
           </a>
-          
+
           <a
             href="/dashboard/storefront"
             className="block w-full text-left px-4 py-3 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors"

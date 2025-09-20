@@ -62,9 +62,9 @@ export function CommentsList({ comments, loading, onRefresh }: CommentsListProps
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit'
     })
   }
 
@@ -98,7 +98,7 @@ export function CommentsList({ comments, loading, onRefresh }: CommentsListProps
         </p>
         <button
           onClick={onRefresh}
-          className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors" style={{backgroundColor: '#714efe'}} onMouseEnter={(e) => e.target.style.backgroundColor = '#5f3fd6'} onMouseLeave={(e) => e.target.style.backgroundColor = '#714efe'}
+          className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors" style={{ backgroundColor: '#714efe' }}
         >
           <MessageCircle className="w-4 h-4" />
           Check for new comments
@@ -117,7 +117,7 @@ export function CommentsList({ comments, loading, onRefresh }: CommentsListProps
             onClick={() => handleCommentClick(comment)}
           >
             {/* User Avatar */}
-            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{background: 'linear-gradient(135deg, #714efe 0%, #5f3fd6 100%)'}}>
+            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, #714efe 0%, #5f3fd6 100%)' }}>
               <User className="w-5 h-5 text-white" />
             </div>
 

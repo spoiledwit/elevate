@@ -47,7 +47,8 @@ export function Navbar() {
           ) : session ? (
             <Link
               href="/dashboard"
-              className="bg-purple-600 font-semibold text-white px-6 py-2.5 rounded-lg hover:scale-105 transition-all"
+              className="font-semibold text-white px-6 py-2.5 rounded-lg hover:scale-105 transition-all"
+              style={{backgroundColor: '#714efe'}}
             >
               Dashboard
             </Link>
@@ -58,7 +59,8 @@ export function Navbar() {
               </Link>
               <Link
                 href="/get-started"
-                className="bg-purple-600 font-semibold text-white px-6 py-2.5 rounded-lg hover:scale-105 transition-all"
+                className="font-semibold text-white px-6 py-2.5 rounded-lg hover:scale-105 transition-all"
+                style={{backgroundColor: '#714efe'}}
               >
                 Get Started
               </Link>
@@ -123,7 +125,10 @@ export function Navbar() {
               ) : session ? (
                 <Link
                   href="/dashboard"
-                  className="block bg-purple-600 font-semibold text-white px-6 py-2.5 rounded-lg text-center hover:bg-purple-700 transition-colors"
+                  className="block font-semibold text-white px-6 py-2.5 rounded-lg text-center transition-colors"
+                  style={{backgroundColor: '#714efe'}}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#5f3fd6'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#714efe'}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Dashboard
@@ -139,7 +144,10 @@ export function Navbar() {
                   </Link>
                   <Link
                     href="/get-started"
-                    className="block bg-purple-600 font-semibold text-white px-6 py-2.5 rounded-lg text-center hover:bg-purple-700 transition-colors"
+                    className="block font-semibold text-white px-6 py-2.5 rounded-lg text-center transition-colors"
+                    style={{backgroundColor: '#714efe'}}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#5f3fd6'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#714efe'}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Get Started

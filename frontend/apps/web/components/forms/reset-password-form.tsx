@@ -52,7 +52,9 @@ export function ResetPasswordForm() {
                         {...register('password')}
                         type="password"
                         placeholder="Enter new password"
-                        className="w-full px-3 h-11 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm"
+                        className="w-full px-3 h-11 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none text-sm"
+                        onFocus={(e) => e.target.style.boxShadow = `0 0 0 2px #714efe66`}
+                        onBlur={(e) => e.target.style.boxShadow = ''}
                     />
                     {formState.errors.password && (
                         <p className="text-red-500 text-sm">{formState.errors.password.message}</p>
@@ -65,14 +67,16 @@ export function ResetPasswordForm() {
                         {...register('passwordRetype')}
                         type="password"
                         placeholder="Confirm new password"
-                        className="w-full px-3 h-11 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm"
+                        className="w-full px-3 h-11 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none text-sm"
+                        onFocus={(e) => e.target.style.boxShadow = `0 0 0 2px #714efe66`}
+                        onBlur={(e) => e.target.style.boxShadow = ''}
                     />
                     {formState.errors.passwordRetype && (
                         <p className="text-red-500 text-sm">{formState.errors.passwordRetype.message}</p>
                     )}
                 </div>
 
-                <button type="submit" className="w-full bg-purple-500 hover:bg-purple-600 text-white font-medium h-11 rounded-lg text-sm">Reset password</button>
+                <button type="submit" className="w-full text-white font-medium h-11 rounded-lg text-sm transition-colors" style={{backgroundColor: '#714efe'}} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#5f3fd6'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#714efe'}>Reset password</button>
             </form>
         </div>
     )

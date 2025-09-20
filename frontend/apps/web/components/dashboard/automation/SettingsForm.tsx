@@ -121,7 +121,7 @@ export function SettingsForm({ setting, facebookPages, pagesWithoutSettings, onC
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
-            <Settings2 className="w-6 h-6 text-purple-600" />
+            <Settings2 className="w-6 h-6 text-[#714efe]" />
             <h2 className="text-xl font-semibold text-gray-900">
               {isEditing ? 'Update Settings' : 'Setup Automation'}
             </h2>
@@ -151,7 +151,7 @@ export function SettingsForm({ setting, facebookPages, pagesWithoutSettings, onC
                 <select
                   value={formData.connection_id}
                   onChange={(e) => handleInputChange('connection_id', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#714efe] focus:border-transparent"
                 >
                   <option value="">Select a Facebook page</option>
                   {availablePages.map((page: any) => (
@@ -170,9 +170,9 @@ export function SettingsForm({ setting, facebookPages, pagesWithoutSettings, onC
           {/* Enable/Disable Toggle */}
           <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-[#714efe1a] rounded-lg flex items-center justify-center">
                 {formData.is_enabled ? (
-                  <ToggleRight className="w-5 h-5 text-purple-600" />
+                  <ToggleRight className="w-5 h-5 text-[#714efe]" />
                 ) : (
                   <ToggleLeft className="w-5 h-5 text-gray-500" />
                 )}
@@ -191,7 +191,7 @@ export function SettingsForm({ setting, facebookPages, pagesWithoutSettings, onC
                 onChange={(e) => handleInputChange('is_enabled', e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#714efe66] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#714efe]"></div>
             </label>
           </div>
 
@@ -219,7 +219,7 @@ export function SettingsForm({ setting, facebookPages, pagesWithoutSettings, onC
                   max="300"
                   value={formData.reply_delay_seconds}
                   onChange={(e) => handleInputChange('reply_delay_seconds', e.target.value)}
-                  className="w-14 px-2 py-1 border border-gray-300 rounded text-sm text-center focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-14 px-2 py-1 border border-gray-300 rounded text-sm text-center focus:ring-2 focus:ring-[#714efe] focus:border-transparent"
                 />
                 <span className="text-sm text-gray-500">s</span>
               </div>
@@ -245,7 +245,7 @@ export function SettingsForm({ setting, facebookPages, pagesWithoutSettings, onC
               onChange={(e) => handleInputChange('default_reply', e.target.value)}
               placeholder="Optional: Message to send when no automation rules match..."
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#714efe] focus:border-transparent resize-none"
             />
             <p className="text-xs text-gray-500 mt-1">
               This message is sent when a comment doesn't match any automation rules
@@ -358,7 +358,7 @@ export function SettingsForm({ setting, facebookPages, pagesWithoutSettings, onC
             type="submit"
             form="settings-form"
             disabled={loading}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-4 py-2 bg-[#714efe] text-white rounded-lg hover:bg-[#5f3fd6] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {loading ? (
               <>

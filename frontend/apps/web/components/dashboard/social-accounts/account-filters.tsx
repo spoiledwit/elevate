@@ -38,7 +38,7 @@ export function AccountFilters({
   totalAccounts,
   filteredAccounts
 }: AccountFiltersProps) {
-  
+
   const clearAllFilters = () => {
     onStatusChange('all')
     onPlatformChange('all')
@@ -57,7 +57,7 @@ export function AccountFilters({
         {hasActiveFilters && (
           <button
             onClick={clearAllFilters}
-            className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+            className="text-sm font-medium" style={{ color: '#714efe' }}
           >
             Clear all
           </button>
@@ -79,22 +79,21 @@ export function AccountFilters({
           {statusOptions.map((status) => {
             const Icon = status.icon
             const isSelected = filterStatus === status.id
-            
+
             return (
               <button
                 key={status.id}
                 onClick={() => onStatusChange(status.id)}
                 className={cn(
                   "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors border",
-                  isSelected
-                    ? "bg-purple-50 text-purple-700 border-purple-200"
-                    : "text-gray-600 hover:bg-gray-50 border-transparent hover:border-gray-200"
+                  !isSelected && "text-gray-600 hover:bg-gray-50 border-transparent hover:border-gray-200"
                 )}
+                style={isSelected ? { backgroundColor: '#714efe1a', color: '#714efe', borderColor: '#714efe33' } : {}}
               >
-                <Icon className={cn("w-4 h-4", isSelected ? "text-purple-600" : status.color)} />
+                <Icon className={cn("w-4 h-4", !isSelected && status.color)} style={isSelected ? { color: '#714efe' } : {}} />
                 <span className="flex-1 text-left">{status.name}</span>
                 {isSelected && (
-                  <CheckCircle className="w-4 h-4 text-purple-600" />
+                  <CheckCircle className="w-4 h-4" style={{color: '#714efe'}} />
                 )}
               </button>
             )
@@ -109,22 +108,21 @@ export function AccountFilters({
           {platformOptions.map((platform) => {
             const Icon = platform.icon
             const isSelected = filterPlatform === platform.id
-            
+
             return (
               <button
                 key={platform.id}
                 onClick={() => onPlatformChange(platform.id)}
                 className={cn(
                   "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors border",
-                  isSelected
-                    ? "bg-purple-50 text-purple-700 border-purple-200"
-                    : "text-gray-600 hover:bg-gray-50 border-transparent hover:border-gray-200"
+                  !isSelected && "text-gray-600 hover:bg-gray-50 border-transparent hover:border-gray-200"
                 )}
+                style={isSelected ? {backgroundColor: '#714efe1a', color: '#714efe', borderColor: '#714efe33'} : {}}
               >
-                <Icon className={cn("w-4 h-4", isSelected ? "text-purple-600" : platform.color)} />
+                <Icon className={cn("w-4 h-4", !isSelected && platform.color)} style={isSelected ? {color: '#714efe'} : {}} />
                 <span className="flex-1 text-left">{platform.name}</span>
                 {isSelected && (
-                  <CheckCircle className="w-4 h-4 text-purple-600" />
+                  <CheckCircle className="w-4 h-4" style={{color: '#714efe'}} />
                 )}
               </button>
             )

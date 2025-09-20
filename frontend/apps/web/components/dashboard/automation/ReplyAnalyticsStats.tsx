@@ -83,13 +83,13 @@ export function ReplyAnalyticsStats({ stats }: ReplyAnalyticsStatsProps) {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-gray-600">Reply Rate</p>
-            <p className="text-2xl font-bold text-purple-600">{replyRate.toFixed(1)}%</p>
+            <p className="text-2xl font-bold" style={{color: '#714efe'}}>{replyRate.toFixed(1)}%</p>
             <p className="text-xs text-gray-500 mt-1">
               Comments with replies
             </p>
           </div>
-          <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-            <TrendingUp className="w-6 h-6 text-purple-600" />
+          <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{backgroundColor: '#714efe1a'}}>
+            <TrendingUp className="w-6 h-6" style={{color: '#714efe'}} />
           </div>
         </div>
       </div>

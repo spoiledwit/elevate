@@ -1297,10 +1297,10 @@ class StripeConnectAccount(models.Model):
     
     # Commission settings
     platform_fee_percentage = models.DecimalField(
-        _("platform fee percentage"), 
-        max_digits=5, 
-        decimal_places=2, 
-        default=10.00,
+        _("platform fee percentage"),
+        max_digits=5,
+        decimal_places=2,
+        default=4.00,
         help_text="Percentage of each transaction kept as platform fee"
     )
     

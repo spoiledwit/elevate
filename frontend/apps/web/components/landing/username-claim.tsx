@@ -128,14 +128,16 @@ export function UsernameClaim({ onSubmit, buttonText = "Claim your username", in
               className={`${variant === 'large' ? 'h-6 sm:h-8' : 'h-6'} flex-shrink-0`}
             />
             <span className={`font-medium ${variant === 'large' ? 'text-sm sm:text-lg hidden xs:block' : 'text-sm'} flex-shrink-0 text-gray-700`}>elevate.social</span>
-            <span className={`text-purple-500 font-medium ${variant === 'large' ? 'text-sm sm:text-lg' : 'text-sm'} flex-shrink-0`}>/</span>
+            <span className={`font-medium ${variant === 'large' ? 'text-sm sm:text-lg' : 'text-sm'} flex-shrink-0`} style={{color: '#714efe'}}>/</span>
             <input
               type="text"
               placeholder="username"
               value={username}
               onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
               onKeyDown={handleKeyDown}
-              className={`min-w-0 flex-1 outline-none text-purple-500 ${variant === 'large' ? 'text-sm sm:text-lg' : 'text-sm'} placeholder-purple-300 font-medium`}
+              className={`min-w-0 flex-1 outline-none ${variant === 'large' ? 'text-sm sm:text-lg' : 'text-sm'} font-medium`}
+              style={{color: '#714efe'}}
+              placeholder="username"
               maxLength={30}
             />
             {layout === 'col' && (
@@ -154,10 +156,19 @@ export function UsernameClaim({ onSubmit, buttonText = "Claim your username", in
         <button
           onClick={handleClaimUsername}
           disabled={!isAvailable || username.length < 3}
-          className={`${layout === 'col' ? 'w-full' : variant === 'large' ? 'px-4 sm:px-6' : 'px-4'} ${variant === 'large' ? 'h-12 sm:h-14' : 'h-11'} rounded-lg font-medium text-center ${variant === 'large' ? 'text-sm sm:text-lg' : 'text-sm'} transition-all ${isAvailable && username.length >= 3
-            ? 'bg-purple-500 text-white hover:bg-purple-600 cursor-pointer'
-            : 'bg-purple-500 text-white cursor-not-allowed'
+          className={`${layout === 'col' ? 'w-full' : variant === 'large' ? 'px-4 sm:px-6' : 'px-4'} ${variant === 'large' ? 'h-12 sm:h-14' : 'h-11'} rounded-lg font-medium text-center ${variant === 'large' ? 'text-sm sm:text-lg' : 'text-sm'} transition-all text-white ${isAvailable && username.length >= 3
+            ? 'cursor-pointer'
+            : 'cursor-not-allowed'
             }`}
+          style={{backgroundColor: '#714efe'}}
+          onMouseEnter={(e) => {
+            if (isAvailable && username.length >= 3) {
+              e.currentTarget.style.backgroundColor = '#5f3fd6'
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#714efe'
+          }}
         >
           <span className="block sm:hidden">Claim</span>
           <span className="hidden sm:block">{buttonText}</span>

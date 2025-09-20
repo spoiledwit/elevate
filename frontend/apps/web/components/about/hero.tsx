@@ -7,8 +7,8 @@ export function AboutHero() {
   return (
     <section className="relative overflow-hidden pt-20 sm:pt-24 lg:pt-32 pb-12 sm:pb-16 bg-gradient-to-b from-white to-gray-50">
       {/* Purple blur decorative elements */}
-      <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 sm:h-64 lg:w-[450px] lg:h-[450px] bg-purple-300 rounded-full blur-3xl opacity-25"></div>
-      <div className="absolute bottom-0 left-0 w-48 h-48 sm:w-64 sm:h-64 lg:w-[450px] lg:h-[450px] bg-purple-300 rounded-full blur-3xl opacity-20"></div>
+      <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 sm:h-64 lg:w-[450px] lg:h-[450px] rounded-full blur-3xl opacity-25" style={{backgroundColor: '#714efe80'}}></div>
+      <div className="absolute bottom-0 left-0 w-48 h-48 sm:w-64 sm:h-64 lg:w-[450px] lg:h-[450px] rounded-full blur-3xl opacity-20" style={{backgroundColor: '#714efe66'}}></div>
 
       {/* Background decorative elements */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 pt-4 sm:pt-6 lg:pt-8">
@@ -21,11 +21,11 @@ export function AboutHero() {
           />
           <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-[40px] font-bold leading-tight text-black max-w-4xl px-4 sm:px-0">
             To create the{' '}
-            <span className="text-purple-500">all-in-one platform</span>{' '}
+            <span style={{color: '#714efe'}}>all-in-one platform</span>{' '}
             I always{' '}
-            <span className="text-purple-500">needed</span>{' '}
+            <span style={{color: '#714efe'}}>needed</span>{' '}
             and wished for my{' '}
-            <span className="text-purple-500">clients</span>, I built{' '}
+            <span style={{color: '#714efe'}}>clients</span>, I built{' '}
             Elevate Social.{' '}
             <img
               src={smile.src}
@@ -38,7 +38,8 @@ export function AboutHero() {
         {/* CTA Button */}
         <Link
           href={"/get-started"}
-          className="bg-purple-500 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-lg font-semibold text-base sm:text-lg w-full sm:w-auto max-w-sm mx-auto">
+          className="text-white px-6 sm:px-8 py-3 sm:py-4 rounded-lg font-semibold text-base sm:text-lg w-full sm:w-auto max-w-sm mx-auto"
+          style={{backgroundColor: '#714efe'}}>
           Get Started for Free
         </Link>
       </div>

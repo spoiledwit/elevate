@@ -62,7 +62,7 @@ class StripeConnectService:
                 charges_enabled=account.charges_enabled,
                 payouts_enabled=account.payouts_enabled,
                 details_submitted=account.details_submitted,
-                platform_fee_percentage=Decimal('10.00')  # Default 10% platform fee
+                platform_fee_percentage=Decimal('4.00')  # Default 4% platform fee
             )
 
             logger.info(f"Created Stripe Connect account {account.id} for user {user.id}")

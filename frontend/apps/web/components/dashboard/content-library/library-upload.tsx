@@ -129,7 +129,7 @@ export function LibraryUpload({ folders, onClose, onUpload, onCreateFolder }: Li
               </label>
               <button
                 onClick={() => setShowCreateFolder(true)}
-                className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+                className="text-sm text-[#714efe] hover:text-[#714efe] font-medium"
               >
                 + New Folder
               </button>
@@ -137,7 +137,7 @@ export function LibraryUpload({ folders, onClose, onUpload, onCreateFolder }: Li
             <select
               value={selectedFolder}
               onChange={(e) => setSelectedFolder(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#714efe] focus:border-transparent"
             >
               {folders.map(folder => (
                 <option key={folder} value={folder}>{folder}</option>
@@ -157,7 +157,7 @@ export function LibraryUpload({ folders, onClose, onUpload, onCreateFolder }: Li
                   value={newFolderName}
                   onChange={(e) => setNewFolderName(e.target.value)}
                   placeholder="Enter folder name"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#714efe] focus:border-transparent"
                 />
                 <button
                   onClick={() => {
@@ -169,7 +169,7 @@ export function LibraryUpload({ folders, onClose, onUpload, onCreateFolder }: Li
                     }
                   }}
                   disabled={!newFolderName.trim()}
-                  className="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-2 bg-[#714efe] text-white rounded-lg hover:bg-[#5f3fd6] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Create
                 </button>
@@ -191,7 +191,7 @@ export function LibraryUpload({ folders, onClose, onUpload, onCreateFolder }: Li
             className={cn(
               "border-2 border-dashed rounded-lg p-8 text-center transition-colors",
               isDragging
-                ? "border-purple-500 bg-purple-50"
+                ? "border-[#714efe] bg-[#714efe1a]"
                 : "border-gray-300 hover:border-gray-400"
             )}
             onDrop={handleDrop}
@@ -203,7 +203,7 @@ export function LibraryUpload({ folders, onClose, onUpload, onCreateFolder }: Li
               Drag and drop files here, or{' '}
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="text-purple-600 hover:text-purple-700 font-medium"
+                className="text-[#714efe] hover:text-[#714efe] font-medium"
               >
                 browse
               </button>
@@ -253,7 +253,7 @@ export function LibraryUpload({ folders, onClose, onUpload, onCreateFolder }: Li
                         <div className="mt-1">
                           <div className="w-full bg-gray-200 rounded-full h-1">
                             <div 
-                              className="bg-purple-600 h-1 rounded-full transition-all duration-300"
+                              className="bg-[#714efe] h-1 rounded-full transition-all duration-300"
                               style={{ width: `${uploadFile.progress}%` }}
                             />
                           </div>
@@ -305,7 +305,7 @@ export function LibraryUpload({ folders, onClose, onUpload, onCreateFolder }: Li
             <button
               onClick={simulateUpload}
               disabled={!canUpload}
-              className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2 bg-[#714efe] text-white rounded-lg hover:bg-[#5f3fd6] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isUploading ? 'Uploading...' : 'Upload Files'}
             </button>

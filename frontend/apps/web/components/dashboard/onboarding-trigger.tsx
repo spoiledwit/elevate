@@ -16,7 +16,7 @@ export function OnboardingTrigger({ expandSection }: OnboardingTriggerProps) {
         {/* Help button that's always visible */}
         <button
           onClick={startOnboarding}
-          className="bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-105"
+          className="text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-105" style={{backgroundColor: '#714efe'}} onMouseEnter={(e) => e.target.style.backgroundColor = '#5f3fd6'} onMouseLeave={(e) => e.target.style.backgroundColor = '#714efe'}
           title="Take a guided tour"
         >
           <HelpCircle className="w-5 h-5" />

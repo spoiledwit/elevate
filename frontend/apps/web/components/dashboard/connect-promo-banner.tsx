@@ -2,23 +2,23 @@
 
 export function ConnectPromoBanner() {
   return (
-    <div className="bg-gradient-to-r from-purple-100 to-purple-200 rounded-lg p-6">
+    <div className="rounded-lg p-6" style={{background: 'linear-gradient(135deg, #714efe1a 0%, #714efe33 100%)'}}>
       <div className="flex items-center justify-between">
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-purple-900 mb-2">
+          <h3 className="text-lg font-semibold mb-2" style={{color: '#5f3fd6'}}>
             Join our creator network
           </h3>
-          <p className="text-purple-700 text-sm mb-4 max-w-md">
+          <p className="text-sm mb-4 max-w-md" style={{color: '#714efe'}}>
             Get access to our premium creator network and earn up to 30% commission on referrals.
           </p>
-          <button className="bg-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors">
+          <button className="text-white px-6 py-2 rounded-lg font-medium transition-colors" style={{backgroundColor: '#714efe'}} onMouseEnter={(e) => e.target.style.backgroundColor = '#5f3fd6'} onMouseLeave={(e) => e.target.style.backgroundColor = '#714efe'}>
             Learn more
           </button>
         </div>
         
         <div className="hidden md:flex items-center">
-          <div className="w-24 h-24 bg-purple-300 rounded-full flex items-center justify-center">
-            <NetworkIcon className="w-12 h-12 text-purple-600" />
+          <div className="w-24 h-24 rounded-full flex items-center justify-center" style={{backgroundColor: '#714efe66'}}>
+            <NetworkIcon className="w-12 h-12" style={{color: '#714efe'}} />
           </div>
         </div>
       </div>

@@ -30,7 +30,7 @@ export default function GetStarted() {
               <div className="space-y-4">
                 <div className="h-11 bg-gray-200 rounded"></div>
                 <div className="h-11 bg-gray-200 rounded"></div>
-                <div className="h-11 bg-purple-200 rounded"></div>
+                <div className="h-11 rounded" style={{backgroundColor: '#714efe33'}}></div>
               </div>
             </div>
           }>

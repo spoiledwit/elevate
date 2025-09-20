@@ -8,10 +8,10 @@ export function AboutStory() {
           {/* Text Content */}
           <div className="order-2 lg:order-1 text-center lg:text-left">
             <div className="mb-4 sm:mb-6">
-              <span className="text-purple-500 font-semibold text-xs sm:text-sm uppercase tracking-wider">THE JOURNEY</span>
+              <span className="font-semibold text-xs sm:text-sm uppercase tracking-wider" style={{color: '#714efe'}}>THE JOURNEY</span>
             </div>
             <p className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-semibold text-black leading-relaxed">
-              After 2-3 years of mind mapping, testing, and building digital business systems for myself and thousands of clients—including top creators with huge audiences—I saw a clear pattern: <span className="text-purple-500">most people just want a simple, proven way to succeed online, without overwhelm.</span>
+              After 2-3 years of mind mapping, testing, and building digital business systems for myself and thousands of clients—including top creators with huge audiences—I saw a clear pattern: <span style={{color: '#714efe'}}>most people just want a simple, proven way to succeed online, without overwhelm.</span>
             </p>
           </div>
 

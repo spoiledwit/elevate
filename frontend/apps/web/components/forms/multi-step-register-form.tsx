@@ -277,7 +277,7 @@ export function MultiStepRegisterForm({ onSubmitHandler }: MultiStepRegisterForm
       // OAuth users only have 1 step (username selection)
       return (
         <div className="flex items-center justify-center mb-6 sm:mb-8">
-          <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-8 rounded-full font-semibold text-sm bg-purple-500 text-white">
+          <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-8 rounded-full font-semibold text-sm text-white" style={{backgroundColor: '#714efe'}}>
             1
           </div>
         </div>
@@ -294,20 +294,30 @@ export function MultiStepRegisterForm({ onSubmitHandler }: MultiStepRegisterForm
                 onClick={() => goToStep(step)}
                 disabled={step >= currentStep}
                 className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-8 rounded-full font-semibold text-sm ${currentStep >= step
-                  ? 'bg-purple-500 text-white'
+                  ? 'text-white'
                   : 'bg-gray-200 text-gray-500'
                   } ${step < currentStep
-                    ? 'hover:bg-purple-600 cursor-pointer'
+                    ? 'cursor-pointer'
                     : step >= currentStep
                       ? 'cursor-not-allowed'
                       : ''
                   }`}
+                style={currentStep >= step ? {backgroundColor: '#714efe'} : {}}
+                onMouseEnter={(e) => {
+                  if (step < currentStep) {
+                    e.currentTarget.style.backgroundColor = '#5f3fd6'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (step < currentStep) {
+                    e.currentTarget.style.backgroundColor = '#714efe'
+                  }
+                }}
               >
                 {step}
               </button>
               {step < 2 && (
-                <div className={`w-16 sm:w-24 h-1 rounded-full ${currentStep > step ? 'bg-purple-500' : 'bg-gray-200'
-                  }`}></div>
+                <div className={`w-16 sm:w-24 h-1 rounded-full ${currentStep > step ? '' : 'bg-gray-200'}`} style={currentStep > step ? {backgroundColor: '#714efe'} : {}}></div>
               )}
             </div>
           ))}
@@ -331,7 +341,7 @@ export function MultiStepRegisterForm({ onSubmitHandler }: MultiStepRegisterForm
           ) : (
             <>
               Already have an account?{' '}
-              <a href="/login" className="text-purple-500 font-semibold hover:underline">
+              <a href="/login" className="font-semibold hover:underline" style={{color: '#714efe'}}>
                 Login
               </a>
             </>
@@ -395,7 +405,9 @@ export function MultiStepRegisterForm({ onSubmitHandler }: MultiStepRegisterForm
                 {...stepTwoForm.register('email')}
                 type="email"
                 placeholder="Enter your email address"
-                className="w-full px-3 h-11 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm"
+                className="w-full px-3 h-11 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none text-sm"
+                onFocus={(e) => e.target.style.boxShadow = `0 0 0 2px #714efe66`}
+                onBlur={(e) => e.target.style.boxShadow = ''}
               />
               {stepTwoForm.formState.errors.email && (
                 <p className="text-red-500 text-sm">{stepTwoForm.formState.errors.email.message}</p>
@@ -409,7 +421,9 @@ export function MultiStepRegisterForm({ onSubmitHandler }: MultiStepRegisterForm
                   {...stepTwoForm.register('password')}
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Enter your password"
-                  className="w-full px-3 h-11 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm"
+                  className="w-full px-3 h-11 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none text-sm"
+                  onFocus={(e) => e.target.style.boxShadow = `0 0 0 2px #714efe66`}
+                  onBlur={(e) => e.target.style.boxShadow = ''}
                 />
                 <button
                   type="button"
@@ -438,7 +452,18 @@ export function MultiStepRegisterForm({ onSubmitHandler }: MultiStepRegisterForm
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white font-medium h-11 rounded-lg text-sm flex items-center justify-center"
+            className="w-full text-white font-medium h-11 rounded-lg text-sm flex items-center justify-center transition-colors"
+            style={{backgroundColor: isLoading ? '#714efe80' : '#714efe'}}
+            onMouseEnter={(e) => {
+              if (!isLoading) {
+                e.currentTarget.style.backgroundColor = '#5f3fd6'
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isLoading) {
+                e.currentTarget.style.backgroundColor = '#714efe'
+              }
+            }}
           >
             {isLoading ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -475,11 +500,11 @@ export function MultiStepRegisterForm({ onSubmitHandler }: MultiStepRegisterForm
         </p>
 
         <div className="w-full bg-gray-200 rounded-full h-2 mb-8">
-          <div className="bg-purple-500 h-2 rounded-full animate-pulse" style={{ width: '70%' }}></div>
+          <div className="h-2 rounded-full animate-pulse" style={{ width: '70%', backgroundColor: '#714efe' }}></div>
         </div>
 
         {isLoading && (
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto" style={{borderBottomColor: '#714efe'}}></div>
         )}
       </div>
     )

@@ -112,10 +112,9 @@ export function PostList({ posts }: PostListProps) {
                 onClick={() => handleSort('date')}
                 className={cn(
                   "px-2 py-1 text-sm rounded transition-colors",
-                  sortBy === 'date' 
-                    ? "bg-purple-100 text-purple-700" 
-                    : "text-gray-600 hover:bg-gray-100"
+                  sortBy !== 'date' && "text-gray-600 hover:bg-gray-100"
                 )}
+                style={sortBy === 'date' ? {backgroundColor: '#714efe1a', color: '#714efe'} : {}}
               >
                 Date {sortBy === 'date' && (sortOrder === 'desc' ? '↓' : '↑')}
               </button>
@@ -123,10 +122,9 @@ export function PostList({ posts }: PostListProps) {
                 onClick={() => handleSort('status')}
                 className={cn(
                   "px-2 py-1 text-sm rounded transition-colors",
-                  sortBy === 'status' 
-                    ? "bg-purple-100 text-purple-700" 
-                    : "text-gray-600 hover:bg-gray-100"
+                  sortBy !== 'status' && "text-gray-600 hover:bg-gray-100"
                 )}
+                style={sortBy === 'status' ? {backgroundColor: '#714efe1a', color: '#714efe'} : {}}
               >
                 Status {sortBy === 'status' && (sortOrder === 'desc' ? '↓' : '↑')}
               </button>
@@ -134,10 +132,9 @@ export function PostList({ posts }: PostListProps) {
                 onClick={() => handleSort('author')}
                 className={cn(
                   "px-2 py-1 text-sm rounded transition-colors",
-                  sortBy === 'author' 
-                    ? "bg-purple-100 text-purple-700" 
-                    : "text-gray-600 hover:bg-gray-100"
+                  sortBy !== 'author' && "text-gray-600 hover:bg-gray-100"
                 )}
+                style={sortBy === 'author' ? {backgroundColor: '#714efe1a', color: '#714efe'} : {}}
               >
                 Author {sortBy === 'author' && (sortOrder === 'desc' ? '↓' : '↑')}
               </button>

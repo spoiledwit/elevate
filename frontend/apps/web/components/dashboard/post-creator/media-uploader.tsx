@@ -133,7 +133,7 @@ export function MediaUploader({ mediaFiles, onMediaChange, selectedPlatforms, is
         {onGenerateImage && (
           <button
             onClick={onGenerateImage}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-[#714efe] bg-[#714efe1a] rounded-lg hover:bg-[#714efe1a] transition-colors"
             title="Generate image with AI"
           >
             <Wand2 className="w-4 h-4" />
@@ -149,19 +149,19 @@ export function MediaUploader({ mediaFiles, onMediaChange, selectedPlatforms, is
         onDrop={handleDrop}
         className={cn(
           "relative border-2 border-dashed rounded-lg transition-all",
-          isDragging ? "border-purple-500 bg-purple-50" : "border-gray-300",
+          isDragging ? "border-[#714efe] bg-[#714efe1a]" : "border-gray-300",
           mediaFiles.length > 0 || isLoadingMedia || isMiloGeneratingImage ? "p-4" : "p-8"
         )}
       >
         {isLoadingMedia ? (
           <div className="text-center py-8">
-            <Loader2 className="w-12 h-12 text-purple-600 animate-spin mx-auto mb-4" />
+            <Loader2 className="w-12 h-12 text-[#714efe] animate-spin mx-auto mb-4" />
             <p className="text-gray-600">Loading image from content library...</p>
           </div>
         ) : isMiloGeneratingImage ? (
           <div className="text-center py-8">
-            <Loader2 className="w-12 h-12 text-purple-600 animate-spin mx-auto mb-4" />
-            <p className="text-purple-700 font-medium">Milo is generating your image...</p>
+            <Loader2 className="w-12 h-12 text-[#714efe] animate-spin mx-auto mb-4" />
+            <p className="text-[#714efe] font-medium">Milo is generating your image...</p>
             <p className="text-sm text-gray-500 mt-2">This may take up to 30 seconds</p>
           </div>
         ) : mediaFiles.length === 0 ? (
@@ -171,7 +171,7 @@ export function MediaUploader({ mediaFiles, onMediaChange, selectedPlatforms, is
               Drag and drop your media here, or
             </p>
             <label className="cursor-pointer">
-              <span className="text-purple-600 hover:text-purple-700 font-medium">
+              <span className="text-[#714efe] hover:text-[#714efe] font-medium">
                 browse files
               </span>
               <input
@@ -235,7 +235,7 @@ export function MediaUploader({ mediaFiles, onMediaChange, selectedPlatforms, is
             {/* Add more button */}
             {mediaFiles.length < limits.maxFiles && (
               <label className="block cursor-pointer">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-purple-500 hover:bg-purple-50 transition-all">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-[#714efe] hover:bg-[#714efe1a] transition-all">
                   <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                   <span className="text-sm text-gray-600">Add more media</span>
                 </div>
@@ -255,7 +255,7 @@ export function MediaUploader({ mediaFiles, onMediaChange, selectedPlatforms, is
         {isUploading && (
           <div className="absolute inset-0 bg-white/90 flex items-center justify-center rounded-lg">
             <div className="text-center">
-              <Loader2 className="w-8 h-8 text-purple-600 animate-spin mx-auto mb-2" />
+              <Loader2 className="w-8 h-8 text-[#714efe] animate-spin mx-auto mb-2" />
               <p className="text-sm text-gray-600">Uploading...</p>
             </div>
           </div>

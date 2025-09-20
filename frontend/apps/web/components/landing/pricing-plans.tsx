@@ -78,7 +78,7 @@ export function PricingPlans({
 
     // Determine styling based on plan features
     const buttonStyle = apiPlan.is_featured
-      ? "bg-purple-500 text-white"
+      ? "text-white"
       : "bg-black text-white hover:bg-gray-800"
 
     const isFree = apiPlan.price === "0.00"
@@ -107,7 +107,7 @@ export function PricingPlans({
             <div key={plan.name} className="relative">
               {plan.popular && !plan.isCurrentPlan && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
-                  <span className="bg-purple-500 text-white px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-medium">
+                  <span className="text-white px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-medium" style={{backgroundColor: '#714efe'}}>
                     Popular
                   </span>
                 </div>
@@ -139,6 +139,7 @@ export function PricingPlans({
                       ? 'bg-gray-400 text-white cursor-not-allowed'
                       : plan.buttonStyle
                     }`}
+                  style={plan.popular && !plan.isCurrentPlan && loadingPlanId !== plan.id ? {backgroundColor: '#714efe'} : {}}
                   onClick={() => plan.isCurrentPlan ? undefined : handleButtonClick(plan.id, plan.name)}
                   disabled={plan.isCurrentPlan || loadingPlanId === plan.id}
                 >
@@ -155,7 +156,8 @@ export function PricingPlans({
                     {plan.features.map((feature, featureIndex) => (
                       <li key={featureIndex} className="flex items-start gap-2 sm:gap-3">
                         <svg
-                          className={`w-4 h-4 sm:w-5 sm:h-5 ${plan.popular ? 'text-purple-900' : 'text-gray-500'} mt-0.5 flex-shrink-0`}
+                          className={`w-4 h-4 sm:w-5 sm:h-5 ${plan.popular ? 'mt-0.5 flex-shrink-0' : 'text-gray-500 mt-0.5 flex-shrink-0'}`}
+                          style={plan.popular ? {color: '#714efe'} : {}}
                           fill="currentColor"
                           viewBox="0 0 20 20"
                         >
@@ -165,7 +167,7 @@ export function PricingPlans({
                             clipRule="evenodd"
                           />
                         </svg>
-                        <span className={`text-xs sm:text-sm ${plan.popular ? 'text-purple-900' : 'text-gray-700'} leading-relaxed`}>
+                        <span className={`text-xs sm:text-sm ${plan.popular ? 'leading-relaxed' : 'text-gray-700 leading-relaxed'}`} style={plan.popular ? {color: '#714efe'} : {}}>
                           {feature}
                         </span>
                       </li>

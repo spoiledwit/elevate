@@ -157,7 +157,7 @@ export function RulesList({ rules, loading, onRefresh }: RulesListProps) {
                   {(rule.keywords || []).slice(0, 3).map((keyword: string, index: number) => (
                     <span
                       key={index}
-                      className="inline-block px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs font-medium"
+                      className="inline-block px-2 py-0.5 rounded text-xs font-medium" style={{backgroundColor: '#714efe1a', color: '#714efe'}}
                     >
                       {keyword}
                     </span>

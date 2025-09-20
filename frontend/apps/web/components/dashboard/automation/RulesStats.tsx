@@ -31,8 +31,8 @@ export function RulesStats({
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
       <div className="bg-white border border-gray-200 rounded-lg p-6">
         <div className="flex items-center gap-3 mb-2">
-          <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-            <Zap className="w-4 h-4 text-purple-600" />
+          <div className="w-8 h-8 bg-[#714efe1a] rounded-lg flex items-center justify-center">
+            <Zap className="w-4 h-4 text-[#714efe]" />
           </div>
           <h3 className="text-sm font-medium text-gray-700">Total Rules</h3>
         </div>

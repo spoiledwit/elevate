@@ -68,8 +68,9 @@ export function FAQ() {
                 </span>
                 <ChevronDown
                   className={`w-4 h-4 sm:w-5 sm:h-5 text-gray-500 transition-all duration-300 ease-in-out flex-shrink-0 ${
-                    openIndex === index ? 'rotate-180 text-purple-500' : ''
+                    openIndex === index ? 'rotate-180' : ''
                   }`}
+                  style={openIndex === index ? { color: '#714efe' } : {}}
                 />
               </div>
               

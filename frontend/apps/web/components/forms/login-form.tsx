@@ -53,7 +53,10 @@ export function LoginForm() {
               {...register('username')}
               type="text"
               placeholder="Enter your username or email"
-              className="w-full px-3 h-11 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm"
+              className="w-full px-3 h-11 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none text-sm"
+              style={{'--focus-ring-color': '#714efe'} as any}
+              onFocus={(e) => e.target.style.boxShadow = `0 0 0 2px #714efe66`}
+              onBlur={(e) => e.target.style.boxShadow = ''}
             />
             {formState.errors.username && (
               <p className="text-red-500 text-sm">{formState.errors.username.message}</p>
@@ -67,7 +70,10 @@ export function LoginForm() {
                 {...register('password', { required: true })}
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Enter your password"
-                className="w-full px-3 h-11 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm"
+                className="w-full px-3 h-11 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none text-sm"
+                style={{'--focus-ring-color': '#714efe'} as any}
+                onFocus={(e) => e.target.style.boxShadow = `0 0 0 2px #714efe66`}
+                onBlur={(e) => e.target.style.boxShadow = ''}
               />
               <button
                 type="button"
@@ -91,14 +97,17 @@ export function LoginForm() {
             )}
 
             <div className="flex justify-end mt-2">
-              <a href="/forgot-password" className="text-sm text-purple-500 font-medium hover:underline">Forgot password?</a>
+              <a href="/forgot-password" className="text-sm font-medium hover:underline" style={{color: '#714efe'}}>Forgot password?</a>
             </div>
           </div>
         </div>
 
         <button
           type="submit"
-          className="w-full bg-purple-500 hover:bg-purple-600 text-white font-medium h-11 rounded-lg text-sm"
+          className="w-full text-white font-medium h-11 rounded-lg text-sm transition-colors"
+          style={{backgroundColor: '#714efe'}}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#5f3fd6'}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#714efe'}
         >
           Sign in
         </button>
@@ -119,7 +128,7 @@ export function LoginForm() {
 
       <p className="text-sm text-gray-600 text-center mt-6">
         Don't have an account?{' '}
-        <a href="/get-started" className="text-purple-500 font-semibold hover:underline">
+        <a href="/get-started" className="font-semibold hover:underline" style={{color: '#714efe'}}>
           Sign up
         </a>
       </p>

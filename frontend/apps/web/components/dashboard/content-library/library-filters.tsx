@@ -51,7 +51,7 @@ export function LibraryFilters({
         {hasActiveFilters && (
           <button
             onClick={clearAllFilters}
-            className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+            className="text-sm text-[#714efe] hover:text-[#714efe] font-medium"
           >
             Clear all
           </button>
@@ -75,11 +75,11 @@ export function LibraryFilters({
             className={cn(
               "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
               selectedFolder === 'all'
-                ? "bg-purple-50 text-purple-700 border border-purple-200"
+                ? "bg-[#714efe1a] text-[#714efe] border border-[#714efe33]"
                 : "text-gray-600 hover:bg-gray-50"
             )}
           >
-            <FolderOpen className={cn("w-4 h-4", selectedFolder === 'all' ? "text-purple-600" : "text-gray-400")} />
+            <FolderOpen className={cn("w-4 h-4", selectedFolder === 'all' ? "text-[#714efe]" : "text-gray-400")} />
             <span className="flex-1 text-left">All Folders</span>
           </button>
 
@@ -90,11 +90,11 @@ export function LibraryFilters({
               className={cn(
                 "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                 selectedFolder === folder
-                  ? "bg-purple-50 text-purple-700 border border-purple-200"
+                  ? "bg-[#714efe1a] text-[#714efe] border border-[#714efe33]"
                   : "text-gray-600 hover:bg-gray-50"
               )}
             >
-              <Folder className={cn("w-4 h-4", selectedFolder === folder ? "text-purple-600" : "text-gray-400")} />
+              <Folder className={cn("w-4 h-4", selectedFolder === folder ? "text-[#714efe]" : "text-gray-400")} />
               <span className="flex-1 text-left">{folder}</span>
             </button>
           ))}
@@ -116,11 +116,11 @@ export function LibraryFilters({
                 className={cn(
                   "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                   isSelected
-                    ? "bg-purple-50 text-purple-700 border border-purple-200"
+                    ? "bg-[#714efe1a] text-[#714efe] border border-[#714efe33]"
                     : "text-gray-600 hover:bg-gray-50"
                 )}
               >
-                <Icon className={cn("w-4 h-4", isSelected ? "text-purple-600" : "text-gray-400")} />
+                <Icon className={cn("w-4 h-4", isSelected ? "text-[#714efe]" : "text-gray-400")} />
                 <span className="flex-1 text-left">{type.name}</span>
               </button>
             )

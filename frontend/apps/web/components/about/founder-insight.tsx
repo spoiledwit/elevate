@@ -69,13 +69,13 @@ export function FounderInsight() {
                       aria-label={`Go to image ${index + 1}`}
                     >
                       <div className={`h-2 rounded-full transition-all duration-500 ease-out ${index === currentImageIndex
-                        ? 'w-8 sm:w-12 bg-purple-500'
+                        ? 'w-8 sm:w-12'
                         : 'w-2 bg-gray-300 group-hover:bg-gray-400'
-                        }`}></div>
+                        }`} style={index === currentImageIndex ? {backgroundColor: '#714efe'} : {}}></div>
                       {/* Progress bar for active indicator */}
                       {index === currentImageIndex && (
                         <div className="absolute inset-0 h-2 rounded-full overflow-hidden">
-                          <div className="h-full bg-purple-600 animate-progress-bar"></div>
+                          <div className="h-full animate-progress-bar" style={{backgroundColor: '#714efe'}}></div>
                         </div>
                       )}
                     </button>
@@ -88,15 +88,15 @@ export function FounderInsight() {
             <div className="relative text-center lg:text-left">
               <div className="relative z-10">
                 <div className="mb-4 sm:mb-6">
-                  <span className="text-purple-500 font-semibold text-xs sm:text-sm uppercase tracking-wider">THE REALIZATION</span>
+                  <span className="font-semibold text-xs sm:text-sm uppercase tracking-wider" style={{color: '#714efe'}}>THE REALIZATION</span>
                 </div>
 
                 <p className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-semibold text-black leading-relaxed">
-                  Despite offering nearly <span className="text-purple-500">done-for-you</span> solutions, I noticed many beginners still felt lost and overloaded by all the options.
+                  Despite offering nearly <span style={{color: '#714efe'}}>done-for-you</span> solutions, I noticed many beginners still felt lost and overloaded by all the options.
                 </p>
 
                 <p className="text-base sm:text-lg lg:text-xl xl:text-2xl text-gray-700 mt-4 sm:mt-6 leading-relaxed">
-                  Even with everything set up, they craved something <span className="font-bold text-purple-500">even easier</span>.
+                  Even with everything set up, they craved something <span className="font-bold" style={{color: '#714efe'}}>even easier</span>.
                 </p>
               </div>
             </div>

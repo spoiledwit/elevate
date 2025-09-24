@@ -174,7 +174,19 @@ class UserPermissions(models.Model):
 @receiver(post_save, sender=User)
 def create_user_permissions(sender, instance, created, **kwargs):
     if created:
-        UserPermissions.objects.create(user=instance)
+        UserPermissions.objects.create(
+            user=instance,
+            can_access_overview=True,
+            can_access_linkinbio=True,
+            can_access_content=False,
+            can_access_automation=False,
+            can_access_ai_tools=False,
+            can_access_business=False,
+            can_access_account=False,
+            can_edit_profile=False,
+            can_manage_integrations=False,
+            can_view_analytics=False
+        )
 
 
 @receiver(post_save, sender=User)

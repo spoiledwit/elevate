@@ -36,7 +36,7 @@ export function useRealtimeAI(options: UseRealtimeAIOptions = {}) {
   const audioContextRef = useRef<AudioContext | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
 
-  const apiBaseUrl = "https://admin.elevate.social/api"
+  const apiBaseUrl = options.apiBaseUrl || 'http://localhost:8000/api'
 
   // Update state and notify listeners
   const updateState = useCallback((newState: RealtimeConnectionState) => {

@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Sparkles, X, Mic, MicOff, AlertCircle } from 'lucide-react'
+import { X, Mic, MicOff, AlertCircle } from 'lucide-react'
+import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { useRealtimeAI, RealtimeConnectionState } from '@/hooks/useRealtimeAI'
+import milo from "@/assets/milo.svg";
 
 interface MiloChatbotProps {
   onContentUpdate?: (content: string) => void
@@ -119,15 +121,8 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
         )}
         aria-label="Open Milo"
       >
-        <div className="relative">
-          <Sparkles className="w-7 h-7 text-white/90" />
-          {/* Glow pulse */}
-          <div className="absolute -inset-2">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-violet-500 to-brand-500 animate-ping opacity-30"></div>
-          </div>
-          <div className="absolute -inset-3">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-violet-400 to-purple-400 animate-ping animation-delay-200 opacity-20"></div>
-          </div>
+        <div className="relative w-16 h-16 flex items-center justify-center">
+          <Image src={milo.src} alt="Milo" fill className="object-contain" />
         </div>
       </button>
 
@@ -150,8 +145,8 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
         <div className="flex items-center justify-between p-6 pb-4">
           <div className="flex items-center gap-3">
             <div className="relative">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-brand-600 flex items-center justify-center shadow-lg shadow-brand-500/50">
-                <Sparkles className="w-6 h-6 text-white" />
+              <div className="relative w-12 h-12 rounded-2xl overflow-hidden">
+                <Image src={milo.src} alt="Milo" fill className="object-contain" />
               </div>
               {/* Animated status dot */}
               <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full border-2 border-gray-900">
@@ -216,8 +211,8 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
             </div>
           ) : isConnecting ? (
             <div className="relative text-center space-y-6 z-10">
-              <div className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-blue-500/20 to-violet-600/20 backdrop-blur-xl flex items-center justify-center animate-pulse">
-                <Sparkles className="w-12 h-12 text-blue-300" />
+              <div className="relative w-32 h-32 mx-auto">
+                <Image src={milo.src} alt="Milo" fill className="object-contain animate-pulse" />
               </div>
               <div className="space-y-2">
                 <h3 className="text-blue-300 font-light tracking-widest uppercase text-sm">Connecting</h3>
@@ -282,13 +277,9 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
             </div>
           ) : (
             <div className="relative text-center space-y-6 z-10">
-              {/* Futuristic orb */}
+              {/* Milo icon */}
               <div className="relative w-32 h-32 mx-auto">
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-violet-500/20 to-brand-600/20 backdrop-blur-xl animate-pulse"></div>
-                <div className="absolute inset-2 rounded-full bg-gradient-to-br from-violet-600/30 to-purple-700/30 backdrop-blur-xl"></div>
-                <div className="absolute inset-4 rounded-full bg-gradient-to-br from-violet-700/40 to-purple-800/40 backdrop-blur-xl flex items-center justify-center">
-                  <Sparkles className="w-10 h-10 text-purple-300" />
-                </div>
+                <Image src={milo.src} alt="Milo" fill className="object-contain" />
               </div>
 
               {/* Minimal text */}

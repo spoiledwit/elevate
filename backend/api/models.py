@@ -223,7 +223,7 @@ class SocialIcon(models.Model):
     
     user_profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='social_icons')
     platform = models.CharField(_("platform"), max_length=50, choices=PLATFORM_CHOICES)
-    url = models.URLField(_("url"))
+    url = models.TextField(_("url"))
     is_active = models.BooleanField(_("is active"), default=True)
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
     modified_at = models.DateTimeField(_("modified at"), auto_now=True)

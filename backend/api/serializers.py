@@ -306,6 +306,24 @@ class UserCreateErrorSerializer(serializers.Serializer):
 
 # UserProfile Serializers
 class SocialIconSerializer(serializers.ModelSerializer):
+    def validate_url(self, value):
+        """Custom URL validation that allows mailto: URLs"""
+        if value.startswith('mailto:'):
+            # Basic validation for mailto URLs
+            if '@' not in value or len(value.split('mailto:')[1]) < 5:
+                raise serializers.ValidationError("Enter a valid email address.")
+            return value
+
+        # For all other URLs, use default validation
+        from django.core.validators import URLValidator
+        validator = URLValidator()
+        try:
+            validator(value)
+        except ValidationError:
+            raise serializers.ValidationError("Enter a valid URL.")
+
+        return value
+
     class Meta:
         model = SocialIcon
         fields = ['id', 'platform', 'url', 'is_active']

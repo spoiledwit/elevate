@@ -984,13 +984,35 @@ class SocialIconViewSet(viewsets.ModelViewSet):
     serializer_class = SocialIconSerializer
     permission_classes = [IsAuthenticated, StorefrontPermission]
 
+    def create(self, request, *args, **kwargs):
+        print(f"DEBUG - SocialIcon create called with data: {request.data}")
+        try:
+            return super().create(request, *args, **kwargs)
+        except Exception as e:
+            print(f"DEBUG - SocialIcon create failed: {e}")
+            serializer = self.get_serializer(data=request.data)
+            if not serializer.is_valid():
+                print(f"DEBUG - Serializer validation errors: {serializer.errors}")
+            raise
+
     def get_queryset(self):
         return SocialIcon.objects.filter(
             user_profile__user=self.request.user
         )
 
     def perform_create(self, serializer):
+        print(f"DEBUG - SocialIcon perform_create called with data: {serializer.validated_data}")
         profile = get_object_or_404(UserProfile, user=self.request.user)
+        print(f"DEBUG - User profile: {profile}, User: {self.request.user}")
+
+        # Check if we already have a social icon with this platform
+        platform = serializer.validated_data.get('platform')
+        existing_icon = SocialIcon.objects.filter(user_profile=profile, platform=platform).first()
+        if existing_icon:
+            print(f"DEBUG - Found existing social icon for platform {platform}: {existing_icon.id}")
+        else:
+            print(f"DEBUG - Creating new social icon for platform {platform}")
+
         serializer.save(user_profile=profile)
 
 

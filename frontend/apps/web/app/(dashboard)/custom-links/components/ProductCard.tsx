@@ -1,9 +1,9 @@
 'use client'
 
-import { Package, ExternalLink } from 'lucide-react'
+import { Package, ExternalLink, Gift } from 'lucide-react'
 
 interface ProductCardProps {
-  productType: 'digital' | 'custom' | 'ecourse' | 'url-media' | null
+  productType: 'digital' | 'custom' | 'ecourse' | 'url-media' | 'freebie' | null
   thumbnail: string | null
   title: string
   subtitle?: string
@@ -17,6 +17,7 @@ const productTypeIcons = {
   custom: Package,
   ecourse: Package,
   'url-media': ExternalLink,
+  freebie: Gift,
 }
 
 export function ProductCard({

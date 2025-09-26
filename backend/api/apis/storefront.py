@@ -860,14 +860,10 @@ class CustomLinkViewSet(viewsets.ModelViewSet):
         
         link = get_object_or_404(CustomLink, pk=pk, is_active=True)
         logger.info(f"DEBUG - Found link: {link.title}, type: {link.type}, owner: {link.user_profile.user.username}")
-        
-        # Check if link has a price (indicating it's a paid product)
-        if not link.checkout_price or link.checkout_price <= 0:
-            logger.warning(f"DEBUG - Link {pk} is not a paid product, checkout_price: {link.checkout_price}")
-            return Response(
-                {"detail": "This link is not a paid product"}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+
+        # Check if this is a freebie/free product
+        is_free_product = not link.checkout_price or link.checkout_price <= 0
+        logger.info(f"DEBUG - Is free product: {is_free_product}, checkout_price: {link.checkout_price}")
         
         # Rate limiting check
         client_ip = get_client_ip(request)
@@ -902,8 +898,28 @@ class CustomLinkViewSet(viewsets.ModelViewSet):
         # Save the order
         order = serializer.save()
         logger.info(f"DEBUG - Created order: {order.order_id}")
-        
-        # Create Stripe Connect checkout session
+
+        # Handle free products differently - no Stripe payment needed
+        if is_free_product:
+            logger.info("DEBUG - Processing free product order")
+
+            # Mark order as completed immediately
+            order.status = 'completed'
+            order.save(update_fields=['status'])
+
+            logger.info(f"DEBUG - Free product order {order.order_id} marked as completed")
+
+            # For free products, we can provide direct download access
+            # No need for payment processing
+            return Response({
+                "success": True,
+                "order": OrderSerializer(order).data,
+                "is_free": True,
+                "message": "Free download ready! No payment required.",
+                "download_access": True
+            }, status=status.HTTP_201_CREATED)
+
+        # Create Stripe Connect checkout session for paid products
         try:
             from ..services.stripe_connect_service import StripeConnectService
             

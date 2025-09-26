@@ -324,7 +324,8 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
                                     link.type === 'custom_product' ? 'Custom' :
                                       link.type === 'ecourse' ? 'Course' :
                                         link.type === 'url_media' ? 'URL/Media' :
-                                          link.type}
+                                          link.type === 'freebie' ? 'Freebie' :
+                                            link.type}
                                 </span>
                               )}
                               {/* Price */}

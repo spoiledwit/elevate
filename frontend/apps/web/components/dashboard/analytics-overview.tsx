@@ -72,7 +72,7 @@ export function AnalyticsOverview({ initialStats }: AnalyticsOverviewProps) {
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6">
       <h2 className="text-lg font-semibold text-gray-900 mb-4">Analytics Overview</h2>
-      
+
       {/* Main metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className="border border-gray-200 rounded-lg p-4">
@@ -83,7 +83,7 @@ export function AnalyticsOverview({ initialStats }: AnalyticsOverviewProps) {
             <span>last 30 days</span>
           </div>
         </div>
-        
+
         <div className="border border-gray-200 rounded-lg p-4">
           <h3 className="text-sm font-medium text-gray-700 mb-2">Link Clicks</h3>
           <div className="text-3xl font-bold text-gray-900 mb-1">{totalLinkClicks.toLocaleString()}</div>
@@ -143,33 +143,6 @@ export function AnalyticsOverview({ initialStats }: AnalyticsOverviewProps) {
           </div>
         </div>
       </div>
-
-      {/* Top performing links */}
-      {stats.components?.custom_links?.top_performing && stats.components.custom_links.top_performing.length > 0 && (
-        <div className="mb-8">
-          <h3 className="text-md font-medium text-gray-900 mb-4">Top Performing Links</h3>
-          <div className="space-y-3">
-            {stats.components.custom_links.top_performing.slice(0, 3).map((link, index) => (
-              <div key={link.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs font-medium">
-                    {index + 1}
-                  </div>
-                  <div>
-                    <div className="font-medium text-gray-900">{link.text}</div>
-                    <div className="text-xs text-gray-500 truncate max-w-xs">{link.url}</div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="font-medium text-gray-900">{link.click_count}</div>
-                  <div className="text-xs text-gray-500">clicks</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
     </div>
   )
 }

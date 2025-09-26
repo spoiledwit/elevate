@@ -12,6 +12,7 @@ import digitalProductImg from '@/assets/product-types/digitalProduct.svg'
 import customProductImg from '@/assets/product-types/product.svg'
 import eCourseImg from '@/assets/product-types/eCourse.svg'
 import urlMediaImg from '@/assets/product-types/media.svg'
+import freebieImg from '@/assets/product-types/freebee.png'
 import uploadImg from '@/assets/imgs/upload.png'
 import {
   Plus,
@@ -41,7 +42,8 @@ import {
   Circle,
   Phone,
   Globe,
-  Settings
+  Settings,
+  Gift
 } from 'lucide-react'
 
 interface LinkFormProps {
@@ -49,7 +51,7 @@ interface LinkFormProps {
   onClose?: () => void
 }
 
-type ProductType = 'digital' | 'custom' | 'ecourse' | 'url-media' | null
+type ProductType = 'digital' | 'custom' | 'ecourse' | 'url-media' | 'freebie' | null
 
 export function LinkForm({ link, onClose }: LinkFormProps) {
   const router = useRouter()
@@ -151,6 +153,14 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       icon: Link,
       color: 'bg-orange-50 border-orange-200 text-orange-600',
       image: urlMediaImg
+    },
+    {
+      id: 'freebie' as const,
+      title: 'Freebie',
+      description: 'Free digital downloads and resources for your audience',
+      icon: Gift,
+      color: 'bg-pink-50 border-pink-200 text-pink-600',
+      image: freebieImg
     }
   ]
 
@@ -166,6 +176,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
           case 'custom_product': return 'custom'
           case 'ecourse': return 'ecourse'
           case 'url_media': return 'url-media'
+          case 'freebie': return 'freebie'
           default: return 'digital'
         }
       }
@@ -215,6 +226,9 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         } else if (productType === 'url-media') {
           setMediaUrl(additionalInfo.destination_url || '')
           setButtonText(additionalInfo.button_text || 'View Content')
+        } else if (productType === 'freebie') {
+          setDigitalFileUrl(additionalInfo.digital_file_url || '')
+          setDownloadInstructions(additionalInfo.download_instructions || '')
         }
       }
 
@@ -388,6 +402,44 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         const response = await fetch(eCourseImg.src)
         const blob = await response.blob()
         const file = new File([blob], 'ecourse-checkout.svg', { type: 'image/svg+xml' })
+        setCheckoutImage(file)
+      } catch (error) {
+        console.error('Failed to convert checkout image to file:', error)
+      }
+    }
+
+    // Auto-set fields for freebie
+    if (type === 'freebie') {
+      // Step 2: Basic info
+      setThumbnailPreview(freebieImg.src)
+
+      // Convert PNG to File object for thumbnail
+      try {
+        const response = await fetch(freebieImg.src)
+        const blob = await response.blob()
+        const file = new File([blob], 'freebie-thumbnail.png', { type: 'image/png' })
+        setThumbnail(file)
+      } catch (error) {
+        console.error('Failed to convert thumbnail to file:', error)
+      }
+
+      setTitle('Get Your Free Resource Today!')
+      setSubtitle('Exclusive free download - no strings attached')
+      setCheckoutPrice('0.00')
+      setCheckoutDiscountedPrice('')
+
+      // Step 3: Checkout details
+      setCheckoutTitle('Download Your Free Resource')
+      setCheckoutDescription('<h3>About Me:</h3><ul><li>✅ Passionate content creator</li><li>✅ Expert in my field</li><li>✅ Committed to delivering value</li><li>✅ Building a community of learners</li></ul><p>I believe in sharing knowledge and helping others succeed. This free resource is my way of giving back to the community and showing you the quality of content I create!</p>')
+      setCheckoutBottomTitle('Ready to Download?')
+      setCheckoutCtaButtonText('Download Free')
+
+      // Also set checkout image to the same
+      setCheckoutImagePreview(freebieImg.src)
+      try {
+        const response = await fetch(freebieImg.src)
+        const blob = await response.blob()
+        const file = new File([blob], 'freebie-checkout.png', { type: 'image/png' })
         setCheckoutImage(file)
       } catch (error) {
         console.error('Failed to convert checkout image to file:', error)
@@ -610,13 +662,13 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
     setIsSubmitting(true)
 
     try {
-      // Handle file upload for digital products if a new file is selected
+      // Handle file upload for digital products and freebies if a new file is selected
       let finalDigitalFileUrl = digitalFileUrl
 
-      if (selectedType === 'digital' && digitalFile) {
+      if ((selectedType === 'digital' || selectedType === 'freebie') && digitalFile) {
         setIsUploadingFile(true)
 
-        const uploadResult = await uploadDocumentAction(digitalFile, 'digital-products')
+        const uploadResult = await uploadDocumentAction(digitalFile, selectedType === 'freebie' ? 'freebies' : 'digital-products')
 
         if (uploadResult.error) {
           toast.error(`Failed to upload file: ${uploadResult.error}`)
@@ -639,6 +691,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
           case 'custom': return 'custom_product'
           case 'ecourse': return 'ecourse'
           case 'url-media': return 'url_media'
+          case 'freebie': return 'freebie'
           default: return 'generic'
         }
       }
@@ -664,6 +717,11 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         additionalInfo = {
           destination_url: mediaUrl,
           button_text: buttonText
+        }
+      } else if (selectedType === 'freebie') {
+        additionalInfo = {
+          digital_file_url: finalDigitalFileUrl,
+          download_instructions: downloadInstructions
         }
       }
 
@@ -755,13 +813,13 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
     setIsSubmitting(true)
 
     try {
-      // Handle file upload for digital products if a file is selected
+      // Handle file upload for digital products and freebies if a file is selected
       let finalDigitalFileUrl = digitalFileUrl
 
-      if (selectedType === 'digital' && digitalFile) {
+      if ((selectedType === 'digital' || selectedType === 'freebie') && digitalFile) {
         setIsUploadingFile(true)
 
-        const uploadResult = await uploadDocumentAction(digitalFile, 'digital-products')
+        const uploadResult = await uploadDocumentAction(digitalFile, selectedType === 'freebie' ? 'freebies' : 'digital-products')
 
         if (uploadResult.error) {
           toast.error(`Failed to upload file: ${uploadResult.error}`)
@@ -784,6 +842,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
           case 'custom': return 'custom_product'
           case 'ecourse': return 'ecourse'
           case 'url-media': return 'url_media'
+          case 'freebie': return 'freebie'
           default: return 'generic'
         }
       }
@@ -809,6 +868,11 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         additionalInfo = {
           destination_url: mediaUrl,
           button_text: buttonText
+        }
+      } else if (selectedType === 'freebie') {
+        additionalInfo = {
+          digital_file_url: finalDigitalFileUrl,
+          download_instructions: downloadInstructions
         }
       }
 
@@ -1557,6 +1621,131 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
           )}
 
           <div className="space-y-6">
+            {/* Freebie Fields */}
+            {selectedType === 'freebie' && (
+              <>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    Free Download File <span className="text-red-500">*</span>
+                  </label>
+
+                  {/* Upload Option */}
+                  <div className="mb-4">
+                    {digitalFile || digitalFileUrl ? (
+                      <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                        <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <img src={uploadImg.src} alt="Upload" className="w-7 h-7" />
+                        </div>
+                        <div className="flex-1">
+                          {digitalFile ? (
+                            <>
+                              <p className="text-sm font-medium text-gray-900">{digitalFileName || digitalFile.name}</p>
+                              <p className="text-xs text-gray-600 mt-1">Free download ready to upload</p>
+                            </>
+                          ) : (
+                            <>
+                              <p className="text-sm font-medium text-gray-900">Download link set</p>
+                              <p className="text-xs text-gray-600 mt-1 truncate">{digitalFileUrl}</p>
+                            </>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDigitalFile(null)
+                            setDigitalFileName('')
+                            setDigitalFileUrl('')
+                            if (digitalFileInputRef.current) {
+                              digitalFileInputRef.current.value = ''
+                            }
+                          }}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div
+                        onClick={() => digitalFileInputRef.current?.click()}
+                        className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-pink-400 hover:bg-pink-50 transition-colors"
+                      >
+                        <img src={uploadImg.src} alt="Upload" className="w-12 h-12 mx-auto mb-2" />
+                        <p className="text-sm font-medium text-gray-900">
+                          Click to upload your free download file
+                        </p>
+                      </div>
+                    )}
+
+                    <input
+                      ref={digitalFileInputRef}
+                      type="file"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          setDigitalFile(file)
+                          setDigitalFileName(file.name)
+                          setDigitalFileUrl('') // Clear URL when file is selected
+                        }
+                      }}
+                      className="hidden"
+                      accept="*/*"
+                    />
+                  </div>
+
+                  {/* OR Divider */}
+                  <div className="relative mb-4">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t border-gray-300" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-white px-2 text-gray-500">Or enter URL directly</span>
+                    </div>
+                  </div>
+
+                  {/* URL Input */}
+                  <div>
+                    <div className="relative">
+                      <ExternalLink className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type="url"
+                        id="freebie-file-url"
+                        value={digitalFileUrl}
+                        onChange={(e) => {
+                          setDigitalFileUrl(e.target.value)
+                          setDigitalFile(null) // Clear file when URL is entered
+                          setDigitalFileName('')
+                        }}
+                        placeholder="https://example.com/download/free-resource.pdf"
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-300"
+                        disabled={!!digitalFile}
+                      />
+                    </div>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Direct link to the free downloadable file
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="freebie-instructions" className="block text-sm font-semibold text-gray-900 mb-2">
+                    Download Instructions <span className="text-gray-400 font-normal">(Optional)</span>
+                  </label>
+                  <textarea
+                    id="freebie-instructions"
+                    value={downloadInstructions}
+                    onChange={(e) => setDownloadInstructions(e.target.value)}
+                    placeholder="Click the download button to get instant access to your free resource..."
+                    rows={3}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-300 resize-none"
+                    maxLength={300}
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    {downloadInstructions.length}/300 characters
+                  </p>
+                </div>
+              </>
+            )}
+
             {/* Digital Product Fields */}
             {selectedType === 'digital' && (
               <>
@@ -1886,6 +2075,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
               disabled={
                 isSubmitting ||
                 (selectedType === 'digital' && !digitalFileUrl && !digitalFile) ||
+                (selectedType === 'freebie' && !digitalFileUrl && !digitalFile) ||
                 (selectedType === 'url-media' && !mediaUrl)
               }
               className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"

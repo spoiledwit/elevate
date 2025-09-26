@@ -7,7 +7,7 @@ import { createOrderAction, type OrderCreateData } from '@/actions/storefront-ac
 
 interface CheckoutFormProps {
   linkId?: string
-  productType: 'digital' | 'custom' | 'ecourse' | 'url-media' | null
+  productType: 'digital' | 'custom' | 'ecourse' | 'url-media' | 'freebie' | null
   thumbnail: string | null
   title: string
   subtitle?: string
@@ -139,7 +139,6 @@ export function CheckoutForm({
           } else {
             // Fallback for when Stripe checkout fails but order is created
             toast.success('Order Created Successfully!', {
-              description: result.data.error || 'Payment processing is currently unavailable.',
               duration: 5000
             })
 

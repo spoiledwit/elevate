@@ -210,10 +210,16 @@ def send_product_delivery_email(order: Order) -> bool:
     additional_info = custom_link.additional_info or {}
     logger.info(f"Additional info: {additional_info}")
 
-    # Determine product type from additional_info structure
+    # Determine product type from additional_info structure and price
     if 'digital_file_url' in additional_info or 'download_instructions' in additional_info:
-        logger.info(f"Detected digital product for order {order.order_id}")
-        return send_digital_product_email(order)
+        # Check if this is a freebie (free product)
+        is_free = not custom_link.checkout_price or custom_link.checkout_price <= 0
+        if is_free:
+            logger.info(f"Detected freebie product for order {order.order_id}")
+            return send_freebie_email(order)
+        else:
+            logger.info(f"Detected digital product for order {order.order_id}")
+            return send_digital_product_email(order)
     elif 'course_duration' in additional_info or 'course_modules' in additional_info:
         logger.info(f"Detected e-course for order {order.order_id}")
         return send_ecourse_email(order)
@@ -248,6 +254,31 @@ def send_digital_product_email(order: Order) -> bool:
     return send_email(
         template_name='digital_product_delivery',
         subject=f'Your download is ready: {context["product_title"]}',
+        to_email=order.customer_email,
+        context=context
+    )
+
+
+def send_freebie_email(order: Order) -> bool:
+    """Send freebie product delivery email with free download link."""
+    custom_link = order.custom_link
+    additional_info = custom_link.additional_info or {}
+
+    context = {
+        'customer_name': order.customer_name,
+        'order_id': order.order_id,
+        'product_title': custom_link.title or custom_link.checkout_title or 'Free Resource',
+        'product_subtitle': custom_link.subtitle,
+        'purchase_date': order.created_at,
+        'digital_file_url': additional_info.get('digital_file_url'),
+        'download_instructions': additional_info.get('download_instructions'),
+        'form_responses': order.get_formatted_responses(),
+        'is_free': True,  # Flag to indicate this is a free product
+    }
+
+    return send_email(
+        template_name='freebie_delivery',
+        subject=f'Your free download is ready: {context["product_title"]}',
         to_email=order.customer_email,
         context=context
     )

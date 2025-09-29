@@ -24,21 +24,7 @@ export function Navbar() {
           </span>
         </Link>
 
-        {/* Desktop Navigation */}
-        <div className="hidden lg:flex items-center gap-8 text-[16px]">
-          <Link href="/about" className="text-gray-700 hover:text-gray-900">
-            Our Story
-          </Link>
-          <Link href="/product" className="text-gray-700 hover:text-gray-900">
-            Product
-          </Link>
-          <Link href="/pricing" className="text-gray-700 hover:text-gray-900">
-            Pricing
-          </Link>
-          <Link href="/blog" className="text-gray-700 hover:text-gray-900">
-            Blog
-          </Link>
-        </div>
+
 
         {/* Desktop Auth Buttons */}
         <div className="hidden lg:flex items-center gap-4 text-[16px]">
@@ -48,7 +34,7 @@ export function Navbar() {
             <Link
               href="/dashboard"
               className="font-semibold text-white px-6 py-2.5 rounded-lg hover:scale-105 transition-all"
-              style={{backgroundColor: '#714efe'}}
+              style={{ backgroundColor: '#714efe' }}
             >
               Dashboard
             </Link>
@@ -60,7 +46,7 @@ export function Navbar() {
               <Link
                 href="/get-started"
                 className="font-semibold text-white px-6 py-2.5 rounded-lg hover:scale-105 transition-all"
-                style={{backgroundColor: '#714efe'}}
+                style={{ backgroundColor: '#714efe' }}
               >
                 Get Started
               </Link>
@@ -90,35 +76,35 @@ export function Navbar() {
       {isMobileMenuOpen && (
         <div className="lg:hidden mt-4 pb-4 border-t border-gray-200">
           <div className="flex flex-col space-y-4 pt-4">
-            <Link 
-              href="/about" 
+            <Link
+              href="/about"
               className="text-gray-700 hover:text-gray-900 py-2"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Our Story
             </Link>
-            <Link 
-              href="/product" 
+            <Link
+              href="/product"
               className="text-gray-700 hover:text-gray-900 py-2"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Product
             </Link>
-            <Link 
-              href="/pricing" 
+            <Link
+              href="/pricing"
               className="text-gray-700 hover:text-gray-900 py-2"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Pricing
             </Link>
-            <Link 
-              href="/blog" 
+            <Link
+              href="/blog"
               className="text-gray-700 hover:text-gray-900 py-2"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Blog
             </Link>
-            
+
             <div className="pt-4 border-t border-gray-200 space-y-3">
               {isLoading ? (
                 <div className="w-full h-10 bg-gray-100 animate-pulse rounded-lg"></div>
@@ -126,7 +112,7 @@ export function Navbar() {
                 <Link
                   href="/dashboard"
                   className="block font-semibold text-white px-6 py-2.5 rounded-lg text-center transition-colors"
-                  style={{backgroundColor: '#714efe'}}
+                  style={{ backgroundColor: '#714efe' }}
                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#5f3fd6'}
                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#714efe'}
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -135,8 +121,8 @@ export function Navbar() {
                 </Link>
               ) : (
                 <>
-                  <Link 
-                    href="/login" 
+                  <Link
+                    href="/login"
                     className="block text-gray-700 hover:text-gray-900 py-2"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
@@ -145,7 +131,7 @@ export function Navbar() {
                   <Link
                     href="/get-started"
                     className="block font-semibold text-white px-6 py-2.5 rounded-lg text-center transition-colors"
-                    style={{backgroundColor: '#714efe'}}
+                    style={{ backgroundColor: '#714efe' }}
                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#5f3fd6'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#714efe'}
                     onClick={() => setIsMobileMenuOpen(false)}

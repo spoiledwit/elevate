@@ -951,7 +951,7 @@ class CustomLinkViewSet(viewsets.ModelViewSet):
             from django.conf import settings
             frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
             success_url = f"{frontend_url}/order-success?order_id={order.order_id}"
-            cancel_url = f"{frontend_url}/order-cancelled?order_id={order.order_id}"
+            cancel_url = f"{frontend_url}?order_cancelled=true&order_id={order.order_id}"
             
             logger.info(f"DEBUG - Success URL: {success_url}")
             logger.info(f"DEBUG - Cancel URL: {cancel_url}")

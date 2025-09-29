@@ -84,7 +84,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       items: [
         { id: 'storefront', label: 'My Storefront', icon: Store },
         { id: 'custom-links', label: 'My Products', icon: Package },
-        { id: 'cta-banners', label: 'CTA Banners', icon: Megaphone },
       ]
     },
     {
@@ -187,8 +186,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       case '/custom-links':
       case '/custom-links/create':
         return { itemId: 'custom-links', sectionId: 'linkinbio' }
-      case '/cta-banners':
-        return { itemId: 'cta-banners', sectionId: 'linkinbio' }
       case '/calendar':
         return { itemId: 'calendar', sectionId: 'content' }
       case '/post-creator':
@@ -247,9 +244,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         break
       case 'custom-links':
         router.push('/custom-links')
-        break
-      case 'cta-banners':
-        router.push('/cta-banners')
         break
       case 'subscription':
         router.push('/subscription')

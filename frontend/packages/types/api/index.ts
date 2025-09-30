@@ -146,6 +146,7 @@ export { MediaService } from './services/MediaService';
 export { PlansService } from './services/PlansService';
 export { PostsService } from './services/PostsService';
 export { ProfilesService } from './services/ProfilesService';
+export { RealtimeService } from './services/RealtimeService';
 export { SchemaService } from './services/SchemaService';
 export { StorefrontService } from './services/StorefrontService';
 export { StripeConnectService } from './services/StripeConnectService';

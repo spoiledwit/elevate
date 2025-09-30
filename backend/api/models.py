@@ -29,6 +29,7 @@ class UserProfile(models.Model):
     bio = models.TextField(_("bio"), blank=True)
     profile_image = CloudinaryField('profile_image', blank=True, null=True)
     embedded_video = models.URLField(_("embedded video"), blank=True)
+    affiliate_link = models.TextField(_("affiliate link"), blank=True, help_text="Affiliate/purchase link for funnel injection")
     is_active = models.BooleanField(_("is active"), default=True)
     view_count = models.PositiveIntegerField(_("view count"), default=0)
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)

@@ -21,6 +21,7 @@ import { MediaService } from './services/MediaService';
 import { PlansService } from './services/PlansService';
 import { PostsService } from './services/PostsService';
 import { ProfilesService } from './services/ProfilesService';
+import { RealtimeService } from './services/RealtimeService';
 import { SchemaService } from './services/SchemaService';
 import { StorefrontService } from './services/StorefrontService';
 import { StripeConnectService } from './services/StripeConnectService';
@@ -47,6 +48,7 @@ export class ApiClient {
     public readonly plans: PlansService;
     public readonly posts: PostsService;
     public readonly profiles: ProfilesService;
+    public readonly realtime: RealtimeService;
     public readonly schema: SchemaService;
     public readonly storefront: StorefrontService;
     public readonly stripeConnect: StripeConnectService;
@@ -84,6 +86,7 @@ export class ApiClient {
         this.plans = new PlansService(this.request);
         this.posts = new PostsService(this.request);
         this.profiles = new ProfilesService(this.request);
+        this.realtime = new RealtimeService(this.request);
         this.schema = new SchemaService(this.request);
         this.storefront = new StorefrontService(this.request);
         this.stripeConnect = new StripeConnectService(this.request);

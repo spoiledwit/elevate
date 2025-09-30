@@ -400,14 +400,14 @@ class UserProfileSerializer(serializers.ModelSerializer):
     custom_links = CustomLinkSerializer(many=True, read_only=True)
     cta_banner = CTABannerSerializer(read_only=True)
     profile_image = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = UserProfile
         fields = [
-            'id', 'slug', 'display_name', 'bio', 'profile_image', 
-            'embedded_video', 'is_active', 'social_icons', 'custom_links', 'cta_banner'
+            'id', 'slug', 'display_name', 'bio', 'profile_image',
+            'embedded_video', 'affiliate_link', 'is_active', 'social_icons', 'custom_links', 'cta_banner'
         ]
-    
+
     def get_profile_image(self, obj):
         """Return the full Cloudinary URL for the profile image"""
         if obj.profile_image:

@@ -18,6 +18,7 @@ import { DmAutomationStatsService } from './services/DmAutomationStatsService';
 import { DmRepliesService } from './services/DmRepliesService';
 import { IntegrationsService } from './services/IntegrationsService';
 import { MediaService } from './services/MediaService';
+import { OrdersService } from './services/OrdersService';
 import { PlansService } from './services/PlansService';
 import { PostsService } from './services/PostsService';
 import { ProfilesService } from './services/ProfilesService';
@@ -45,6 +46,7 @@ export class ApiClient {
     public readonly dmReplies: DmRepliesService;
     public readonly integrations: IntegrationsService;
     public readonly media: MediaService;
+    public readonly orders: OrdersService;
     public readonly plans: PlansService;
     public readonly posts: PostsService;
     public readonly profiles: ProfilesService;
@@ -83,6 +85,7 @@ export class ApiClient {
         this.dmReplies = new DmRepliesService(this.request);
         this.integrations = new IntegrationsService(this.request);
         this.media = new MediaService(this.request);
+        this.orders = new OrdersService(this.request);
         this.plans = new PlansService(this.request);
         this.posts = new PostsService(this.request);
         this.profiles = new ProfilesService(this.request);

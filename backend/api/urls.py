@@ -125,12 +125,14 @@ from .apis.upload import (
     upload_to_cloudinary,
     delete_from_cloudinary,
 )
+from .apis.orders import OrderViewSet
 
 router = routers.DefaultRouter()
 router.register("users", UserViewSet, basename="api-users")
 router.register("profiles", UserProfileViewSet, basename="api-profiles")
 router.register("plans", PlanViewSet, basename="api-plans")
 router.register("ai", OpenAIViewSet, basename="api-ai")
+router.register("orders", OrderViewSet, basename="api-orders")
 
 # Storefront API endpoints
 router.register("storefront/profiles", UserProfileStorefrontViewSet, basename="storefront-profiles")

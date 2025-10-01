@@ -239,9 +239,103 @@ class SocialIcon(models.Model):
         return f"{self.user_profile.user.username} - {self.platform}"
 
 
+class CustomLinkTemplate(models.Model):
+    """
+    Master templates for custom links that can be distributed to all users.
+    Managed by admin only through Django admin panel.
+    """
+    # Template info
+    name = models.CharField(_("template name"), max_length=255, help_text="Internal name for this template")
+
+    # Core fields (same as CustomLink)
+    order = models.IntegerField(_("order"), default=0)
+    is_active = models.BooleanField(_("is active"), default=True)
+    type = models.CharField(_("type"), max_length=50, default='generic', help_text="Product type (e.g., 'generic', 'digital_product', 'service', 'event', 'subscription')")
+
+    # Thumbnail info fields
+    thumbnail = CloudinaryField('template_thumbnail', blank=True, null=True)
+    title = models.CharField(_("title"), max_length=100, blank=True)
+    subtitle = models.CharField(_("subtitle"), max_length=150, blank=True)
+
+    # Style and button fields
+    button_text = models.CharField(_("button text"), max_length=100, blank=True)
+
+    STYLE_CHOICES = [
+        ('callout', _('Callout')),
+        ('button', _('Button')),
+        ('checkout', _('Checkout')),
+        ('collect_info', _('Collect Info')),
+    ]
+    style = models.CharField(_("style"), max_length=20, choices=STYLE_CHOICES, default='callout')
+
+    # Checkout page info fields
+    checkout_image = CloudinaryField('template_checkout_image', blank=True, null=True)
+    checkout_title = models.CharField(_("checkout title"), max_length=100, blank=True)
+    checkout_description = tinymce_models.HTMLField(_("checkout description"), blank=True)
+    checkout_bottom_title = models.CharField(_("checkout bottom title"), max_length=100, blank=True)
+    checkout_cta_button_text = models.CharField(_("checkout CTA button text"), max_length=50, blank=True)
+    checkout_price = models.DecimalField(_("checkout price"), max_digits=10, decimal_places=2, blank=True, null=True)
+    checkout_discounted_price = models.DecimalField(_("checkout discounted price"), max_digits=10, decimal_places=2, blank=True, null=True)
+
+    # Additional product-specific information stored as JSON
+    additional_info = models.JSONField(_("additional info"), blank=True, null=True, help_text="Product-specific information based on product type")
+
+    # Timestamps
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    modified_at = models.DateTimeField(_("modified at"), auto_now=True)
+
+    class Meta:
+        db_table = "custom_link_templates"
+        verbose_name = _("custom link template")
+        verbose_name_plural = _("custom link templates")
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+    def sync_to_user_links(self):
+        """
+        Sync this template's values to all linked CustomLinks.
+        Returns the count of updated links.
+        """
+        # Update scalar fields via bulk update for efficiency
+        updated_count = self.user_links.update(
+            order=self.order,
+            type=self.type,
+            title=self.title,
+            subtitle=self.subtitle,
+            button_text=self.button_text,
+            style=self.style,
+            checkout_title=self.checkout_title,
+            checkout_description=self.checkout_description,
+            checkout_bottom_title=self.checkout_bottom_title,
+            checkout_cta_button_text=self.checkout_cta_button_text,
+            checkout_price=self.checkout_price,
+            checkout_discounted_price=self.checkout_discounted_price,
+            additional_info=self.additional_info,
+            is_active=self.is_active,
+        )
+
+        # Handle Cloudinary fields separately (can't use bulk update)
+        for link in self.user_links.all():
+            link.thumbnail = self.thumbnail
+            link.checkout_image = self.checkout_image
+            link.save(update_fields=['thumbnail', 'checkout_image'])
+
+        return updated_count
+
+
 class CustomLink(models.Model):
     # Core fields
     user_profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='custom_links')
+    template = models.ForeignKey(
+        CustomLinkTemplate,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='user_links',
+        help_text="Master template this link is based on"
+    )
     order = models.IntegerField(_("order"), default=0)
     is_active = models.BooleanField(_("is active"), default=True)
     click_count = models.PositiveIntegerField(_("click count"), default=0)
@@ -1493,4 +1587,18 @@ class ConnectWebhookEvent(models.Model):
     
     def __str__(self):
         return f"{self.event_type} - {self.stripe_event_id[:20]}..."
+
+
+# ============================================================================
+# CUSTOM LINK TEMPLATE AUTO-SYNC SIGNAL
+# ============================================================================
+
+@receiver(post_save, sender=CustomLinkTemplate)
+def auto_sync_template_on_save(sender, instance, created, **kwargs):
+    """
+    Auto-sync all user links when template is updated.
+    When a template is saved (not created), update all CustomLinks that reference it.
+    """
+    if not created:  # Only on updates, not creation
+        instance.sync_to_user_links()
 

@@ -43,14 +43,14 @@ def send_email(
         # Add common context variables
         context.update({
             'frontend_url': getattr(settings, 'FRONTEND_URL', 'http://localhost:3000'),
-            'support_email': 'elevate@credminds.com',
+            'support_email': 'contact@elevate.social',
         })
 
         # Render the HTML template
         html_content = render_to_string(f'emails/{template_name}.html', context)
 
         # Use Resend to send email
-        from_email = from_email or 'elevate@credminds.com'
+        from_email = from_email or 'contact@elevate.social'
 
         params = {
             "from": from_email,

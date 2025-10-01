@@ -10,9 +10,11 @@ from .services.stripe_service import stripe_service
 from django.contrib import messages
 from import_export.admin import ImportExportModelAdmin
 from unfold.contrib.import_export.forms import ExportForm, ImportForm
+from django.db import transaction
+import logging
 
 from .models import (
-    User, UserProfile, UserSocialLinks, UserPermissions, SocialIcon, CustomLink, CollectInfoField, CollectInfoResponse, CTABanner, Subscription,
+    User, UserProfile, UserSocialLinks, UserPermissions, SocialIcon, CustomLinkTemplate, CustomLink, CollectInfoField, CollectInfoResponse, CTABanner, Subscription,
     ProfileView, LinkClick, BannerClick, Order,
     SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, PaymentEvent, Plan, PlanFeature, StripeCustomer,
     Folder, Media, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply, AIConfiguration,
@@ -20,6 +22,9 @@ from .models import (
 )
 from tinymce.widgets import TinyMCE
 from django import forms
+
+# Logger
+logger = logging.getLogger(__name__)
 
 # Backwards compatibility aliases
 CommentAutomationRule = AutomationRule
@@ -205,6 +210,154 @@ class SocialIconAdmin(ModelAdmin, ImportExportModelAdmin):
     )
 
 
+class CustomLinkTemplateAdminForm(forms.ModelForm):
+    class Meta:
+        model = CustomLinkTemplate
+        fields = '__all__'
+        widgets = {
+            'checkout_description': TinyMCE(attrs={'cols': 80, 'rows': 20}),
+        }
+
+
+@admin.register(CustomLinkTemplate)
+class CustomLinkTemplateAdmin(ModelAdmin, ImportExportModelAdmin):
+    """Admin for managing master templates for custom links"""
+    form = CustomLinkTemplateAdminForm
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    list_display = ['name', 'title', 'style', 'type', 'user_count', 'is_active', 'modified_at']
+    list_filter = ['style', 'type', 'is_active', 'created_at']
+    search_fields = ['name', 'title', 'checkout_title', 'subtitle']
+    readonly_fields = ['created_at', 'modified_at']
+    actions = ['distribute_to_all_users', 'sync_to_all_users']
+
+    fieldsets = (
+        ('Template Information', {
+            'fields': ('name', 'type', 'style', 'order', 'is_active'),
+            'description': 'Basic template configuration'
+        }),
+        ('Callout Fields', {
+            'fields': ('title', 'subtitle', 'thumbnail'),
+            'classes': ('collapse',),
+            'description': 'Fields used when style is set to Callout'
+        }),
+        ('Button Fields', {
+            'fields': ('button_text',),
+            'classes': ('collapse',),
+            'description': 'Fields used when style is set to Button'
+        }),
+        ('Checkout Fields', {
+            'fields': ('checkout_image', 'checkout_title', 'checkout_description', 'checkout_bottom_title', 'checkout_cta_button_text', 'checkout_price', 'checkout_discounted_price'),
+            'classes': ('collapse',),
+            'description': 'Fields used when style is set to Checkout'
+        }),
+        ('Additional Info', {
+            'fields': ('additional_info',),
+            'classes': ('collapse',),
+            'description': 'Product-specific information stored as JSON'
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'modified_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def user_count(self, obj):
+        """Show how many users have this template"""
+        return obj.user_links.count()
+    user_count.short_description = 'Users'
+
+    @admin.action(description="Distribute to all users")
+    def distribute_to_all_users(self, request, queryset):
+        """Admin action: Distribute selected templates to ALL users with bulk operations"""
+        BATCH_SIZE = 500
+        total_created = 0
+
+        try:
+            with transaction.atomic():
+                for template in queryset:
+                    # Get all user profiles at once
+                    all_profiles = list(UserProfile.objects.all().values_list('id', flat=True))
+
+                    # Pre-query existing links for this template to avoid duplicates
+                    existing_profile_ids = set(
+                        CustomLink.objects.filter(template=template)
+                        .values_list('user_profile_id', flat=True)
+                    )
+
+                    # Filter out profiles that already have this template
+                    profiles_to_create = [
+                        profile_id for profile_id in all_profiles
+                        if profile_id not in existing_profile_ids
+                    ]
+
+                    # Build CustomLink instances in memory
+                    links_to_create = []
+                    for profile_id in profiles_to_create:
+                        links_to_create.append(
+                            CustomLink(
+                                user_profile_id=profile_id,
+                                template=template,
+                                order=template.order,
+                                type=template.type,
+                                thumbnail=template.thumbnail,
+                                title=template.title,
+                                subtitle=template.subtitle,
+                                button_text=template.button_text,
+                                style=template.style,
+                                checkout_image=template.checkout_image,
+                                checkout_title=template.checkout_title,
+                                checkout_description=template.checkout_description,
+                                checkout_bottom_title=template.checkout_bottom_title,
+                                checkout_cta_button_text=template.checkout_cta_button_text,
+                                checkout_price=template.checkout_price,
+                                checkout_discounted_price=template.checkout_discounted_price,
+                                additional_info=template.additional_info,
+                                is_active=template.is_active,
+                            )
+                        )
+
+                    # Bulk create in batches
+                    for i in range(0, len(links_to_create), BATCH_SIZE):
+                        batch = links_to_create[i:i + BATCH_SIZE]
+                        try:
+                            CustomLink.objects.bulk_create(batch, ignore_conflicts=True)
+                            total_created += len(batch)
+                        except Exception as batch_error:
+                            logger.exception(
+                                "Error in bulk_create batch for template %s: %s",
+                                template.id, str(batch_error)
+                            )
+                            # Continue with next batch even if this one fails
+
+                self.message_user(
+                    request,
+                    f"Distributed to {total_created} users across {queryset.count()} template(s)",
+                    messages.SUCCESS
+                )
+
+        except Exception as e:
+            logger.exception("Error distributing templates to users: %s", str(e))
+            self.message_user(
+                request,
+                f"Error distributing templates: {str(e)}. Changes have been rolled back.",
+                messages.ERROR
+            )
+
+    @admin.action(description="Sync to all users (update existing)")
+    def sync_to_all_users(self, request, queryset):
+        """Admin action: Sync/update existing template links for all users"""
+        total_updated = 0
+        for template in queryset:
+            updated_count = template.sync_to_user_links()
+            total_updated += updated_count
+
+        self.message_user(request, f"Synced {total_updated} user links", messages.SUCCESS)
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).prefetch_related('user_links')
+
+
 class CustomLinkAdminForm(forms.ModelForm):
     class Meta:
         model = CustomLink
@@ -224,10 +377,58 @@ class CustomLinkAdmin(ModelAdmin, ImportExportModelAdmin):
     search_fields = ['user_profile__user__username', 'title', 'button_text', 'checkout_title']
     readonly_fields = ['created_at', 'modified_at', 'click_count']
     list_editable = ['order']
-    
+    actions = ['convert_to_template']
+
     def display_title(self, obj):
         return obj.title or obj.button_text or obj.checkout_title or 'Untitled'
     display_title.short_description = 'Title'
+
+    @admin.action(description="Convert to template")
+    def convert_to_template(self, request, queryset):
+        """Convert selected custom links into templates"""
+        total_created = 0
+
+        try:
+            with transaction.atomic():
+                for link in queryset:
+                    # Create template name from link title
+                    template_name = link.title or link.button_text or link.checkout_title or f"Template from {link.user_profile.user.username}"
+
+                    # Create a new template from this link
+                    CustomLinkTemplate.objects.create(
+                        name=template_name,
+                        order=link.order,
+                        type=link.type,
+                        thumbnail=link.thumbnail,
+                        title=link.title,
+                        subtitle=link.subtitle,
+                        button_text=link.button_text,
+                        style=link.style,
+                        checkout_image=link.checkout_image,
+                        checkout_title=link.checkout_title,
+                        checkout_description=link.checkout_description,
+                        checkout_bottom_title=link.checkout_bottom_title,
+                        checkout_cta_button_text=link.checkout_cta_button_text,
+                        checkout_price=link.checkout_price,
+                        checkout_discounted_price=link.checkout_discounted_price,
+                        additional_info=link.additional_info,
+                        is_active=link.is_active,
+                    )
+                    total_created += 1
+
+                # Success - all templates created
+                self.message_user(request, f"Created {total_created} template(s) from selected links", messages.SUCCESS)
+
+        except Exception as e:
+            # Log the exception with full traceback
+            logger.exception("Error converting custom links to templates: %s", str(e))
+
+            # Show error message to admin
+            self.message_user(
+                request,
+                f"Error creating templates: {str(e)}. All changes have been rolled back.",
+                messages.ERROR
+            )
     
     fieldsets = (
         ('Basic Information', {

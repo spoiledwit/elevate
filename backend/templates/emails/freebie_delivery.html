@@ -1,97 +1,38 @@
 {% extends "emails/base.html" %}
 
-{% block title %}Your Free Download is Ready - Elevate Social{% endblock %}
+{% block title %}Your 5-Minute Content Engine is ready 🚀{% endblock %}
 
-{% block header_title %}Free Download Ready!{% endblock %}
+{% block header_title %}Your 5-Minute Content Engine is ready 🚀{% endblock %}
 
 {% block content %}
-<h2>Your free resource is ready!</h2>
+<p>Hey {{ first_name|default:"there" }},</p>
 
-<p>Hi {{ customer_name|default:"valued reader" }},</p>
+<p>You're in! Here's your <strong>5-Minute / 30-Post Content Engine.</strong><br>
+Tap the button to access everything in one place:</p>
 
-<p>Thank you for your interest in <strong>{{ product_title }}</strong>! Your free download is now ready.</p>
-
-{% if product_subtitle %}
-<p><em>{{ product_subtitle }}</em></p>
-{% endif %}
-
-<div class="download-section">
-    <h3>
-        <svg class="icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <polyline points="7,10 12,15 17,10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-        Download Your Free Resource
-    </h3>
-    <p>Click the button below to access your free download:</p>
-
+<div style="text-align: center; margin: 30px 0;">
     {% if digital_file_url %}
-    <a href="{{ digital_file_url }}" class="download-button" style="color: white !important;">Download Free</a>
+    <a href="{{ digital_file_url }}" style="display: inline-block; background-color: #714efe; color: white !important; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 16px;">Access Your Content Engine Hub</a>
     {% else %}
     <p><em>Download link will be provided shortly via email.</em></p>
     {% endif %}
 </div>
 
-{% if download_instructions %}
-<div class="info-box">
-    <h3>
-        <svg class="icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M9 11H7a4 4 0 0 0 0 8h2m6-8h2a4 4 0 0 1 0 8h-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <polyline points="3,8 5,12 9,12 11,8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <polyline points="13,8 15,12 19,12 21,8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Download Instructions
-    </h3>
-    <p>{{ download_instructions|linebreaks }}</p>
-</div>
+{% if digital_file_url %}
+<p>Or use this link: <a href="{{ digital_file_url }}" style="color: #714efe;">{{ digital_file_url }}</a></p>
 {% endif %}
 
-<div class="info-box">
-    <h3>
-        <svg class="icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
-            <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Download Details
-    </h3>
-    <p><strong>Download ID:</strong> {{ order_id }}</p>
-    <p><strong>Resource:</strong> {{ product_title }}</p>
-    <p><strong>Access Date:</strong> {{ purchase_date|date:"F d, Y" }}</p>
-    <p><strong>Cost:</strong> FREE - No payment required</p>
+<div style="margin: 30px 0;">
+    <p><strong>Quick steps:</strong></p>
+    <p>Open the link → click spreadsheet → copy the prompt → paste into <strong>Elevate Engine GPT</strong> → generate your rows.</p>
+    <p>Open the Canva template → <em>Apps</em> → <em>Bulk Create</em> → map your columns.</p>
+    <p>Preview, download, and post. Watch the mini course/walkthrough video for more details. Repeat monthly in minutes.</p>
 </div>
 
-{% if form_responses %}
-<div class="info-box">
-    <h3>
-        <svg class="icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2"/>
-            <polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="2"/>
-            <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" stroke-width="2"/>
-            <polyline points="10,9 9,9 8,9" stroke="currentColor" stroke-width="2"/>
-        </svg>
-        Your Information
-    </h3>
-    {% for response in form_responses %}
-    <p><strong>{{ response.question }}:</strong> {{ response.answer }}</p>
-    {% endfor %}
-</div>
-{% endif %}
+<p>– {{ sender_name|default:"The Elevate Social Team" }}</p>
 
-<div class="info-box" style="background-color: #f0f9ff; border-left: 4px solid #3b82f6;">
-    <h3>
-        <svg class="icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Why Free?
-    </h3>
-    <p>We believe in providing value first and building trust with our community. This free resource is our way of sharing knowledge and helping you succeed!</p>
-</div>
+<p style="font-size: 15px; color: #666; margin-top: 30px;"><strong>P.S.</strong> Bulk Create requires Canva Pro. A free trial works great if you're just getting started.</p>
 
-<p>If you have any issues accessing your free download or need assistance, please don't hesitate to reach out to our support team.</p>
+<p style="font-size: 15px; color: #666;"><strong>P.P.S.</strong> I'll send a few more quick wins and goodies over the next few days—keep an eye out. To learn more about how to get more of where this came from, {% if affiliate_link %}check out <a href="{{ affiliate_link }}" style="color: #714efe;">my recommended resources</a>{% else %}stay tuned for more resources{% endif %}. I'd love to support you directly. Enjoy—and hit reply with any questions!</p>
 
-<p>We hope you find this resource valuable! If you'd like to see more content like this, feel free to explore our other offerings.</p>
-
-<p>Best regards,<br>The Elevate Social Team</p>
 {% endblock %}

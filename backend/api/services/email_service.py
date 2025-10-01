@@ -264,8 +264,16 @@ def send_freebie_email(order: Order) -> bool:
     custom_link = order.custom_link
     additional_info = custom_link.additional_info or {}
 
+    # Get seller's profile information
+    seller_profile = custom_link.user_profile
+    seller_user = seller_profile.user
+
+    # Extract first name from customer name or order email
+    first_name = order.customer_name.split()[0] if order.customer_name else ""
+
     context = {
         'customer_name': order.customer_name,
+        'first_name': first_name,
         'order_id': order.order_id,
         'product_title': custom_link.title or custom_link.checkout_title or 'Free Resource',
         'product_subtitle': custom_link.subtitle,
@@ -274,11 +282,13 @@ def send_freebie_email(order: Order) -> bool:
         'download_instructions': additional_info.get('download_instructions'),
         'form_responses': order.get_formatted_responses(),
         'is_free': True,  # Flag to indicate this is a free product
+        'sender_name': seller_profile.display_name or seller_user.get_full_name() or seller_user.username,
+        'affiliate_link': seller_profile.affiliate_link or '',
     }
 
     return send_email(
         template_name='freebie_delivery',
-        subject=f'Your free download is ready: {context["product_title"]}',
+        subject='Your 5-Minute Content Engine is ready 🚀',
         to_email=order.customer_email,
         context=context
     )

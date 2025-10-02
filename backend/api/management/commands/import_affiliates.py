@@ -70,6 +70,9 @@ class Command(BaseCommand):
                 required_headers = {'Email', 'Affiliate Full name'}
                 if not required_headers.issubset(reader.fieldnames):
                     raise CommandError(f'CSV must contain headers: {required_headers}')
+
+                # Check if Password column exists
+                has_password_column = 'Password' in reader.fieldnames
                 
                 # Read all rows first
                 all_rows = list(reader)
@@ -106,7 +109,7 @@ class Command(BaseCommand):
                         try:
                             email = row['Email'].strip().lower()
                             full_name = row['Affiliate Full name'].strip()
-                            
+
                             # Validate email
                             if not email or '@' not in email:
                                 self.stdout.write(
@@ -114,12 +117,15 @@ class Command(BaseCommand):
                                 )
                                 error_count += 1
                                 continue
-                            
+
                             # Split full name
                             name_parts = full_name.split(' ', 1)
                             first_name = name_parts[0] if name_parts else ''
                             last_name = name_parts[1] if len(name_parts) > 1 else ''
-                            
+
+                            # Get password from CSV if available
+                            row_password = row.get('Password', '').strip() if has_password_column else None
+
                             # Handle existing users
                             if email in existing_emails:
                                 if update_existing:
@@ -127,7 +133,8 @@ class Command(BaseCommand):
                                         'email': email,
                                         'first_name': first_name,
                                         'last_name': last_name,
-                                        'full_name': full_name
+                                        'full_name': full_name,
+                                        'password': row_password
                                     })
                                 else:
                                     skipped_count += 1
@@ -154,8 +161,11 @@ class Command(BaseCommand):
                                 last_name=last_name,
                                 is_active=True
                             )
-                            
-                            if password_hash:
+
+                            # Set password: priority is CSV password > default password > unusable
+                            if row_password:
+                                user.password = make_password(row_password)
+                            elif password_hash:
                                 user.password = password_hash
                             else:
                                 user.set_unusable_password()
@@ -267,10 +277,19 @@ class Command(BaseCommand):
                         # Bulk update existing users if requested
                         if update_existing and users_to_update:
                             for update_data in users_to_update:
-                                User.objects.filter(email=update_data['email']).update(
-                                    first_name=update_data['first_name'],
-                                    last_name=update_data['last_name']
-                                )
+                                update_fields = {
+                                    'first_name': update_data['first_name'],
+                                    'last_name': update_data['last_name']
+                                }
+
+                                # Update password if provided in CSV or as default
+                                if update_data.get('password'):
+                                    update_fields['password'] = make_password(update_data['password'])
+                                elif default_password:
+                                    update_fields['password'] = password_hash
+
+                                User.objects.filter(email=update_data['email']).update(**update_fields)
+
                                 # Update profile if exists
                                 UserProfile.objects.filter(user__email=update_data['email']).update(
                                     display_name=update_data['full_name']

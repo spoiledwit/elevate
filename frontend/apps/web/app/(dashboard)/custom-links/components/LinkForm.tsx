@@ -10,7 +10,6 @@ import { createNewProductAction, updateCustomLinkWithFileAction, updateCustomLin
 import { uploadDocumentAction } from '@/actions/upload-action'
 import digitalProductImg from '@/assets/product-types/digitalProduct.svg'
 import customProductImg from '@/assets/product-types/product.svg'
-import eCourseImg from '@/assets/product-types/eCourse.svg'
 import urlMediaImg from '@/assets/product-types/media.svg'
 import freebieImg from '@/assets/product-types/freebee.png'
 import uploadImg from '@/assets/imgs/upload.png'
@@ -51,7 +50,7 @@ interface LinkFormProps {
   onClose?: () => void
 }
 
-type ProductType = 'digital' | 'custom' | 'ecourse' | 'url-media' | 'freebie' | null
+type ProductType = 'digital' | 'custom' | 'url-media' | 'freebie' | null
 
 export function LinkForm({ link, onClose }: LinkFormProps) {
   const router = useRouter()
@@ -139,14 +138,6 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       image: customProductImg
     },
     {
-      id: 'ecourse' as const,
-      title: 'eCourse',
-      description: 'Create and sell online courses with lessons and content',
-      icon: GraduationCap,
-      color: 'bg-green-50 border-green-200 text-green-600',
-      image: eCourseImg
-    },
-    {
       id: 'url-media' as const,
       title: 'URL/Media',
       description: 'Simple link to external content or media files',
@@ -174,7 +165,6 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         switch (backendType) {
           case 'digital_product': return 'digital'
           case 'custom_product': return 'custom'
-          case 'ecourse': return 'ecourse'
           case 'url_media': return 'url-media'
           case 'freebie': return 'freebie'
           default: return 'digital'
@@ -220,9 +210,6 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
           setDownloadInstructions(additionalInfo.download_instructions || '')
         } else if (productType === 'custom') {
           setCustomFields(additionalInfo.custom_fields || [])
-        } else if (productType === 'ecourse') {
-          setCourseDuration(additionalInfo.course_duration || '')
-          setCourseModules(additionalInfo.course_modules || [''])
         } else if (productType === 'url-media') {
           setMediaUrl(additionalInfo.destination_url || '')
           setButtonText(additionalInfo.button_text || 'View Content')
@@ -354,54 +341,6 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         const response = await fetch(urlMediaImg.src)
         const blob = await response.blob()
         const file = new File([blob], 'url-media-checkout.svg', { type: 'image/svg+xml' })
-        setCheckoutImage(file)
-      } catch (error) {
-        console.error('Failed to convert checkout image to file:', error)
-      }
-    }
-
-    // Auto-set fields for eCourse
-    if (type === 'ecourse') {
-      // Step 2: Basic info
-      setThumbnailPreview(eCourseImg.src)
-
-      // Convert SVG to File object for thumbnail
-      try {
-        const response = await fetch(eCourseImg.src)
-        const blob = await response.blob()
-        const file = new File([blob], 'ecourse-thumbnail.svg', { type: 'image/svg+xml' })
-        setThumbnail(file)
-      } catch (error) {
-        console.error('Failed to convert thumbnail to file:', error)
-      }
-
-      setTitle('Master New Skills with Our eCourse')
-      setSubtitle('Comprehensive online course with expert guidance')
-      setCheckoutPrice('199.99')
-      setCheckoutDiscountedPrice('149.99')
-
-      // Step 3: Checkout details
-      setCheckoutTitle('Enroll in Our Premium eCourse')
-      setCheckoutDescription('<h3>What You\'ll Learn:</h3><ul><li>✅ Step-by-step video lessons</li><li>✅ Downloadable resources and worksheets</li><li>✅ Interactive assignments and quizzes</li><li>✅ Certificate of completion</li><li>✅ Lifetime access to course materials</li><li>✅ Direct access to instructor support</li></ul><p>Transform your skills with our comprehensive online course. Join thousands of successful students who have already mastered these valuable skills!</p>')
-      setCheckoutBottomTitle('Ready to Start Learning?')
-      setCheckoutCtaButtonText('Enroll Now')
-
-      // Set default course info
-      setCourseDuration('8 weeks • Self-paced')
-      setCourseModules([
-        'Introduction and Course Overview',
-        'Fundamentals and Basic Concepts',
-        'Advanced Techniques and Strategies',
-        'Practical Applications and Case Studies',
-        'Final Project and Certification'
-      ])
-
-      // Also set checkout image to the same
-      setCheckoutImagePreview(eCourseImg.src)
-      try {
-        const response = await fetch(eCourseImg.src)
-        const blob = await response.blob()
-        const file = new File([blob], 'ecourse-checkout.svg', { type: 'image/svg+xml' })
         setCheckoutImage(file)
       } catch (error) {
         console.error('Failed to convert checkout image to file:', error)
@@ -689,7 +628,6 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         switch (type) {
           case 'digital': return 'digital_product'
           case 'custom': return 'custom_product'
-          case 'ecourse': return 'ecourse'
           case 'url-media': return 'url_media'
           case 'freebie': return 'freebie'
           default: return 'generic'
@@ -707,11 +645,6 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       } else if (selectedType === 'custom') {
         additionalInfo = {
           custom_fields: customFields.filter(field => field.label.trim() && field.value.trim())
-        }
-      } else if (selectedType === 'ecourse') {
-        additionalInfo = {
-          course_duration: courseDuration,
-          course_modules: courseModules.filter(module => module.trim())
         }
       } else if (selectedType === 'url-media') {
         additionalInfo = {
@@ -840,7 +773,6 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         switch (type) {
           case 'digital': return 'digital_product'
           case 'custom': return 'custom_product'
-          case 'ecourse': return 'ecourse'
           case 'url-media': return 'url_media'
           case 'freebie': return 'freebie'
           default: return 'generic'
@@ -858,11 +790,6 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       } else if (selectedType === 'custom') {
         additionalInfo = {
           custom_fields: customFields.filter(field => field.label.trim() && field.value.trim())
-        }
-      } else if (selectedType === 'ecourse') {
-        additionalInfo = {
-          course_duration: courseDuration,
-          course_modules: courseModules.filter(module => module.trim())
         }
       } else if (selectedType === 'url-media') {
         additionalInfo = {
@@ -1941,77 +1868,6 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                       ))}
                     </div>
                   )}
-                </div>
-              </>
-            )}
-
-            {/* eCourse Fields */}
-            {selectedType === 'ecourse' && (
-              <>
-                <div>
-                  <label htmlFor="course-duration" className="block text-sm font-semibold text-gray-900 mb-2">
-                    Course Duration
-                  </label>
-                  <div className="relative">
-                    <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input
-                      type="text"
-                      id="course-duration"
-                      value={courseDuration}
-                      onChange={(e) => setCourseDuration(e.target.value)}
-                      placeholder="e.g., 8 weeks, 30 hours, Self-paced"
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-300"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <label className="block text-sm font-semibold text-gray-900">
-                      Course Modules
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => setCourseModules([...courseModules, ''])}
-                      className="inline-flex items-center gap-1 text-sm text-brand-600 hover:text-purple-700"
-                    >
-                      <PlusCircle className="w-4 h-4" />
-                      Add Module
-                    </button>
-                  </div>
-
-                  <div className="space-y-2">
-                    {courseModules.map((module, index) => (
-                      <div key={index} className="flex gap-2">
-                        <div className="flex items-center gap-2 flex-1">
-                          <BookOpen className="w-4 h-4 text-gray-400" />
-                          <input
-                            type="text"
-                            value={module}
-                            onChange={(e) => {
-                              const updated = [...courseModules]
-                              updated[index] = e.target.value
-                              setCourseModules(updated)
-                            }}
-                            placeholder={`Module ${index + 1}: Introduction to...`}
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-                          />
-                        </div>
-                        {courseModules.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const updated = courseModules.filter((_, i) => i !== index)
-                              setCourseModules(updated)
-                            }}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
                 </div>
               </>
             )}

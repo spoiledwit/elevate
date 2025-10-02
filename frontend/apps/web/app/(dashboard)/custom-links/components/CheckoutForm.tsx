@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ShoppingCart } from 'lucide-react'
 import { toast } from 'sonner'
 import { createOrderAction, type OrderCreateData } from '@/actions/storefront-action'
+import confetti from 'canvas-confetti'
 
 interface CheckoutFormProps {
   linkId?: string
@@ -36,6 +37,7 @@ interface CheckoutFormProps {
 
 export function CheckoutForm({
   linkId,
+  productType,
   thumbnail,
   title,
   checkoutTitle,
@@ -51,11 +53,43 @@ export function CheckoutForm({
   onOrderSuccess
 }: CheckoutFormProps) {
   const hasDiscount = discountedPrice && parseFloat(discountedPrice) < parseFloat(price)
+  const isFreebie = productType === 'freebie'
 
   // Form state for active mode
   const [formData, setFormData] = useState<Record<string, string | string[]>>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false)
+
+  // Confetti animation for freebie success
+  const triggerConfetti = () => {
+    const duration = 3000
+    const animationEnd = Date.now() + duration
+    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 }
+
+    const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min
+
+    const interval = window.setInterval(() => {
+      const timeLeft = animationEnd - Date.now()
+
+      if (timeLeft <= 0) {
+        return clearInterval(interval)
+      }
+
+      const particleCount = 50 * (timeLeft / duration)
+
+      confetti({
+        ...defaults,
+        particleCount,
+        origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+      })
+      confetti({
+        ...defaults,
+        particleCount,
+        origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+      })
+    }, 250)
+  }
 
   const handleInputChange = (fieldIndex: number, value: string | string[]) => {
     const fieldKey = `field_${fieldIndex}`
@@ -138,15 +172,29 @@ export function CheckoutForm({
             window.location.href = result.data.checkout_url
           } else {
             // Fallback for when Stripe checkout fails but order is created
-            toast.success('Order Created Successfully!', {
-              duration: 5000
-            })
+            // For freebies, show special success message with confetti
+            if (isFreebie) {
+              setShowSuccessMessage(true)
+              triggerConfetti()
+
+              // Hide success message after 5 seconds
+              setTimeout(() => {
+                setShowSuccessMessage(false)
+                if (onOrderSuccess) {
+                  onOrderSuccess(result.data)
+                }
+              }, 5000)
+            } else {
+              toast.success('Order Created Successfully!', {
+                duration: 5000
+              })
+            }
 
             // Clear form data
             setFormData({})
 
-            // Call success callback to navigate back
-            if (onOrderSuccess) {
+            // Call success callback to navigate back (for non-freebies)
+            if (!isFreebie && onOrderSuccess) {
               onOrderSuccess(result.data)
             }
           }
@@ -170,7 +218,7 @@ export function CheckoutForm({
 
   if (layout === 'fullpage') {
     return (
-      <div className={`bg-white ${className}`}>
+      <div className={`bg-white ${className} relative`}>
         <div className="max-w-2xl mx-auto p-8">
           <div className="space-y-8">
             {/* Header Section */}
@@ -385,13 +433,27 @@ export function CheckoutForm({
             </div>
           </div>
         </div>
+
+        {/* Success Message Overlay for Freebies - Fullpage */}
+        {showSuccessMessage && isFreebie && (
+          <div className="absolute inset-0 bg-white/95 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="text-center px-6">
+              <h2 className="text-5xl md:text-6xl font-bold text-brand-600 mb-4">
+                Check your email!
+              </h2>
+              <p className="text-3xl md:text-4xl font-semibold text-gray-700">
+                Your gift is on its way! 🎁
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
 
   // Card layout (default)
   return (
-    <div className={`bg-white ${className}`}>
+    <div className={`bg-white ${className} relative`}>
       {/* Checkout Page Image with Title Overlay */}
       {thumbnail ? (
         <div className="aspect-[3/2] overflow-hidden bg-purple-50 relative">
@@ -616,6 +678,20 @@ export function CheckoutForm({
           </div>
         </div>
       </div>
+
+      {/* Success Message Overlay for Freebies */}
+      {showSuccessMessage && isFreebie && (
+        <div className="absolute inset-0 bg-white/95 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
+          <div className="text-center px-6">
+            <h2 className="text-4xl md:text-5xl font-bold text-brand-600 mb-2">
+              Check your email!
+            </h2>
+            <p className="text-2xl md:text-3xl font-semibold text-gray-700">
+              Your gift is on its way! 🎁
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

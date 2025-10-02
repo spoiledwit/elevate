@@ -554,6 +554,11 @@ UNFOLD = {
                         "icon": "settings_suggest",
                         "link": reverse_lazy("admin:api_aiconfiguration_changelist"),
                     },
+                    {
+                        "title": _("Milo Prompts"),
+                        "icon": "smart_toy",
+                        "link": reverse_lazy("admin:api_miloprompt_changelist"),
+                    },
                 ],
             },
             {

@@ -50,7 +50,7 @@ interface LinkFormProps {
   onClose?: () => void
 }
 
-type ProductType = 'digital' | 'custom' | 'url-media' | 'freebie' | null
+type ProductType = 'digital' | 'url-media' | 'freebie' | 'opt-in' | null
 
 export function LinkForm({ link, onClose }: LinkFormProps) {
   const router = useRouter()
@@ -130,17 +130,17 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       image: digitalProductImg
     },
     {
-      id: 'custom' as const,
-      title: 'Custom Product',
-      description: 'Create a custom product with your own fields and pricing',
+      id: 'opt-in' as const,
+      title: 'Opt In Page',
+      description: 'Collect leads with a free download or resource in exchange for contact info',
       icon: Package,
-      color: 'bg-purple-50 border-purple-200 text-brand-600',
+      color: 'bg-green-50 border-green-200 text-green-600',
       image: customProductImg
     },
     {
       id: 'url-media' as const,
-      title: 'URL/Media',
-      description: 'Simple link to external content or media files',
+      title: 'My Links',
+      description: 'Direct links to your content, social profiles, or external resources',
       icon: Link,
       color: 'bg-orange-50 border-orange-200 text-orange-600',
       image: urlMediaImg
@@ -164,7 +164,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       const getProductTypeFromBackend = (backendType: string): ProductType => {
         switch (backendType) {
           case 'digital_product': return 'digital'
-          case 'custom_product': return 'custom'
+          case 'opt_in': return 'opt-in'
           case 'url_media': return 'url-media'
           case 'freebie': return 'freebie'
           default: return 'digital'
@@ -208,8 +208,9 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         if (productType === 'digital') {
           setDigitalFileUrl(additionalInfo.digital_file_url || '')
           setDownloadInstructions(additionalInfo.download_instructions || '')
-        } else if (productType === 'custom') {
-          setCustomFields(additionalInfo.custom_fields || [])
+        } else if (productType === 'opt-in') {
+          setDigitalFileUrl(additionalInfo.digital_file_url || '')
+          setDownloadInstructions(additionalInfo.download_instructions || '')
         } else if (productType === 'url-media') {
           setMediaUrl(additionalInfo.destination_url || '')
           setButtonText(additionalInfo.button_text || 'View Content')
@@ -267,8 +268,8 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       }
     }
 
-    // Auto-set fields for custom product
-    if (type === 'custom') {
+    // Auto-set fields for opt-in page
+    if (type === 'opt-in') {
       // Step 2: Basic info
       setThumbnailPreview(customProductImg.src)
 
@@ -276,29 +277,29 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       try {
         const response = await fetch(customProductImg.src)
         const blob = await response.blob()
-        const file = new File([blob], 'custom-product-thumbnail.svg', { type: 'image/svg+xml' })
+        const file = new File([blob], 'opt-in-thumbnail.svg', { type: 'image/svg+xml' })
         setThumbnail(file)
       } catch (error) {
         console.error('Failed to convert thumbnail to file:', error)
       }
 
-      setTitle('Get Your Custom Product Today!')
-      setSubtitle('Premium quality product tailored just for you')
-      setCheckoutPrice('99.99')
-      setCheckoutDiscountedPrice('79.99')
+      setTitle('Download Your Free Guide!')
+      setSubtitle('Get instant access to our proven strategies and resources')
+      setCheckoutPrice('0.00')
+      setCheckoutDiscountedPrice('')
 
       // Step 3: Checkout details
-      setCheckoutTitle('Order Your Custom Product')
-      setCheckoutDescription('<h3>What Makes This Special:</h3><ul><li>✅ Completely customized to your needs</li><li>✅ Premium materials and craftsmanship</li><li>✅ Personal consultation included</li><li>✅ Satisfaction guaranteed</li></ul><p>Experience the difference of a product made specifically for you. Join our community of satisfied customers who chose quality and personalization!</p>')
-      setCheckoutBottomTitle('Ready to Order?')
-      setCheckoutCtaButtonText('Order Custom Product')
+      setCheckoutTitle('Get Your Free Download Now')
+      setCheckoutDescription('<h3>What You\'ll Learn:</h3><ul><li>✅ Step-by-step strategies you can implement today</li><li>✅ Proven frameworks used by successful entrepreneurs</li><li>✅ Downloadable worksheets and templates</li><li>✅ Exclusive tips not shared anywhere else</li></ul><p>Join thousands of others who have already downloaded this valuable resource and started seeing results!</p>')
+      setCheckoutBottomTitle('Enter Your Details to Get Instant Access')
+      setCheckoutCtaButtonText('Get Free Instant Access')
 
       // Also set checkout image to the same
       setCheckoutImagePreview(customProductImg.src)
       try {
         const response = await fetch(customProductImg.src)
         const blob = await response.blob()
-        const file = new File([blob], 'custom-product-checkout.svg', { type: 'image/svg+xml' })
+        const file = new File([blob], 'opt-in-checkout.svg', { type: 'image/svg+xml' })
         setCheckoutImage(file)
       } catch (error) {
         console.error('Failed to convert checkout image to file:', error)
@@ -322,8 +323,8 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
 
       setTitle('Access Premium Content')
       setSubtitle('Exclusive media and resources for your success')
-      setCheckoutPrice('19.99')
-      setCheckoutDiscountedPrice('14.99')
+      setCheckoutPrice('0.00')
+      setCheckoutDiscountedPrice('')
 
       // Step 3: Checkout details
       setCheckoutTitle('Get Access to Premium Media')
@@ -391,11 +392,15 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
   const handleContinue = () => {
     if (step === 1 && selectedType) {
       setStep(2)
-    } else if (step === 2 && title.trim() && selectedStyle && checkoutPrice) {
+    } else if (step === 2 && title.trim() && selectedStyle && (selectedType === 'url-media' || selectedType === 'opt-in' || selectedType === 'freebie' || checkoutPrice)) {
       setStep(3)
     } else if (step === 3) {
-      // Always go to collect info step (step 4)
-      setStep(4)
+      // Skip collect info step (step 4) for url-media, go straight to step 5
+      if (selectedType === 'url-media') {
+        setStep(5)
+      } else {
+        setStep(4)
+      }
     } else if (step === 4) {
       // Validate collect info fields before continuing
       if (validateCollectInfoFields()) {
@@ -408,7 +413,12 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
 
   const handleBack = () => {
     if (step > 1) {
-      setStep(step - 1)
+      // Skip step 4 when going back from step 5 for url-media
+      if (step === 5 && selectedType === 'url-media') {
+        setStep(3)
+      } else {
+        setStep(step - 1)
+      }
     } else {
       if (onClose) {
         onClose()
@@ -604,7 +614,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       // Handle file upload for digital products and freebies if a new file is selected
       let finalDigitalFileUrl = digitalFileUrl
 
-      if ((selectedType === 'digital' || selectedType === 'freebie') && digitalFile) {
+      if ((selectedType === 'digital' || selectedType === 'opt-in' || selectedType === 'freebie') && digitalFile) {
         setIsUploadingFile(true)
 
         const uploadResult = await uploadDocumentAction(digitalFile, selectedType === 'freebie' ? 'freebies' : 'digital-products')
@@ -627,7 +637,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       const getProductTypeKey = (type: ProductType): string => {
         switch (type) {
           case 'digital': return 'digital_product'
-          case 'custom': return 'custom_product'
+          case 'opt-in': return 'opt_in'
           case 'url-media': return 'url_media'
           case 'freebie': return 'freebie'
           default: return 'generic'
@@ -642,9 +652,10 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
           digital_file_url: finalDigitalFileUrl,
           download_instructions: downloadInstructions
         }
-      } else if (selectedType === 'custom') {
+      } else if (selectedType === 'opt-in') {
         additionalInfo = {
-          custom_fields: customFields.filter(field => field.label.trim() && field.value.trim())
+          digital_file_url: finalDigitalFileUrl,
+          download_instructions: downloadInstructions
         }
       } else if (selectedType === 'url-media') {
         additionalInfo = {
@@ -749,7 +760,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       // Handle file upload for digital products and freebies if a file is selected
       let finalDigitalFileUrl = digitalFileUrl
 
-      if ((selectedType === 'digital' || selectedType === 'freebie') && digitalFile) {
+      if ((selectedType === 'digital' || selectedType === 'opt-in' || selectedType === 'freebie') && digitalFile) {
         setIsUploadingFile(true)
 
         const uploadResult = await uploadDocumentAction(digitalFile, selectedType === 'freebie' ? 'freebies' : 'digital-products')
@@ -772,7 +783,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       const getProductTypeKey = (type: ProductType): string => {
         switch (type) {
           case 'digital': return 'digital_product'
-          case 'custom': return 'custom_product'
+          case 'opt-in': return 'opt_in'
           case 'url-media': return 'url_media'
           case 'freebie': return 'freebie'
           default: return 'generic'
@@ -787,9 +798,10 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
           digital_file_url: finalDigitalFileUrl,
           download_instructions: downloadInstructions
         }
-      } else if (selectedType === 'custom') {
+      } else if (selectedType === 'opt-in') {
         additionalInfo = {
-          custom_fields: customFields.filter(field => field.label.trim() && field.value.trim())
+          digital_file_url: finalDigitalFileUrl,
+          download_instructions: downloadInstructions
         }
       } else if (selectedType === 'url-media') {
         additionalInfo = {
@@ -1064,56 +1076,58 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                 </div>
               </div>
 
-              {/* Pricing Section */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-3">
-                  Pricing
-                </label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Regular Price */}
-                  <div>
-                    <label htmlFor="checkout-price" className="block text-sm font-medium text-gray-700 mb-2">
-                      Price <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input
-                        type="number"
-                        id="checkout-price"
-                        value={checkoutPrice}
-                        onChange={(e) => setCheckoutPrice(e.target.value)}
-                        placeholder="99.00"
-                        step="0.01"
-                        min="0"
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-300"
-                      />
+              {/* Pricing Section - Hide for Opt-In, Freebie, and URL/Media */}
+              {selectedType !== 'opt-in' && selectedType !== 'freebie' && selectedType !== 'url-media' && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-3">
+                    Pricing
+                  </label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Regular Price */}
+                    <div>
+                      <label htmlFor="checkout-price" className="block text-sm font-medium text-gray-700 mb-2">
+                        Price <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input
+                          type="number"
+                          id="checkout-price"
+                          value={checkoutPrice}
+                          onChange={(e) => setCheckoutPrice(e.target.value)}
+                          placeholder="99.00"
+                          step="0.01"
+                          min="0"
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-300"
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Discounted Price */}
-                  <div>
-                    <label htmlFor="checkout-discounted-price" className="block text-sm font-medium text-gray-700 mb-2">
-                      Sale Price <span className="text-gray-400 font-normal">(Optional)</span>
-                    </label>
-                    <div className="relative">
-                      <Tag className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input
-                        type="number"
-                        id="checkout-discounted-price"
-                        value={checkoutDiscountedPrice}
-                        onChange={(e) => setCheckoutDiscountedPrice(e.target.value)}
-                        placeholder="79.00"
-                        step="0.01"
-                        min="0"
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-300"
-                      />
+                    {/* Discounted Price */}
+                    <div>
+                      <label htmlFor="checkout-discounted-price" className="block text-sm font-medium text-gray-700 mb-2">
+                        Sale Price <span className="text-gray-400 font-normal">(Optional)</span>
+                      </label>
+                      <div className="relative">
+                        <Tag className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input
+                          type="number"
+                          id="checkout-discounted-price"
+                          value={checkoutDiscountedPrice}
+                          onChange={(e) => setCheckoutDiscountedPrice(e.target.value)}
+                          placeholder="79.00"
+                          step="0.01"
+                          min="0"
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-300"
+                        />
+                      </div>
+                      {checkoutDiscountedPrice && checkoutPrice && parseFloat(checkoutDiscountedPrice) >= parseFloat(checkoutPrice) && (
+                        <p className="mt-1 text-xs text-red-600">Sale price should be less than regular price</p>
+                      )}
                     </div>
-                    {checkoutDiscountedPrice && checkoutPrice && parseFloat(checkoutDiscountedPrice) >= parseFloat(checkoutPrice) && (
-                      <p className="mt-1 text-xs text-red-600">Sale price should be less than regular price</p>
-                    )}
                   </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Preview Column */}
@@ -1332,8 +1346,8 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         </div>
       )}
 
-      {/* Step 4: Collect Info Fields Configuration */}
-      {step === 4 && (
+      {/* Step 4: Collect Info Fields Configuration - Hide for URL/Media */}
+      {step === 4 && selectedType !== 'url-media' && (
         <div className="p-6">
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -1674,7 +1688,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
             )}
 
             {/* Digital Product Fields */}
-            {selectedType === 'digital' && (
+            {(selectedType === 'digital' || selectedType === 'opt-in') && (
               <>
                 <div>
                   <label className="block text-sm font-semibold text-gray-900 mb-2">
@@ -1794,80 +1808,6 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                   <p className="mt-1 text-xs text-gray-500">
                     {downloadInstructions.length}/300 characters
                   </p>
-                </div>
-              </>
-            )}
-
-            {/* Custom Product Fields */}
-            {selectedType === 'custom' && (
-              <>
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <label className="block text-sm font-semibold text-gray-900">
-                      Custom Fields
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => setCustomFields([...customFields, { label: '', value: '' }])}
-                      className="inline-flex items-center gap-1 text-sm text-brand-600 hover:text-purple-700"
-                    >
-                      <PlusCircle className="w-4 h-4" />
-                      Add Field
-                    </button>
-                  </div>
-
-                  {customFields.length === 0 ? (
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                      <Package className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600">No custom fields added yet</p>
-                      <button
-                        type="button"
-                        onClick={() => setCustomFields([{ label: '', value: '' }])}
-                        className="mt-2 text-sm text-brand-600 hover:text-purple-700"
-                      >
-                        Add your first field
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {customFields.map((field, index) => (
-                        <div key={index} className="flex gap-2">
-                          <input
-                            type="text"
-                            value={field.label}
-                            onChange={(e) => {
-                              const updated = [...customFields]
-                              updated[index].label = e.target.value
-                              setCustomFields(updated)
-                            }}
-                            placeholder="Label (e.g., Size)"
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-                          />
-                          <input
-                            type="text"
-                            value={field.value}
-                            onChange={(e) => {
-                              const updated = [...customFields]
-                              updated[index].value = e.target.value
-                              setCustomFields(updated)
-                            }}
-                            placeholder="Value (e.g., Large)"
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const updated = customFields.filter((_, i) => i !== index)
-                              setCustomFields(updated)
-                            }}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
               </>
             )}

@@ -7,7 +7,7 @@ from rest_framework import exceptions, serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.db.models import Q
 
-from .models import UserProfile, UserSocialLinks, UserPermissions, SocialIcon, CustomLink, CollectInfoField, CollectInfoResponse, CTABanner, SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, Plan, PlanFeature, Subscription, Folder, Media, ProfileView, LinkClick, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply, Order, StripeConnectAccount, PaymentTransaction, ConnectWebhookEvent
+from .models import UserProfile, UserSocialLinks, UserPermissions, SocialIcon, CustomLink, CollectInfoField, CollectInfoResponse, CTABanner, SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, Plan, PlanFeature, Subscription, Folder, Media, ProfileView, LinkClick, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply, Order, StripeConnectAccount, PaymentTransaction, ConnectWebhookEvent, MiloPrompt
 
 # Backwards compatibility aliases
 CommentAutomationRule = AutomationRule
@@ -405,7 +405,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = UserProfile
         fields = [
             'id', 'slug', 'display_name', 'bio', 'profile_image',
-            'embedded_video', 'affiliate_link', 'is_active', 'social_icons', 'custom_links', 'cta_banner'
+            'embedded_video', 'affiliate_link', 'contact_email', 'is_active', 'social_icons', 'custom_links', 'cta_banner'
         ]
 
     def get_profile_image(self, obj):
@@ -2238,7 +2238,7 @@ class ConnectWebhookEventSerializer(serializers.ModelSerializer):
     """Serializer for Connect webhook events"""
     account_username = serializers.CharField(source='connect_account.user.username', read_only=True, allow_null=True)
     transaction_order_id = serializers.CharField(source='payment_transaction.order.order_id', read_only=True, allow_null=True)
-    
+
     class Meta:
         model = ConnectWebhookEvent
         fields = [
@@ -2247,3 +2247,12 @@ class ConnectWebhookEventSerializer(serializers.ModelSerializer):
             'processed', 'error_message', 'created_at', 'processed_at'
         ]
         read_only_fields = ['id', 'created_at']
+
+
+class MiloPromptSerializer(serializers.ModelSerializer):
+    """Serializer for Milo AI prompts"""
+
+    class Meta:
+        model = MiloPrompt
+        fields = ['id', 'system_prompt', 'created_at', 'modified_at']
+        read_only_fields = ['id', 'created_at', 'modified_at']

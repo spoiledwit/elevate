@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation'
 import { Navbar } from '@/components/landing/navbar'
 import { Hero } from '@/components/landing/hero'
 import { CreatorsShowcase } from '@/components/landing/creators-showcase'
@@ -14,6 +15,7 @@ import { FloatingUsernameClaim } from '@/components/landing/floating-username-cl
 import { getPlansAction } from '@/actions'
 
 export default async function Home() {
+  redirect('/login')
   // Fetch plans data on the server
   const plansData = await getPlansAction()
   return (

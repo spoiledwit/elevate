@@ -13,7 +13,8 @@ import {
   Check,
   Globe,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Mail
 } from 'lucide-react'
 import {
   FaInstagram,
@@ -59,6 +60,7 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
     display_name: profile?.display_name || '',
     bio: profile?.bio || '',
     affiliate_link: profile?.affiliate_link || '',
+    contact_email: profile?.contact_email || '',
     embedded_video: profile?.embedded_video || '',
     is_active: profile?.is_active ?? true,
   })
@@ -378,6 +380,23 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
               value={formData.affiliate_link}
               onChange={(e) => handleInputChange('affiliate_link', e.target.value)}
               placeholder="https://your-affiliate-link.com"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all duration-300 ease-in-out"
+            />
+          </div>
+        </div>
+
+        {/* Contact Email Section */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-900 mb-2">
+            Contact Email
+          </label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="email"
+              value={formData.contact_email}
+              onChange={(e) => handleInputChange('contact_email', e.target.value)}
+              placeholder="contact@youremail.com"
               className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all duration-300 ease-in-out"
             />
           </div>

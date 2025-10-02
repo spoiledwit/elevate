@@ -8,7 +8,7 @@ import confetti from 'canvas-confetti'
 
 interface CheckoutFormProps {
   linkId?: string
-  productType: 'digital' | 'custom' | 'ecourse' | 'url-media' | 'freebie' | null
+  productType: 'digital' | 'opt-in' | 'url-media' | 'freebie' | null
   thumbnail: string | null
   title: string
   subtitle?: string
@@ -53,7 +53,7 @@ export function CheckoutForm({
   onOrderSuccess
 }: CheckoutFormProps) {
   const hasDiscount = discountedPrice && parseFloat(discountedPrice) < parseFloat(price)
-  const isFreebie = productType === 'freebie'
+  const isFreebie = productType === 'freebie' || productType === 'opt-in'
 
   // Form state for active mode
   const [formData, setFormData] = useState<Record<string, string | string[]>>({})

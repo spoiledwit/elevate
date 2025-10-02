@@ -30,6 +30,7 @@ class UserProfile(models.Model):
     profile_image = CloudinaryField('profile_image', blank=True, null=True)
     embedded_video = models.URLField(_("embedded video"), blank=True)
     affiliate_link = models.TextField(_("affiliate link"), blank=True, help_text="Affiliate/purchase link for funnel injection")
+    contact_email = models.EmailField(_("contact email"), blank=True, help_text="Contact email displayed on storefront")
     is_active = models.BooleanField(_("is active"), default=True)
     view_count = models.PositiveIntegerField(_("view count"), default=0)
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
@@ -1591,6 +1592,27 @@ class ConnectWebhookEvent(models.Model):
 
 # ============================================================================
 # CUSTOM LINK TEMPLATE AUTO-SYNC SIGNAL
+# ============================================================================
+
+
+class MiloPrompt(models.Model):
+    """
+    Model to store and manage Milo AI system prompts.
+    """
+    system_prompt = models.TextField(_("system prompt"), help_text="System prompt for Milo AI assistant")
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    modified_at = models.DateTimeField(_("modified at"), auto_now=True)
+
+    class Meta:
+        db_table = "milo_prompts"
+        verbose_name = _("Milo Prompt")
+        verbose_name_plural = _("Milo Prompts")
+        ordering = ['-modified_at']
+
+    def __str__(self):
+        return f"Milo Prompt - {self.modified_at.strftime('%Y-%m-%d %H:%M')}"
+
+
 # ============================================================================
 
 @receiver(post_save, sender=CustomLinkTemplate)

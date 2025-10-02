@@ -17,7 +17,7 @@ from .models import (
     User, UserProfile, UserSocialLinks, UserPermissions, SocialIcon, CustomLinkTemplate, CustomLink, CollectInfoField, CollectInfoResponse, CTABanner, Subscription,
     ProfileView, LinkClick, BannerClick, Order,
     SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, PaymentEvent, Plan, PlanFeature, StripeCustomer,
-    Folder, Media, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply, AIConfiguration,
+    Folder, Media, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply, AIConfiguration, MiloPrompt,
     StripeConnectAccount, PaymentTransaction, ConnectWebhookEvent
 )
 from tinymce.widgets import TinyMCE
@@ -1364,7 +1364,7 @@ class AIConfigurationAdmin(ModelAdmin, ImportExportModelAdmin):
                 form.base_fields['capability'].choices = available_choices
         
         return form
-    
+
     def save_model(self, request, obj, form, change):
         """Override to prevent duplicate capability configs"""
         if not change:  # New object
@@ -1379,6 +1379,37 @@ class AIConfigurationAdmin(ModelAdmin, ImportExportModelAdmin):
                 )
                 return
         super().save_model(request, obj, form, change)
+
+
+@admin.register(MiloPrompt)
+class MiloPromptAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    """
+    Admin interface for Milo AI prompts.
+    Only one prompt can exist at a time.
+    """
+    list_display = ['id', 'modified_at', 'created_at']
+    readonly_fields = ['created_at', 'modified_at']
+
+    fieldsets = (
+        ('Milo AI System Prompt', {
+            'fields': ('system_prompt',),
+            'description': 'System prompt for Milo AI assistant'
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'modified_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def has_add_permission(self, request):
+        """Only allow adding if no prompt exists"""
+        return MiloPrompt.objects.count() == 0
+
+    def has_delete_permission(self, request, obj=None):
+        """Prevent deletion of the Milo prompt"""
+        return False
 
 
 # Backward compatibility aliases are already registered via the @admin.register decorators above

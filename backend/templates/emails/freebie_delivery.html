@@ -35,4 +35,8 @@ Tap the button to access everything in one place:</p>
 
 <p style="font-size: 15px; color: #666;"><strong>P.P.S.</strong> I'll send a few more quick wins and goodies over the next few days—keep an eye out. To learn more about how to get more of where this came from, {% if affiliate_link %}check out <a href="{{ affiliate_link }}" style="color: #714efe;">my recommended resources</a>{% else %}stay tuned for more resources{% endif %}. I'd love to support you directly. Enjoy—and hit reply with any questions!</p>
 
+{% if contact_email %}
+<p style="font-size: 15px; color: #666; margin-top: 20px;">If you want to get in touch, contact me at <a href="mailto:{{ contact_email }}" style="color: #714efe;">{{ contact_email }}</a></p>
+{% endif %}
+
 {% endblock %}

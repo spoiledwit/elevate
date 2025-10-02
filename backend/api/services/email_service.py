@@ -208,10 +208,16 @@ def send_product_delivery_email(order: Order) -> bool:
 
     custom_link = order.custom_link
     additional_info = custom_link.additional_info or {}
+    product_type = custom_link.type
+    logger.info(f"Product type: {product_type}")
     logger.info(f"Additional info: {additional_info}")
 
-    # Determine product type from additional_info structure and price
+    # Determine product type from type field and additional_info structure
     if 'digital_file_url' in additional_info or 'download_instructions' in additional_info:
+        # Check product type - opt_in should use digital product email
+        if product_type == 'opt_in':
+            logger.info(f"Detected opt-in page for order {order.order_id}")
+            return send_digital_product_email(order)
         # Check if this is a freebie (free product)
         is_free = not custom_link.checkout_price or custom_link.checkout_price <= 0
         if is_free:
@@ -239,6 +245,10 @@ def send_digital_product_email(order: Order) -> bool:
     custom_link = order.custom_link
     additional_info = custom_link.additional_info or {}
 
+    # Get seller's profile information
+    seller_profile = custom_link.user_profile
+    seller_user = seller_profile.user
+
     context = {
         'customer_name': order.customer_name,
         'order_id': order.order_id,
@@ -249,6 +259,9 @@ def send_digital_product_email(order: Order) -> bool:
         'digital_file_url': additional_info.get('digital_file_url'),
         'download_instructions': additional_info.get('download_instructions'),
         'form_responses': order.get_formatted_responses(),
+        'sender_name': seller_profile.display_name or seller_user.get_full_name() or seller_user.username,
+        'affiliate_link': seller_profile.affiliate_link or '',
+        'contact_email': seller_profile.contact_email or '',
     }
 
     return send_email(
@@ -284,6 +297,7 @@ def send_freebie_email(order: Order) -> bool:
         'is_free': True,  # Flag to indicate this is a free product
         'sender_name': seller_profile.display_name or seller_user.get_full_name() or seller_user.username,
         'affiliate_link': seller_profile.affiliate_link or '',
+        'contact_email': seller_profile.contact_email or '',
     }
 
     return send_email(

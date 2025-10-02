@@ -53,6 +53,18 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
     setSelectedProduct(null)
   }
 
+  const handleProductClick = (link: any) => {
+    trackLinkClick(link.id)
+
+    // If it's a url_media type, redirect directly to the destination URL
+    if (link.type === 'url_media' && link.additional_info?.destination_url) {
+      window.open(link.additional_info.destination_url, '_blank')
+    } else {
+      // Otherwise, open the checkout page
+      setSelectedProduct(link)
+    }
+  }
+
   const activeCustomLinks = profile.custom_links?.filter((link: any) => link.is_active) || []
 
   return (
@@ -118,10 +130,7 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
               <div className="max-w-xs space-y-4 w-full">
                 {activeCustomLinks.map((link: any) => (
                   <div key={link.id}
-                    onClick={() => {
-                      setSelectedProduct(link);
-                      trackLinkClick(link.id);
-                    }}
+                    onClick={() => handleProductClick(link)}
                   >
                     <ProductCard
                       productType={link.type || 'digital'}
@@ -129,8 +138,8 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
                       title={link.title || link.text}
                       subtitle={link.subtitle}
                       displayStyle={link.style}
-                      price={link.checkout_price}
-                      discountedPrice={link.checkout_discounted_price}
+                      price={link.type === 'url_media' ? undefined : link.checkout_price}
+                      discountedPrice={link.type === 'url_media' ? undefined : link.checkout_discounted_price}
                     />
                   </div>
                 ))}
@@ -196,10 +205,7 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
                 {activeCustomLinks.map((link: any) => (
                   <div key={link.id}
                     className='mb-8'
-                    onClick={() => {
-                      setSelectedProduct(link);
-                      trackLinkClick(link.id);
-                    }}
+                    onClick={() => handleProductClick(link)}
                   >
                     <ProductCard
                       productType={link.type || 'digital'}
@@ -207,8 +213,8 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
                       title={link.title || link.text}
                       subtitle={link.subtitle}
                       displayStyle="callout"
-                      price={link.checkout_price}
-                      discountedPrice={link.checkout_discounted_price}
+                      price={link.type === 'url_media' ? undefined : link.checkout_price}
+                      discountedPrice={link.type === 'url_media' ? undefined : link.checkout_discounted_price}
                     />
                   </div>
                 ))}

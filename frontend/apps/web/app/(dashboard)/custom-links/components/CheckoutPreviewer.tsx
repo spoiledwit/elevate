@@ -3,7 +3,7 @@
 import { CheckoutForm } from './CheckoutForm'
 
 interface CheckoutPreviewerProps {
-  productType: 'digital' | 'custom' | 'ecourse' | 'url-media' | 'freebie' | null
+  productType: 'digital' | 'opt-in' | 'url-media' | 'freebie' | null
   thumbnail: string | null
   title: string
   subtitle?: string

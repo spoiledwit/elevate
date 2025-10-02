@@ -90,7 +90,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     },
     {
       id: 'content',
-      title: 'Content & Social',
+      title: 'Content & Social AI',
       icon: Calendar,
       items: [
         { id: 'calendar', label: 'Content Calendar', icon: Calendar },

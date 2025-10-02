@@ -126,6 +126,7 @@ from .apis.upload import (
     delete_from_cloudinary,
 )
 from .apis.orders import OrderViewSet
+from .apis.milo import MiloPromptViewSet
 
 router = routers.DefaultRouter()
 router.register("users", UserViewSet, basename="api-users")
@@ -133,6 +134,7 @@ router.register("profiles", UserProfileViewSet, basename="api-profiles")
 router.register("plans", PlanViewSet, basename="api-plans")
 router.register("ai", OpenAIViewSet, basename="api-ai")
 router.register("orders", OrderViewSet, basename="api-orders")
+router.register("milo-prompts", MiloPromptViewSet, basename="api-milo-prompts")
 
 # Storefront API endpoints
 router.register("storefront/profiles", UserProfileStorefrontViewSet, basename="storefront-profiles")

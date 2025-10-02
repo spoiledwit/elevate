@@ -196,6 +196,10 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
                 {activeCustomLinks.map((link: any) => (
                   <div key={link.id}
                     className='mb-8'
+                    onClick={() => {
+                      setSelectedProduct(link);
+                      trackLinkClick(link.id);
+                    }}
                   >
                     <ProductCard
                       productType={link.type || 'digital'}

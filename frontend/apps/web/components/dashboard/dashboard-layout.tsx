@@ -84,7 +84,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       icon: Store,
       items: [
         { id: 'storefront', label: 'My Storefront', icon: Store },
-        { id: 'custom-links', label: 'My Products', icon: Package },
+        { id: 'custom-links', label: 'My Listings', icon: Package },
         { id: 'leads', label: 'Leads', icon: Users },
       ]
     },

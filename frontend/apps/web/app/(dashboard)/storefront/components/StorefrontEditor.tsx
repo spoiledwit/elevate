@@ -18,24 +18,9 @@ import {
 import {
   FaInstagram,
   FaFacebook,
-  FaTwitter,
-  FaLinkedin,
   FaYoutube,
   FaTiktok,
-  FaSnapchat,
   FaPinterest,
-  FaTwitch,
-  FaDiscord,
-  FaTelegram,
-  FaWhatsapp,
-  FaReddit,
-  FaTumblr,
-  FaMedium,
-  FaGithub,
-  FaDribbble,
-  FaBehance,
-  FaSpotify,
-  FaSoundcloud,
   FaEnvelope
 } from 'react-icons/fa'
 import {
@@ -59,41 +44,14 @@ interface StorefrontEditorProps {
   }
 }
 
-// Custom X (Twitter) icon component
-const XIcon = ({ className }: { className?: string }) => (
-  <svg
-    className={className}
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-  </svg>
-)
-
 const socialPlatforms = [
-  { key: 'instagram', label: 'Instagram', icon: FaInstagram, color: '#E4405F', placeholder: 'https://instagram.com/username' },
   { key: 'facebook', label: 'Facebook', icon: FaFacebook, color: '#1877F2', placeholder: 'https://facebook.com/username' },
-  { key: 'twitter', label: 'X', icon: XIcon, color: '#000000', placeholder: 'https://x.com/username' },
-  { key: 'linkedin', label: 'LinkedIn', icon: FaLinkedin, color: '#0A66C2', placeholder: 'https://linkedin.com/in/username' },
-  { key: 'youtube', label: 'YouTube', icon: FaYoutube, color: '#FF0000', placeholder: 'https://youtube.com/c/username' },
   { key: 'tiktok', label: 'TikTok', icon: FaTiktok, color: '#000000', placeholder: 'https://tiktok.com/@username' },
-  { key: 'snapchat', label: 'Snapchat', icon: FaSnapchat, color: '#FFFC00', placeholder: 'https://snapchat.com/add/username' },
+  { key: 'instagram', label: 'Instagram', icon: FaInstagram, color: '#E4405F', placeholder: 'https://instagram.com/username' },
   { key: 'pinterest', label: 'Pinterest', icon: FaPinterest, color: '#BD081C', placeholder: 'https://pinterest.com/username' },
-  { key: 'twitch', label: 'Twitch', icon: FaTwitch, color: '#9146FF', placeholder: 'https://twitch.tv/username' },
-  { key: 'discord', label: 'Discord', icon: FaDiscord, color: '#5865F2', placeholder: 'https://discord.gg/username' },
-  { key: 'telegram', label: 'Telegram', icon: FaTelegram, color: '#0088CC', placeholder: 'https://t.me/username' },
-  { key: 'whatsapp', label: 'WhatsApp', icon: FaWhatsapp, color: '#25D366', placeholder: 'https://wa.me/phonenumber' },
-  { key: 'reddit', label: 'Reddit', icon: FaReddit, color: '#FF4500', placeholder: 'https://reddit.com/u/username' },
-  { key: 'tumblr', label: 'Tumblr', icon: FaTumblr, color: '#001935', placeholder: 'https://username.tumblr.com' },
-  { key: 'medium', label: 'Medium', icon: FaMedium, color: '#000000', placeholder: 'https://medium.com/@username' },
-  { key: 'github', label: 'GitHub', icon: FaGithub, color: '#181717', placeholder: 'https://github.com/username' },
-  { key: 'dribbble', label: 'Dribbble', icon: FaDribbble, color: '#EA4C89', placeholder: 'https://dribbble.com/username' },
-  { key: 'behance', label: 'Behance', icon: FaBehance, color: '#1769FF', placeholder: 'https://behance.net/username' },
-  { key: 'spotify', label: 'Spotify', icon: FaSpotify, color: '#1DB954', placeholder: 'https://open.spotify.com/user/username' },
-  { key: 'soundcloud', label: 'SoundCloud', icon: FaSoundcloud, color: '#FF3300', placeholder: 'https://soundcloud.com/username' },
+  { key: 'youtube', label: 'YouTube', icon: FaYoutube, color: '#FF0000', placeholder: 'https://youtube.com/c/username' },
+  { key: 'website', label: 'Url', icon: Globe, color: '#6B7280', placeholder: 'https://yourwebsite.com' },
   { key: 'email', label: 'Email', icon: FaEnvelope, color: '#6B7280', placeholder: 'mailto:your.email@example.com' },
-  { key: 'website', label: 'Website', icon: Globe, color: '#6B7280', placeholder: 'https://yourwebsite.com' },
 ]
 
 export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: StorefrontEditorProps) {
@@ -442,7 +400,7 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
                       style={{ color: platform.color }}
                     />
                     <span className="absolute left-9 top-1/2 transform -translate-y-1/2 text-xs text-gray-500">
-                      {platform.key === 'email' ? 'MAIL' : 'URL'}
+                      {platform.key === 'email' ? 'EMAIL' : 'URL'}
                     </span>
                     <input
                       type={platform.key === 'email' ? 'email' : 'url'}
@@ -453,7 +411,7 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
                         handleSocialLinkChange(platform.key, finalValue)
                       }}
                       placeholder={platform.key === 'email' ? 'your.email@example.com' : platform.placeholder}
-                      className="w-full pl-16 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all duration-300 ease-in-out"
+                      className={`w-full ${platform.key === 'email' ? 'pl-20' : 'pl-16'} pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all duration-300 ease-in-out`}
                     />
                   </div>
                 </div>

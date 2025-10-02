@@ -90,19 +90,24 @@ export function StorefrontHeaderPreview({
   // Convert YouTube/Vimeo URLs to embed URLs
   const getEmbedUrl = (url: string) => {
     if (!url) return null
-    
+
+    // If it's already an embed URL, return it directly
+    if (url.includes('youtube.com/embed/') || url.includes('player.vimeo.com/video/')) {
+      return url
+    }
+
     // YouTube URL patterns
-    const youtubeMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/)
+    const youtubeMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/)
     if (youtubeMatch) {
       return `https://www.youtube.com/embed/${youtubeMatch[1]}`
     }
-    
+
     // Vimeo URL patterns
     const vimeoMatch = url.match(/(?:vimeo\.com\/)([0-9]+)/)
     if (vimeoMatch) {
       return `https://player.vimeo.com/video/${vimeoMatch[1]}`
     }
-    
+
     return null
   }
 

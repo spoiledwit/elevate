@@ -276,27 +276,66 @@ class Command(BaseCommand):
                         
                         # Bulk update existing users if requested
                         if update_existing and users_to_update:
+                            # Fetch existing users to update in bulk
+                            emails_to_update = [u['email'] for u in users_to_update]
+                            existing_users = User.objects.filter(email__in=emails_to_update)
+                            existing_profiles = UserProfile.objects.filter(user__email__in=emails_to_update)
+
+                            # Create lookup dictionaries
+                            email_to_user = {user.email: user for user in existing_users}
+                            email_to_profile = {profile.user.email: profile for profile in existing_profiles}
+
+                            # Update users in memory
+                            users_to_bulk_update = []
+                            profiles_to_bulk_update = []
+
                             for update_data in users_to_update:
-                                update_fields = {
-                                    'first_name': update_data['first_name'],
-                                    'last_name': update_data['last_name']
-                                }
+                                email = update_data['email']
 
-                                # Update password if provided in CSV or as default
-                                if update_data.get('password'):
-                                    update_fields['password'] = make_password(update_data['password'])
-                                elif default_password:
-                                    update_fields['password'] = password_hash
+                                # Update user
+                                if email in email_to_user:
+                                    user = email_to_user[email]
+                                    user.first_name = update_data['first_name']
+                                    user.last_name = update_data['last_name']
 
-                                User.objects.filter(email=update_data['email']).update(**update_fields)
+                                    # Update password if provided
+                                    if update_data.get('password'):
+                                        user.password = make_password(update_data['password'])
+                                    elif default_password:
+                                        user.password = password_hash
 
-                                # Update profile if exists
-                                UserProfile.objects.filter(user__email=update_data['email']).update(
-                                    display_name=update_data['full_name']
-                                )
+                                    users_to_bulk_update.append(user)
+
+                                # Update profile
+                                if email in email_to_profile:
+                                    profile = email_to_profile[email]
+                                    profile.display_name = update_data['full_name']
+                                    profiles_to_bulk_update.append(profile)
+
+                            # Perform bulk updates in batches
+                            if users_to_bulk_update:
+                                update_fields = ['first_name', 'last_name']
+                                if any(u.get('password') for u in users_to_update) or default_password:
+                                    update_fields.append('password')
+
+                                for i in range(0, len(users_to_bulk_update), batch_size):
+                                    batch = users_to_bulk_update[i:i + batch_size]
+                                    User.objects.bulk_update(batch, update_fields, batch_size=batch_size)
+                                    self.stdout.write(
+                                        self.style.SUCCESS(f'Updated batch of {len(batch)} users ({i + len(batch)}/{len(users_to_bulk_update)})')
+                                    )
+
+                            if profiles_to_bulk_update:
+                                for i in range(0, len(profiles_to_bulk_update), batch_size):
+                                    batch = profiles_to_bulk_update[i:i + batch_size]
+                                    UserProfile.objects.bulk_update(batch, ['display_name'], batch_size=batch_size)
+                                    self.stdout.write(
+                                        self.style.SUCCESS(f'Updated batch of {len(batch)} profiles')
+                                    )
+
                             updated_count = len(users_to_update)
                             self.stdout.write(
-                                self.style.SUCCESS(f'Updated {updated_count} existing users')
+                                self.style.SUCCESS(f'Total updated: {updated_count} users')
                             )
                     else:
                         created_count = len(users_to_create)

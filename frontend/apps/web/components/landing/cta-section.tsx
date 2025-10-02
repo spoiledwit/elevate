@@ -2,7 +2,7 @@ import yellowman from '@/assets/yellowman.png'
 
 export function CTASection() {
   return (
-    <section className="relative overflow-hidden" style={{backgroundColor: '#714efe'}}>
+    <section className="relative overflow-hidden" style={{ backgroundColor: '#714efe' }}>
       <div className="max-w-8xl px-4 sm:px-6 lg:px-14 mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-12 items-center min-h-[400px] sm:min-h-[450px] lg:min-h-[500px]">
           <div className="text-white py-10 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 text-center lg:text-left">
@@ -19,9 +19,7 @@ export function CTASection() {
                 Create My Free Elevate Social
               </button>
 
-              <p className="text-white text-base sm:text-lg">
-                Upgrade to Pro – <span className="font-semibold">$34.99/month</span>
-              </p>
+
             </div>
           </div>
 

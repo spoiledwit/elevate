@@ -12,7 +12,7 @@ export type PaymentTransaction = {
     readonly seller_username: string;
     readonly product_title: string;
     readonly stripe_checkout_session_id: string | null;
-    readonly payment_intent_id: string;
+    readonly payment_intent_id: string | null;
     readonly charge_id: string;
     /**
      * ID of transfer to connected account

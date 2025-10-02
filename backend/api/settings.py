@@ -299,7 +299,7 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = environ.get('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL = environ.get('DEFAULT_FROM_EMAIL', 'noreply@govara.com')
+DEFAULT_FROM_EMAIL = environ.get('DEFAULT_FROM_EMAIL', '')
 
 # Resend API Configuration
 RESEND_API_KEY = environ.get('RESEND_API_KEY', '')
@@ -486,6 +486,11 @@ UNFOLD = {
                         "title": _("Social Icons"),
                         "icon": "share",
                         "link": reverse_lazy("admin:api_socialicon_changelist"),
+                    },
+                    {
+                        "title": _("Custom Link Templates"),
+                        "icon": "dashboard_customize",
+                        "link": reverse_lazy("admin:api_customlinktemplate_changelist"),
                     },
                     {
                         "title": _("Custom Links"),

@@ -12,6 +12,10 @@ export type PatchedUserProfile = {
     bio?: string;
     readonly profile_image?: string;
     embedded_video?: string;
+    /**
+     * Affiliate/purchase link for funnel injection
+     */
+    affiliate_link?: string;
     is_active?: boolean;
     readonly social_icons?: Array<SocialIcon>;
     readonly custom_links?: Array<CustomLink>;

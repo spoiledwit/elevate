@@ -860,14 +860,10 @@ class CustomLinkViewSet(viewsets.ModelViewSet):
         
         link = get_object_or_404(CustomLink, pk=pk, is_active=True)
         logger.info(f"DEBUG - Found link: {link.title}, type: {link.type}, owner: {link.user_profile.user.username}")
-        
-        # Check if link has a price (indicating it's a paid product)
-        if not link.checkout_price or link.checkout_price <= 0:
-            logger.warning(f"DEBUG - Link {pk} is not a paid product, checkout_price: {link.checkout_price}")
-            return Response(
-                {"detail": "This link is not a paid product"}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+
+        # Check if this is a freebie/free product
+        is_free_product = not link.checkout_price or link.checkout_price <= 0
+        logger.info(f"DEBUG - Is free product: {is_free_product}, checkout_price: {link.checkout_price}")
         
         # Rate limiting check
         client_ip = get_client_ip(request)
@@ -902,8 +898,28 @@ class CustomLinkViewSet(viewsets.ModelViewSet):
         # Save the order
         order = serializer.save()
         logger.info(f"DEBUG - Created order: {order.order_id}")
-        
-        # Create Stripe Connect checkout session
+
+        # Handle free products differently - no Stripe payment needed
+        if is_free_product:
+            logger.info("DEBUG - Processing free product order")
+
+            # Mark order as completed immediately
+            order.status = 'completed'
+            order.save(update_fields=['status'])
+
+            logger.info(f"DEBUG - Free product order {order.order_id} marked as completed")
+
+            # For free products, we can provide direct download access
+            # No need for payment processing
+            return Response({
+                "success": True,
+                "order": OrderSerializer(order).data,
+                "is_free": True,
+                "message": "Free download ready! No payment required.",
+                "download_access": True
+            }, status=status.HTTP_201_CREATED)
+
+        # Create Stripe Connect checkout session for paid products
         try:
             from ..services.stripe_connect_service import StripeConnectService
             
@@ -935,7 +951,7 @@ class CustomLinkViewSet(viewsets.ModelViewSet):
             from django.conf import settings
             frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
             success_url = f"{frontend_url}/order-success?order_id={order.order_id}"
-            cancel_url = f"{frontend_url}/order-cancelled?order_id={order.order_id}"
+            cancel_url = f"{frontend_url}?order_cancelled=true&order_id={order.order_id}"
             
             logger.info(f"DEBUG - Success URL: {success_url}")
             logger.info(f"DEBUG - Cancel URL: {cancel_url}")
@@ -984,13 +1000,35 @@ class SocialIconViewSet(viewsets.ModelViewSet):
     serializer_class = SocialIconSerializer
     permission_classes = [IsAuthenticated, StorefrontPermission]
 
+    def create(self, request, *args, **kwargs):
+        print(f"DEBUG - SocialIcon create called with data: {request.data}")
+        try:
+            return super().create(request, *args, **kwargs)
+        except Exception as e:
+            print(f"DEBUG - SocialIcon create failed: {e}")
+            serializer = self.get_serializer(data=request.data)
+            if not serializer.is_valid():
+                print(f"DEBUG - Serializer validation errors: {serializer.errors}")
+            raise
+
     def get_queryset(self):
         return SocialIcon.objects.filter(
             user_profile__user=self.request.user
         )
 
     def perform_create(self, serializer):
+        print(f"DEBUG - SocialIcon perform_create called with data: {serializer.validated_data}")
         profile = get_object_or_404(UserProfile, user=self.request.user)
+        print(f"DEBUG - User profile: {profile}, User: {self.request.user}")
+
+        # Check if we already have a social icon with this platform
+        platform = serializer.validated_data.get('platform')
+        existing_icon = SocialIcon.objects.filter(user_profile=profile, platform=platform).first()
+        if existing_icon:
+            print(f"DEBUG - Found existing social icon for platform {platform}: {existing_icon.id}")
+        else:
+            print(f"DEBUG - Creating new social icon for platform {platform}")
+
         serializer.save(user_profile=profile)
 
 

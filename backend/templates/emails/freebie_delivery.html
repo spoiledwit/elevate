@@ -1,0 +1,38 @@
+{% extends "emails/base.html" %}
+
+{% block title %}Your 5-Minute Content Engine is ready 🚀{% endblock %}
+
+{% block header_title %}Your 5-Minute Content Engine is ready 🚀{% endblock %}
+
+{% block content %}
+<p>Hey {{ first_name|default:"there" }},</p>
+
+<p>You're in! Here's your <strong>5-Minute / 30-Post Content Engine.</strong><br>
+Tap the button to access everything in one place:</p>
+
+<div style="text-align: center; margin: 30px 0;">
+    {% if digital_file_url %}
+    <a href="{{ digital_file_url }}" style="display: inline-block; background-color: #714efe; color: white !important; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 16px;">Access Your Content Engine Hub</a>
+    {% else %}
+    <p><em>Download link will be provided shortly via email.</em></p>
+    {% endif %}
+</div>
+
+{% if digital_file_url %}
+<p>Or use this link: <a href="{{ digital_file_url }}" style="color: #714efe;">{{ digital_file_url }}</a></p>
+{% endif %}
+
+<div style="margin: 30px 0;">
+    <p><strong>Quick steps:</strong></p>
+    <p>Open the link → click spreadsheet → copy the prompt → paste into <strong>Elevate Engine GPT</strong> → generate your rows.</p>
+    <p>Open the Canva template → <em>Apps</em> → <em>Bulk Create</em> → map your columns.</p>
+    <p>Preview, download, and post. Watch the mini course/walkthrough video for more details. Repeat monthly in minutes.</p>
+</div>
+
+<p>– {{ sender_name|default:"The Elevate Social Team" }}</p>
+
+<p style="font-size: 15px; color: #666; margin-top: 30px;"><strong>P.S.</strong> Bulk Create requires Canva Pro. A free trial works great if you're just getting started.</p>
+
+<p style="font-size: 15px; color: #666;"><strong>P.P.S.</strong> I'll send a few more quick wins and goodies over the next few days—keep an eye out. To learn more about how to get more of where this came from, {% if affiliate_link %}check out <a href="{{ affiliate_link }}" style="color: #714efe;">my recommended resources</a>{% else %}stay tuned for more resources{% endif %}. I'd love to support you directly. Enjoy—and hit reply with any questions!</p>
+
+{% endblock %}

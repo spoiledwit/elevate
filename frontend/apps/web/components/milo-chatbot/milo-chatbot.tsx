@@ -1,22 +1,30 @@
-'use client'
+"use client";
 
-import { useState, useEffect, useCallback } from 'react'
-import { Sparkles, X, Mic, MicOff, AlertCircle } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { useRealtimeAI, RealtimeConnectionState } from '@/hooks/useRealtimeAI'
+import { useState, useEffect, useCallback } from "react";
+import { X, Mic, MicOff, AlertCircle } from "lucide-react";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
+import { useRealtimeAI, RealtimeConnectionState } from "@/hooks/useRealtimeAI";
+import milo from "@/assets/milo.gif";
 
 interface MiloChatbotProps {
-  onContentUpdate?: (content: string) => void
-  onTypingComplete?: () => void
-  onImageGenerated?: (imageFile: File) => void
-  onImageGenerationStart?: () => void
-  onImageGenerationComplete?: () => void
+  onContentUpdate?: (content: string) => void;
+  onTypingComplete?: () => void;
+  onImageGenerated?: (imageFile: File) => void;
+  onImageGenerationStart?: () => void;
+  onImageGenerationComplete?: () => void;
 }
 
 export function MiloChatbot(props: MiloChatbotProps = {}) {
-  const { onContentUpdate, onTypingComplete, onImageGenerated, onImageGenerationStart, onImageGenerationComplete } = props
-  const [isOpen, setIsOpen] = useState(false)
-  const [audioData, setAudioData] = useState<Uint8Array>(new Uint8Array(7))
+  const {
+    onContentUpdate,
+    onTypingComplete,
+    onImageGenerated,
+    onImageGenerationStart,
+    onImageGenerationComplete,
+  } = props;
+  const [isOpen, setIsOpen] = useState(false);
+  const [audioData, setAudioData] = useState<Uint8Array>(new Uint8Array(7));
 
   const {
     connectionState,
@@ -27,79 +35,80 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
     getAudioData,
   } = useRealtimeAI({
     onError: (error) => {
-      console.error('Milo AI Error:', error)
+      console.error("Milo AI Error:", error);
     },
     onStateChange: (state) => {
-      console.log('Milo AI State:', state)
+      console.log("Milo AI State:", state);
     },
     onContentUpdate: onContentUpdate,
     onTypingComplete: onTypingComplete,
     onImageGenerated: onImageGenerated,
     onImageGenerationStart: onImageGenerationStart,
-    onImageGenerationComplete: onImageGenerationComplete
-  })
+    onImageGenerationComplete: onImageGenerationComplete,
+  });
 
-  const isConnected = connectionState === RealtimeConnectionState.CONNECTED ||
+  const isConnected =
+    connectionState === RealtimeConnectionState.CONNECTED ||
     connectionState === RealtimeConnectionState.LISTENING ||
-    connectionState === RealtimeConnectionState.SPEAKING
+    connectionState === RealtimeConnectionState.SPEAKING;
 
-  const isListening = connectionState === RealtimeConnectionState.LISTENING
-  const isSpeaking = connectionState === RealtimeConnectionState.SPEAKING
-  const isConnecting = connectionState === RealtimeConnectionState.CONNECTING
+  const isListening = connectionState === RealtimeConnectionState.LISTENING;
+  const isSpeaking = connectionState === RealtimeConnectionState.SPEAKING;
+  const isConnecting = connectionState === RealtimeConnectionState.CONNECTING;
 
   // Update audio visualization data
   useEffect(() => {
-    let animationFrame: number
+    let animationFrame: number;
 
     const updateAudioData = () => {
       if (isConnected) {
-        const data = getAudioData()
+        const data = getAudioData();
         // Convert to 7 bars by grouping frequency bins
-        const bars = new Uint8Array(7)
-        const binSize = Math.floor(data.length / 7)
+        const bars = new Uint8Array(7);
+        const binSize = Math.floor(data.length / 7);
 
         for (let i = 0; i < 7; i++) {
-          let sum = 0
+          let sum = 0;
           for (let j = 0; j < binSize; j++) {
-            sum += data[i * binSize + j] || 0
+            sum += data[i * binSize + j] || 0;
           }
-          bars[i] = sum / binSize
+          bars[i] = sum / binSize;
         }
 
-        setAudioData(bars)
+        setAudioData(bars);
       }
-      animationFrame = requestAnimationFrame(updateAudioData)
-    }
+      animationFrame = requestAnimationFrame(updateAudioData);
+    };
 
     if (isConnected) {
-      updateAudioData()
+      updateAudioData();
     }
 
     return () => {
       if (animationFrame) {
-        cancelAnimationFrame(animationFrame)
+        cancelAnimationFrame(animationFrame);
       }
-    }
-  }, [isConnected, getAudioData])
+    };
+  }, [isConnected, getAudioData]);
 
   const handleMicClick = useCallback(async () => {
     if (!isAvailable) {
-      return
+      return;
     }
 
     if (isConnected) {
-      disconnect()
+      disconnect();
     } else {
-      await connect()
+      await connect();
     }
-  }, [isAvailable, isConnected, connect, disconnect])
+  }, [isAvailable, isConnected, connect, disconnect]);
 
   const handleClose = useCallback(() => {
     if (isConnected) {
-      disconnect()
+      disconnect();
     }
-    setIsOpen(false)
-  }, [isConnected, disconnect])
+    setIsOpen(false);
+  }, [isConnected, disconnect]);
 
   return (
     <>
@@ -119,15 +128,8 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
         )}
         aria-label="Open Milo"
       >
-        <div className="relative">
-          <Sparkles className="w-7 h-7 text-white/90" />
-          {/* Glow pulse */}
-          <div className="absolute -inset-2">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-violet-500 to-brand-500 animate-ping opacity-30"></div>
-          </div>
-          <div className="absolute -inset-3">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-violet-400 to-purple-400 animate-ping animation-delay-200 opacity-20"></div>
-          </div>
+        <div className="relative w-16 h-16 flex items-center justify-center">
+          <Image src={milo.src} alt="Milo" fill className="object-contain" />
         </div>
       </button>
 
@@ -143,15 +145,22 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
           "shadow-[0_0_80px_rgba(139,92,246,0.3)]",
           "flex flex-col overflow-hidden",
           "transition-all duration-500 transform origin-bottom-right",
-          isOpen ? "scale-100 opacity-100" : "scale-0 opacity-0 pointer-events-none"
+          isOpen
+            ? "scale-100 opacity-100"
+            : "scale-0 opacity-0 pointer-events-none"
         )}
       >
         {/* Header - Minimal */}
         <div className="flex items-center justify-between p-6 pb-4">
           <div className="flex items-center gap-3">
             <div className="relative">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-brand-600 flex items-center justify-center shadow-lg shadow-brand-500/50">
-                <Sparkles className="w-6 h-6 text-white" />
+              <div className="relative w-12 h-12 rounded-2xl overflow-hidden">
+                <Image
+                  src={milo.src}
+                  alt="Milo"
+                  fill
+                  className="object-contain"
+                />
               </div>
               {/* Animated status dot */}
               <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full border-2 border-gray-900">
@@ -159,12 +168,14 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
               </div>
             </div>
             <div>
-              <h3 className="font-bold text-white text-lg tracking-tight">MILO</h3>
+              <h3 className="font-bold text-white text-lg tracking-tight">
+                MILO
+              </h3>
               <p className="text-xs text-purple-400 font-medium">AI Voice</p>
             </div>
           </div>
           <button
-            onClick={() => setIsOpen(false)}
+            onClick={handleClose}
             className="p-2.5 hover:bg-white/10 rounded-xl transition-all duration-300 group"
           >
             <X className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
@@ -175,14 +186,16 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
         <div className="flex-1 relative flex flex-col items-center justify-center p-8">
           {/* Background gradient orb */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className={cn(
-              "w-64 h-64 rounded-full transition-all duration-1000",
-              isConnected
-                ? "bg-gradient-to-r from-violet-600/20 to-brand-600/20 blur-3xl animate-pulse"
-                : isConnecting
+            <div
+              className={cn(
+                "w-64 h-64 rounded-full transition-all duration-1000",
+                isConnected
+                  ? "bg-gradient-to-r from-violet-600/20 to-brand-600/20 blur-3xl animate-pulse"
+                  : isConnecting
                   ? "bg-gradient-to-r from-blue-600/15 to-violet-600/15 blur-3xl animate-pulse"
                   : "bg-gradient-to-r from-violet-600/10 to-brand-600/10 blur-3xl"
-            )}></div>
+              )}
+            ></div>
           </div>
 
           {/* Debug: Show current state - commented out for production */}
@@ -196,7 +209,9 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
                 <AlertCircle className="w-12 h-12 text-red-400" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-red-400 font-light tracking-widest uppercase text-sm">Error</h3>
+                <h3 className="text-red-400 font-light tracking-widest uppercase text-sm">
+                  Error
+                </h3>
                 <p className="text-xs text-red-300 max-w-xs">{error}</p>
                 <div className="flex items-center justify-center gap-6 pt-2">
                   <button
@@ -216,11 +231,18 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
             </div>
           ) : isConnecting ? (
             <div className="relative text-center space-y-6 z-10">
-              <div className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-blue-500/20 to-violet-600/20 backdrop-blur-xl flex items-center justify-center animate-pulse">
-                <Sparkles className="w-12 h-12 text-blue-300" />
+              <div className="relative w-32 h-32 mx-auto">
+                <Image
+                  src={milo.src}
+                  alt="Milo"
+                  fill
+                  className="object-contain animate-pulse"
+                />
               </div>
               <div className="space-y-2">
-                <h3 className="text-blue-300 font-light tracking-widest uppercase text-sm">Connecting</h3>
+                <h3 className="text-blue-300 font-light tracking-widest uppercase text-sm">
+                  Connecting
+                </h3>
                 <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-blue-500 to-transparent mx-auto"></div>
               </div>
             </div>
@@ -229,7 +251,7 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
               {/* Real-time audio visualization */}
               <div className="flex items-center justify-center gap-1.5">
                 {Array.from(audioData).map((amplitude, i) => {
-                  const height = Math.max(20, (amplitude / 255) * 80 + 20)
+                  const height = Math.max(20, (amplitude / 255) * 80 + 20);
                   return (
                     <div
                       key={i}
@@ -238,27 +260,43 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
                         isListening
                           ? "bg-gradient-to-t from-violet-500 to-purple-400 shadow-lg shadow-brand-500/50"
                           : isSpeaking
-                            ? "bg-gradient-to-t from-green-500 to-emerald-400 shadow-lg shadow-green-500/50"
-                            : "bg-gradient-to-t from-violet-500/50 to-purple-400/50"
+                          ? "bg-gradient-to-t from-green-500 to-emerald-400 shadow-lg shadow-green-500/50"
+                          : "bg-gradient-to-t from-violet-500/50 to-purple-400/50"
                       )}
                       style={{ height: `${height}px` }}
                     ></div>
-                  )
+                  );
                 })}
               </div>
 
               {/* Status */}
               <div className="text-center space-y-4">
                 <div className="flex items-center justify-center gap-2">
-                  <div className={cn(
-                    "w-2 h-2 rounded-full animate-pulse",
-                    isListening ? "bg-purple-400" : isSpeaking ? "bg-green-400" : "bg-blue-400"
-                  )}></div>
-                  <span className={cn(
-                    "text-sm font-medium tracking-wider uppercase",
-                    isListening ? "text-purple-400" : isSpeaking ? "text-green-400" : "text-blue-400"
-                  )}>
-                    {isListening ? "Listening" : isSpeaking ? "Speaking" : "Connected"}
+                  <div
+                    className={cn(
+                      "w-2 h-2 rounded-full animate-pulse",
+                      isListening
+                        ? "bg-purple-400"
+                        : isSpeaking
+                        ? "bg-green-400"
+                        : "bg-blue-400"
+                    )}
+                  ></div>
+                  <span
+                    className={cn(
+                      "text-sm font-medium tracking-wider uppercase",
+                      isListening
+                        ? "text-purple-400"
+                        : isSpeaking
+                        ? "text-green-400"
+                        : "text-blue-400"
+                    )}
+                  >
+                    {isListening
+                      ? "Listening"
+                      : isSpeaking
+                      ? "Speaking"
+                      : "Connected"}
                   </span>
                 </div>
 
@@ -282,18 +320,21 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
             </div>
           ) : (
             <div className="relative text-center space-y-6 z-10">
-              {/* Futuristic orb */}
+              {/* Milo icon */}
               <div className="relative w-32 h-32 mx-auto">
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-violet-500/20 to-brand-600/20 backdrop-blur-xl animate-pulse"></div>
-                <div className="absolute inset-2 rounded-full bg-gradient-to-br from-violet-600/30 to-purple-700/30 backdrop-blur-xl"></div>
-                <div className="absolute inset-4 rounded-full bg-gradient-to-br from-violet-700/40 to-purple-800/40 backdrop-blur-xl flex items-center justify-center">
-                  <Sparkles className="w-10 h-10 text-purple-300" />
-                </div>
+                <Image
+                  src={milo.src}
+                  alt="Milo"
+                  fill
+                  className="object-contain"
+                />
               </div>
 
               {/* Minimal text */}
               <div className="space-y-4">
-                <h3 className="text-white font-light tracking-widest uppercase text-sm">Milo</h3>
+                <h3 className="text-white font-light tracking-widest uppercase text-sm">
+                  Milo
+                </h3>
                 <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-brand-500 to-transparent mx-auto"></div>
 
                 {/* Control Icons */}
@@ -308,10 +349,14 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
                         : "bg-gray-500/20 border-gray-500/30 cursor-not-allowed opacity-50"
                     )}
                   >
-                    <Mic className={cn(
-                      "w-5 h-5 transition-colors",
-                      isAvailable ? "text-purple-300 group-hover:text-purple-200" : "text-gray-500"
-                    )} />
+                    <Mic
+                      className={cn(
+                        "w-5 h-5 transition-colors",
+                        isAvailable
+                          ? "text-purple-300 group-hover:text-purple-200"
+                          : "text-gray-500"
+                      )}
+                    />
                   </button>
 
                   <button
@@ -325,8 +370,7 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
             </div>
           )}
         </div>
-
       </div>
     </>
-  )
+  );
 }

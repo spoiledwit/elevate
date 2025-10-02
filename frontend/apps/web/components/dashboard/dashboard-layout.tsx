@@ -25,7 +25,8 @@ import {
   HelpCircle,
   Zap,
   ChevronRight,
-  ChevronDown
+  ChevronDown,
+  Users
 } from 'lucide-react'
 import logo from '@/assets/logo.png'
 
@@ -84,7 +85,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       items: [
         { id: 'storefront', label: 'My Storefront', icon: Store },
         { id: 'custom-links', label: 'My Products', icon: Package },
-        { id: 'cta-banners', label: 'CTA Banners', icon: Megaphone },
+        { id: 'leads', label: 'Leads', icon: Users },
       ]
     },
     {
@@ -187,8 +188,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       case '/custom-links':
       case '/custom-links/create':
         return { itemId: 'custom-links', sectionId: 'linkinbio' }
-      case '/cta-banners':
-        return { itemId: 'cta-banners', sectionId: 'linkinbio' }
+      case '/leads':
+        return { itemId: 'leads', sectionId: 'linkinbio' }
       case '/calendar':
         return { itemId: 'calendar', sectionId: 'content' }
       case '/post-creator':
@@ -248,8 +249,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       case 'custom-links':
         router.push('/custom-links')
         break
-      case 'cta-banners':
-        router.push('/cta-banners')
+      case 'leads':
+        router.push('/leads')
         break
       case 'subscription':
         router.push('/subscription')

@@ -100,6 +100,7 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
   const [formData, setFormData] = useState({
     display_name: profile?.display_name || '',
     bio: profile?.bio || '',
+    affiliate_link: profile?.affiliate_link || '',
     embedded_video: profile?.embedded_video || '',
     is_active: profile?.is_active ?? true,
   })
@@ -120,6 +121,9 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
       return acc
     }, {}) || {}
   )
+
+  console.log('DEBUG - Existing social icons on load:', profile?.social_icons)
+  console.log('DEBUG - existingSocialIcons state:', existingSocialIcons)
 
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -182,7 +186,7 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
           // Check if this social icon already exists
           const existingIcon = existingSocialIcons[platform]
 
-          if (existingIcon) {
+          if (existingIcon && existingIcon.id) {
             // Update existing social icon
             socialLinkPromises.push(
               updateSocialIconAction(existingIcon.id.toString(), {
@@ -201,7 +205,7 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
               })
             )
           }
-        } else if (existingSocialIcons[platform]) {
+        } else if (existingSocialIcons[platform] && existingSocialIcons[platform].id) {
           // If URL is empty but we had an existing icon, delete it
           socialLinkPromises.push(
             deleteSocialIconAction(existingSocialIcons[platform].id.toString())
@@ -404,11 +408,59 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
           </div>
         </div>
 
+        {/* Affiliate Link Section */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-900 mb-2">
+            Affiliate Link
+          </label>
+          <div className="relative">
+            <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              value={formData.affiliate_link}
+              onChange={(e) => handleInputChange('affiliate_link', e.target.value)}
+              placeholder="https://your-affiliate-link.com"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all duration-300 ease-in-out"
+            />
+          </div>
+        </div>
+
         {/* Social Links Section */}
         <div>
           <label className="block text-lg font-semibold text-gray-900 mb-4">Social Media Links</label>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {(showAllSocials ? socialPlatforms : socialPlatforms.slice(0, 6)).map((platform) => {
+            {/* Website and Email first */}
+            {['website', 'email'].map(key => {
+              const platform = socialPlatforms.find(p => p.key === key)
+              if (!platform) return null
+              const IconComponent = platform.icon
+              return (
+                <div key={platform.key}>
+                  <div className="relative">
+                    <IconComponent
+                      className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
+                      style={{ color: platform.color }}
+                    />
+                    <span className="absolute left-9 top-1/2 transform -translate-y-1/2 text-xs text-gray-500">
+                      {platform.key === 'email' ? 'MAIL' : 'URL'}
+                    </span>
+                    <input
+                      type={platform.key === 'email' ? 'email' : 'url'}
+                      value={platform.key === 'email' ? (socialLinks[platform.key] || '').replace('mailto:', '') : (socialLinks[platform.key] || '')}
+                      onChange={(e) => {
+                        const value = e.target.value
+                        const finalValue = platform.key === 'email' && value ? `mailto:${value}` : value
+                        handleSocialLinkChange(platform.key, finalValue)
+                      }}
+                      placeholder={platform.key === 'email' ? 'your.email@example.com' : platform.placeholder}
+                      className="w-full pl-16 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all duration-300 ease-in-out"
+                    />
+                  </div>
+                </div>
+              )
+            })}
+            {/* Other social platforms */}
+            {(showAllSocials ? socialPlatforms.filter(p => !['website', 'email'].includes(p.key)) : socialPlatforms.filter(p => !['website', 'email'].includes(p.key)).slice(0, 4)).map((platform) => {
               const IconComponent = platform.icon
               return (
                 <div key={platform.key}>

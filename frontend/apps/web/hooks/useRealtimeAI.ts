@@ -35,8 +35,11 @@ export function useRealtimeAI(options: UseRealtimeAIOptions = {}) {
   const agentRef = useRef<any>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
+  const micStreamRef = useRef<MediaStream | null>(null);
+  const pcRef = useRef<RTCPeerConnection | null>(null);
 
-  const apiBaseUrl = "https://admin.elevate.social/api"
+
+  const apiBaseUrl = options.apiBaseUrl || 'https://admin.elevate.social/api'
 
   // Update state and notify listeners
   const updateState = useCallback((newState: RealtimeConnectionState) => {
@@ -255,6 +258,11 @@ export function useRealtimeAI(options: UseRealtimeAIOptions = {}) {
       // Connect to the session
       console.log('Connecting to session...')
       await realtimeSession.connect({ apiKey: ephemeralToken })
+      pcRef.current =
+    (realtimeSession as any).pc ??
+    (realtimeSession as any).peerConnection ??
+    (realtimeSession as any).webrtc?.pc ??
+    null;
       console.log('Session connect call completed')
 
       // Set up audio visualization after connection
@@ -262,6 +270,7 @@ export function useRealtimeAI(options: UseRealtimeAIOptions = {}) {
         try {
           console.log('Setting up audio visualization...')
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+          micStreamRef.current = stream;
           const audioContext = new AudioContext()
           const source = audioContext.createMediaStreamSource(stream)
           const analyser = audioContext.createAnalyser()
@@ -294,28 +303,61 @@ export function useRealtimeAI(options: UseRealtimeAIOptions = {}) {
   }, [connectionState, updateState, checkAvailability, handleError, getEphemeralToken])
 
   // Disconnect from Realtime AI
-  const disconnect = useCallback(async () => {
-    try {
-      if (sessionRef.current) {
-        // The SDK doesn't have a disconnect method, just interrupt and clean up
-        sessionRef.current.interrupt()
-        sessionRef.current = null
-      }
+ const disconnect = useCallback(async () => {
+  try {
+    // 1) Ask the SDK/session to stop anything it owns
+    if (sessionRef.current) {
+      // Best-case: explicit close APIs if present
+      sessionRef.current.close?.();
+      sessionRef.current.disconnect?.();
+      sessionRef.current.transport?.close?.();
+      sessionRef.current.webrtc?.close?.();
+      sessionRef.current.end?.();
 
-      if (audioContextRef.current) {
-        audioContextRef.current.close()
-        audioContextRef.current = null
-      }
+      // If agent has any streaming/mic helpers:
+      agentRef.current?.stop?.();
+      agentRef.current?.end?.();
 
-      analyserRef.current = null
-      agentRef.current = null
-
-      updateState(RealtimeConnectionState.IDLE)
-      setError(null)
-    } catch (err) {
-      console.error('Error disconnecting:', err)
+      sessionRef.current = null;
     }
-  }, [updateState])
+
+    // 2) Stop our visualization stream (if any)
+    if (micStreamRef.current) {
+      micStreamRef.current.getTracks().forEach(t => {
+        try { t.stop(); } catch {}
+      });
+      micStreamRef.current = null;
+    }
+
+    // 3) Stop tracks the SDK could be sending via WebRTC
+    if (pcRef.current) {
+      // Stop anything being sent
+      pcRef.current.getSenders?.().forEach(s => {
+        try { s.track?.stop(); } catch {}
+      });
+      // Close PC
+      try { pcRef.current.close(); } catch {}
+      pcRef.current = null;
+    }
+
+    // 4) Close our AudioContext & analyser
+    if (audioContextRef.current) {
+      try { await audioContextRef.current.close(); } catch {}
+      audioContextRef.current = null;
+    }
+    analyserRef.current = null;
+
+    // 5) Clear agent ref
+    agentRef.current = null;
+
+    // 6) Reset state
+    updateState(RealtimeConnectionState.IDLE);
+    setError(null);
+  } catch (err) {
+    console.error('Error disconnecting:', err);
+  }
+}, [updateState]);
+
 
   // Send event (not needed with Agents SDK but keeping for compatibility)
   const sendEvent = useCallback((event: any) => {

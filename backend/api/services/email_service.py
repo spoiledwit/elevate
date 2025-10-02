@@ -43,14 +43,14 @@ def send_email(
         # Add common context variables
         context.update({
             'frontend_url': getattr(settings, 'FRONTEND_URL', 'http://localhost:3000'),
-            'support_email': 'elevate@credminds.com',
+            'support_email': 'contact@elevate.social',
         })
 
         # Render the HTML template
         html_content = render_to_string(f'emails/{template_name}.html', context)
 
         # Use Resend to send email
-        from_email = from_email or 'elevate@credminds.com'
+        from_email = from_email or 'contact@elevate.social'
 
         params = {
             "from": from_email,
@@ -210,10 +210,16 @@ def send_product_delivery_email(order: Order) -> bool:
     additional_info = custom_link.additional_info or {}
     logger.info(f"Additional info: {additional_info}")
 
-    # Determine product type from additional_info structure
+    # Determine product type from additional_info structure and price
     if 'digital_file_url' in additional_info or 'download_instructions' in additional_info:
-        logger.info(f"Detected digital product for order {order.order_id}")
-        return send_digital_product_email(order)
+        # Check if this is a freebie (free product)
+        is_free = not custom_link.checkout_price or custom_link.checkout_price <= 0
+        if is_free:
+            logger.info(f"Detected freebie product for order {order.order_id}")
+            return send_freebie_email(order)
+        else:
+            logger.info(f"Detected digital product for order {order.order_id}")
+            return send_digital_product_email(order)
     elif 'course_duration' in additional_info or 'course_modules' in additional_info:
         logger.info(f"Detected e-course for order {order.order_id}")
         return send_ecourse_email(order)
@@ -248,6 +254,41 @@ def send_digital_product_email(order: Order) -> bool:
     return send_email(
         template_name='digital_product_delivery',
         subject=f'Your download is ready: {context["product_title"]}',
+        to_email=order.customer_email,
+        context=context
+    )
+
+
+def send_freebie_email(order: Order) -> bool:
+    """Send freebie product delivery email with free download link."""
+    custom_link = order.custom_link
+    additional_info = custom_link.additional_info or {}
+
+    # Get seller's profile information
+    seller_profile = custom_link.user_profile
+    seller_user = seller_profile.user
+
+    # Extract first name from customer name or order email
+    first_name = order.customer_name.split()[0] if order.customer_name else ""
+
+    context = {
+        'customer_name': order.customer_name,
+        'first_name': first_name,
+        'order_id': order.order_id,
+        'product_title': custom_link.title or custom_link.checkout_title or 'Free Resource',
+        'product_subtitle': custom_link.subtitle,
+        'purchase_date': order.created_at,
+        'digital_file_url': additional_info.get('digital_file_url'),
+        'download_instructions': additional_info.get('download_instructions'),
+        'form_responses': order.get_formatted_responses(),
+        'is_free': True,  # Flag to indicate this is a free product
+        'sender_name': seller_profile.display_name or seller_user.get_full_name() or seller_user.username,
+        'affiliate_link': seller_profile.affiliate_link or '',
+    }
+
+    return send_email(
+        template_name='freebie_delivery',
+        subject='Your 5-Minute Content Engine is ready 🚀',
         to_email=order.customer_email,
         context=context
     )

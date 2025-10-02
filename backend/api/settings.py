@@ -563,6 +563,16 @@ UNFOLD = {
                         "icon": "smart_toy",
                         "link": reverse_lazy("admin:api_miloprompt_changelist"),
                     },
+                    {
+                        "title": _("Freebie Email Templates"),
+                        "icon": "email",
+                        "link": reverse_lazy("admin:api_freebiefollowupemail_changelist"),
+                    },
+                    {
+                        "title": _("Scheduled Emails"),
+                        "icon": "schedule_send",
+                        "link": reverse_lazy("admin:api_scheduledfollowupemail_changelist"),
+                    },
                 ],
             },
             {

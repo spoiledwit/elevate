@@ -288,6 +288,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'api.tasks.process_scheduled_posts',
         'schedule': 300.0,  # Every 5 minutes
     },
+    'send-freebie-followup-emails': {
+        'task': 'api.tasks.send_scheduled_followup_emails',
+        'schedule': 300.0,  # Every 5 minutes
+    },
 }
 
 ######################################################################

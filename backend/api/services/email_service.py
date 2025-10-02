@@ -402,3 +402,41 @@ def send_generic_product_email(order: Order) -> bool:
         to_email=order.customer_email,
         context=context
     )
+
+
+def send_freebie_followup_email(scheduled_email) -> bool:
+    """
+    Send a follow-up email from the freebie sequence.
+    """
+    order = scheduled_email.order
+    template = scheduled_email.email_template
+    custom_link = order.custom_link
+    seller_profile = custom_link.user_profile
+    seller_user = seller_profile.user
+
+    # Extract first name from customer name
+    first_name = order.customer_name.split()[0] if order.customer_name else ""
+
+    # Replace template variables in body
+    email_body = template.body
+    email_body = email_body.replace('{{ first_name }}', first_name)
+    email_body = email_body.replace('{{ sender_name }}', seller_profile.display_name or seller_user.get_full_name() or seller_user.username)
+    email_body = email_body.replace('{{ affiliate_link }}', seller_profile.affiliate_link or '')
+    email_body = email_body.replace('{{ personal_email }}', seller_profile.contact_email or '')
+
+    # Convert line breaks to HTML
+    email_body = email_body.replace('\n', '<br>')
+
+    context = {
+        'customer_name': order.customer_name,
+        'first_name': first_name,
+        'email_body': email_body,
+        'sender_name': seller_profile.display_name or seller_user.get_full_name() or seller_user.username,
+    }
+
+    return send_email(
+        template_name='freebie_followup',
+        subject=template.subject,
+        to_email=order.customer_email,
+        context=context
+    )

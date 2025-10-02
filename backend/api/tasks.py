@@ -566,3 +566,100 @@ def _send_dm_reply(dm, reply_text, rule=None):
     except Exception as e:
         logger.error(f"Error sending DM reply to {dm.message_id}: {str(e)}")
         return {'success': False, 'error': str(e)}
+
+
+@shared_task
+def schedule_freebie_email_sequence(order_id):
+    """
+    Schedule all follow-up emails for a freebie order.
+    Called automatically when freebie order is completed.
+    """
+    from .models import Order, FreebieFollowupEmail, ScheduledFollowupEmail
+    from datetime import timedelta
+
+    try:
+        order = Order.objects.get(id=order_id)
+
+        # Only schedule for freebie type
+        if order.custom_link.type != 'freebie':
+            logger.info(f"Skipping email sequence for non-freebie order {order.order_id}")
+            return
+
+        # Get all active email templates
+        email_templates = FreebieFollowupEmail.objects.filter(is_active=True).order_by('step_number')
+
+        scheduled_count = 0
+        for template in email_templates:
+            # Calculate scheduled datetime
+            scheduled_datetime = order.created_at + timedelta(days=template.delay_days)
+            scheduled_datetime = scheduled_datetime.replace(
+                hour=template.send_time.hour,
+                minute=template.send_time.minute,
+                second=0,
+                microsecond=0
+            )
+
+            # Create scheduled email
+            ScheduledFollowupEmail.objects.create(
+                order=order,
+                email_template=template,
+                scheduled_for=scheduled_datetime
+            )
+            scheduled_count += 1
+
+        logger.info(f"Scheduled {scheduled_count} follow-up emails for order {order.order_id}")
+        return {'success': True, 'scheduled_count': scheduled_count}
+
+    except Exception as e:
+        logger.error(f"Failed to schedule email sequence for order {order_id}: {e}")
+        return {'success': False, 'error': str(e)}
+
+
+@shared_task
+def send_scheduled_followup_emails():
+    """
+    Send all follow-up emails that are scheduled to be sent now.
+    Runs every 5 minutes via Celery Beat.
+    """
+    from .models import ScheduledFollowupEmail
+    from .services.email_service import send_freebie_followup_email
+    from datetime import timedelta
+
+    now = timezone.now()
+
+    # Get emails scheduled to send now (within last 10 minutes to handle delays)
+    pending_emails = ScheduledFollowupEmail.objects.filter(
+        sent=False,
+        scheduled_for__lte=now,
+        scheduled_for__gte=now - timedelta(minutes=10)
+    ).select_related('order', 'email_template', 'order__custom_link', 'order__custom_link__user_profile')
+
+    sent_count = 0
+    failed_count = 0
+
+    for scheduled_email in pending_emails:
+        try:
+            # Send the email
+            success = send_freebie_followup_email(scheduled_email)
+
+            if success:
+                # Mark as sent
+                scheduled_email.sent = True
+                scheduled_email.sent_at = timezone.now()
+                scheduled_email.save()
+                sent_count += 1
+                logger.info(f"Sent follow-up email {scheduled_email.email_template.step_number} for order {scheduled_email.order.order_id}")
+            else:
+                scheduled_email.error_message = "Email sending failed"
+                scheduled_email.save()
+                failed_count += 1
+                logger.error(f"Failed to send follow-up email {scheduled_email.id}")
+
+        except Exception as e:
+            scheduled_email.error_message = str(e)
+            scheduled_email.save()
+            failed_count += 1
+            logger.error(f"Error sending scheduled email {scheduled_email.id}: {e}")
+
+    logger.info(f"Follow-up emails processed: {sent_count} sent, {failed_count} failed")
+    return {'sent': sent_count, 'failed': failed_count}

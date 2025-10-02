@@ -1,0 +1,23 @@
+{% extends "emails/base.html" %}
+
+{% block title %}{{ subject }}{% endblock %}
+
+{% block header_title %}Hey {{ first_name }}! 👋{% endblock %}
+
+{% block content %}
+<div style="font-size: 16px; line-height: 1.8; color: #333;">
+    {{ email_body|safe }}
+</div>
+
+<div style="margin-top: 40px; padding-top: 30px; border-top: 2px solid #f0f0f0;">
+    <p style="margin-bottom: 10px; font-size: 16px; color: #333;">Best regards,</p>
+    <p style="font-size: 18px; font-weight: 600; color: #667eea; margin: 0;">{{ sender_name }}</p>
+</div>
+
+<div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 8px; padding: 20px; margin-top: 30px; text-align: center;">
+    <p style="margin: 0; font-size: 14px; color: #6c757d;">
+        <strong>Keep growing with Elevate Social</strong><br>
+        Your journey to freedom starts here 🚀
+    </p>
+</div>
+{% endblock %}

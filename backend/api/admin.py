@@ -18,7 +18,7 @@ from .models import (
     ProfileView, LinkClick, BannerClick, Order,
     SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, PaymentEvent, Plan, PlanFeature, StripeCustomer,
     Folder, Media, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply, AIConfiguration, MiloPrompt,
-    StripeConnectAccount, PaymentTransaction, ConnectWebhookEvent
+    StripeConnectAccount, PaymentTransaction, ConnectWebhookEvent, FreebieFollowupEmail, ScheduledFollowupEmail
 )
 from tinymce.widgets import TinyMCE
 from django import forms
@@ -1409,6 +1409,66 @@ class MiloPromptAdmin(ModelAdmin, ImportExportModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         """Prevent deletion of the Milo prompt"""
+        return False
+
+
+@admin.register(FreebieFollowupEmail)
+class FreebieFollowupEmailAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    """
+    Admin interface for freebie follow-up email templates.
+    """
+    list_display = ['step_number', 'delay_days', 'send_time', 'subject', 'is_active', 'modified_at']
+    list_filter = ['is_active', 'delay_days']
+    search_fields = ['subject', 'body']
+    ordering = ['step_number']
+
+    fieldsets = (
+        ('Email Details', {
+            'fields': ('step_number', 'subject', 'body'),
+            'description': 'Email content with template variables: {{ first_name }}, {{ sender_name }}, {{ affiliate_link }}, {{ personal_email }}'
+        }),
+        ('Scheduling', {
+            'fields': ('delay_days', 'send_time', 'is_active')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'modified_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    readonly_fields = ['created_at', 'modified_at']
+
+
+@admin.register(ScheduledFollowupEmail)
+class ScheduledFollowupEmailAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    """
+    Admin interface for scheduled follow-up emails.
+    """
+    list_display = ['order', 'email_template', 'scheduled_for', 'sent', 'sent_at', 'created_at']
+    list_filter = ['sent', 'scheduled_for', 'sent_at']
+    search_fields = ['order__order_id', 'order__customer_email', 'order__customer_name']
+    readonly_fields = ['created_at', 'sent_at', 'error_message']
+    ordering = ['-scheduled_for']
+
+    fieldsets = (
+        ('Email Information', {
+            'fields': ('order', 'email_template')
+        }),
+        ('Schedule', {
+            'fields': ('scheduled_for', 'sent', 'sent_at')
+        }),
+        ('Error Details', {
+            'fields': ('error_message',),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def has_add_permission(self, request):
+        """Prevent manual creation - emails are auto-scheduled"""
         return False
 
 

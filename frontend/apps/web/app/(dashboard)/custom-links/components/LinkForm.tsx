@@ -50,7 +50,7 @@ interface LinkFormProps {
   onClose?: () => void
 }
 
-type ProductType = 'digital' | 'url-media' | 'freebie' | 'opt-in' | null
+type ProductType = 'digital' | 'url-media' | 'freebie' | 'opt_in' | null
 
 export function LinkForm({ link, onClose }: LinkFormProps) {
   const router = useRouter()
@@ -130,7 +130,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       image: digitalProductImg
     },
     {
-      id: 'opt-in' as const,
+      id: 'opt_in' as const,
       title: 'Opt In Page',
       description: 'Collect leads with a free download or resource in exchange for contact info',
       icon: Package,
@@ -164,7 +164,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       const getProductTypeFromBackend = (backendType: string): ProductType => {
         switch (backendType) {
           case 'digital_product': return 'digital'
-          case 'opt_in': return 'opt-in'
+          case 'opt_in': return 'opt_in'
           case 'url_media': return 'url-media'
           case 'freebie': return 'freebie'
           default: return 'digital'
@@ -208,7 +208,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         if (productType === 'digital') {
           setDigitalFileUrl(additionalInfo.digital_file_url || '')
           setDownloadInstructions(additionalInfo.download_instructions || '')
-        } else if (productType === 'opt-in') {
+        } else if (productType === 'opt_in') {
           setDigitalFileUrl(additionalInfo.digital_file_url || '')
           setDownloadInstructions(additionalInfo.download_instructions || '')
         } else if (productType === 'url-media') {
@@ -269,7 +269,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
     }
 
     // Auto-set fields for opt-in page
-    if (type === 'opt-in') {
+    if (type === 'opt_in') {
       // Step 2: Basic info
       setThumbnailPreview(customProductImg.src)
 
@@ -392,7 +392,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
   const handleContinue = () => {
     if (step === 1 && selectedType) {
       setStep(2)
-    } else if (step === 2 && title.trim() && selectedStyle && (selectedType === 'url-media' || selectedType === 'opt-in' || selectedType === 'freebie' || checkoutPrice)) {
+    } else if (step === 2 && title.trim() && selectedStyle && (selectedType === 'url-media' || selectedType === 'opt_in' || selectedType === 'freebie' || checkoutPrice)) {
       setStep(3)
     } else if (step === 3) {
       // Skip collect info step (step 4) for url-media, go straight to step 5
@@ -614,7 +614,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       // Handle file upload for digital products and freebies if a new file is selected
       let finalDigitalFileUrl = digitalFileUrl
 
-      if ((selectedType === 'digital' || selectedType === 'opt-in' || selectedType === 'freebie') && digitalFile) {
+      if ((selectedType === 'digital' || selectedType === 'opt_in' || selectedType === 'freebie') && digitalFile) {
         setIsUploadingFile(true)
 
         const uploadResult = await uploadDocumentAction(digitalFile, selectedType === 'freebie' ? 'freebies' : 'digital-products')
@@ -637,7 +637,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       const getProductTypeKey = (type: ProductType): string => {
         switch (type) {
           case 'digital': return 'digital_product'
-          case 'opt-in': return 'opt_in'
+          case 'opt_in': return 'opt_in'
           case 'url-media': return 'url_media'
           case 'freebie': return 'freebie'
           default: return 'generic'
@@ -652,7 +652,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
           digital_file_url: finalDigitalFileUrl,
           download_instructions: downloadInstructions
         }
-      } else if (selectedType === 'opt-in') {
+      } else if (selectedType === 'opt_in') {
         additionalInfo = {
           digital_file_url: finalDigitalFileUrl,
           download_instructions: downloadInstructions
@@ -760,7 +760,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       // Handle file upload for digital products and freebies if a file is selected
       let finalDigitalFileUrl = digitalFileUrl
 
-      if ((selectedType === 'digital' || selectedType === 'opt-in' || selectedType === 'freebie') && digitalFile) {
+      if ((selectedType === 'digital' || selectedType === 'opt_in' || selectedType === 'freebie') && digitalFile) {
         setIsUploadingFile(true)
 
         const uploadResult = await uploadDocumentAction(digitalFile, selectedType === 'freebie' ? 'freebies' : 'digital-products')
@@ -783,7 +783,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       const getProductTypeKey = (type: ProductType): string => {
         switch (type) {
           case 'digital': return 'digital_product'
-          case 'opt-in': return 'opt_in'
+          case 'opt_in': return 'opt_in'
           case 'url-media': return 'url_media'
           case 'freebie': return 'freebie'
           default: return 'generic'
@@ -798,7 +798,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
           digital_file_url: finalDigitalFileUrl,
           download_instructions: downloadInstructions
         }
-      } else if (selectedType === 'opt-in') {
+      } else if (selectedType === 'opt_in') {
         additionalInfo = {
           digital_file_url: finalDigitalFileUrl,
           download_instructions: downloadInstructions
@@ -1077,7 +1077,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
               </div>
 
               {/* Pricing Section - Hide for Opt-In, Freebie, and URL/Media */}
-              {selectedType !== 'opt-in' && selectedType !== 'freebie' && selectedType !== 'url-media' && (
+              {selectedType !== 'opt_in' && selectedType !== 'freebie' && selectedType !== 'url-media' && (
                 <div>
                   <label className="block text-sm font-semibold text-gray-900 mb-3">
                     Pricing
@@ -1688,7 +1688,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
             )}
 
             {/* Digital Product Fields */}
-            {(selectedType === 'digital' || selectedType === 'opt-in') && (
+            {(selectedType === 'digital' || selectedType === 'opt_in') && (
               <>
                 <div>
                   <label className="block text-sm font-semibold text-gray-900 mb-2">

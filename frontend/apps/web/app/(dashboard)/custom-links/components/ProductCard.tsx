@@ -3,7 +3,7 @@
 import { Package, ExternalLink, Gift } from 'lucide-react'
 
 interface ProductCardProps {
-  productType: 'digital' | 'opt-in' | 'url-media' | 'freebie' | null
+  productType: 'digital' | 'opt_in' | 'url-media' | 'freebie' | null
   thumbnail: string | null
   title: string
   subtitle?: string
@@ -14,7 +14,7 @@ interface ProductCardProps {
 
 const productTypeIcons = {
   digital: Package,
-  'opt-in': Package,
+  'opt_in': Package,
   'url-media': ExternalLink,
   freebie: Gift,
 }

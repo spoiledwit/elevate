@@ -8,11 +8,10 @@ from rest_framework.response import Response
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
-from django.core.mail import send_mail
-from django.template.loader import render_to_string
 from django.conf import settings
 
 from ..models import UserProfile, UserPermissions
+from ..services.email_service import send_email
 from ..serializers import (
     UserChangePasswordErrorSerializer,
     UserChangePasswordSerializer,
@@ -119,16 +118,20 @@ class UserViewSet(
     )
     @action(["post"], url_path="password-reset/request", detail=False)
     def password_reset_request(self, request, *args, **kwargs):
-        """Send password reset email if the username exists. Always returns 200."""
+        """Send password reset email if the username or email exists. Always returns 200."""
         serializer = PasswordResetRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        username = serializer.validated_data["username"].strip().lower()
+        username_or_email = serializer.validated_data["username"].strip().lower()
+        # Search by both username and email (case-insensitive)
+        from django.db.models import Q
         try:
-            user = User.objects.get(username__iexact=username)
+            user = User.objects.get(
+                Q(username__iexact=username_or_email) | Q(email__iexact=username_or_email)
+            )
         except User.DoesNotExist:
-            # Don't reveal whether the username exists
-            return Response({"detail": "If an account with that username exists, a reset email has been sent."}, status=status.HTTP_200_OK)
+            # Don't reveal whether the username/email exists
+            return Response({"detail": "If an account with that username or email exists, a reset email has been sent."}, status=status.HTTP_200_OK)
 
         # Build uid and token
         uid = urlsafe_base64_encode(force_bytes(user.pk))
@@ -139,20 +142,20 @@ class UserViewSet(
         reset_path = f"/reset-password/?uid={uid}&token={token}"
         reset_url = frontend_url.rstrip("/") + reset_path
 
-        # Render email body (simple plaintext)
-        subject = "Reset your Elevate password"
-        message = render_to_string("registration/password_reset_email.html", {
-            'protocol': 'https' if not settings.DEBUG else 'http',
-            'domain': request.get_host(),
-            'uid': uid,
-            'token': token,
-            'reset_url': reset_url,
+        # Send password reset email using Resend
+        context = {
             'user': user,
-        })
+            'reset_url': reset_url,
+        }
 
-        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=True)
+        send_email(
+            template_name='password_reset',
+            subject='Reset your Elevate Social password',
+            to_email=user.email,
+            context=context
+        )
 
-        return Response({"detail": "If an account with that username exists, a reset email has been sent."}, status=status.HTTP_200_OK)
+        return Response({"detail": "If an account with that username or email exists, a reset email has been sent."}, status=status.HTTP_200_OK)
 
     @extend_schema(
         request=PasswordResetConfirmSerializer,

@@ -51,8 +51,16 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
   }
 
   const handleOrderSuccess = () => {
-    // Just navigate back to products list
-    setSelectedProduct(null)
+    // For opt-in products, redirect to affiliate link if available
+    if (selectedProduct?.type === 'opt_in' && profile?.affiliate_link) {
+      // Open affiliate link immediately (confetti already showed for 5 seconds)
+      window.open(profile.affiliate_link, '_blank')
+      // Also navigate back to products list
+      setSelectedProduct(null)
+    } else {
+      // For other products, just navigate back to products list
+      setSelectedProduct(null)
+    }
   }
 
   const handleProductClick = (link: any) => {
@@ -153,8 +161,8 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
                       title={link.title || link.text}
                       subtitle={link.subtitle}
                       displayStyle={link.style}
-                      price={link.type === 'url_media' ? undefined : link.checkout_price}
-                      discountedPrice={link.type === 'url_media' ? undefined : link.checkout_discounted_price}
+                      price={link.type === 'url_media' || link.type === 'opt_in' ? undefined : link.checkout_price}
+                      discountedPrice={link.type === 'url_media' || link.type === 'opt_in' ? undefined : link.checkout_discounted_price}
                     />
                   </div>
                 ))}
@@ -228,8 +236,8 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
                       title={link.title || link.text}
                       subtitle={link.subtitle}
                       displayStyle="callout"
-                      price={link.type === 'url_media' ? undefined : link.checkout_price}
-                      discountedPrice={link.type === 'url_media' ? undefined : link.checkout_discounted_price}
+                      price={link.type === 'url_media' || link.type === 'opt_in' ? undefined : link.checkout_price}
+                      discountedPrice={link.type === 'url_media' || link.type === 'opt_in' ? undefined : link.checkout_discounted_price}
                     />
                   </div>
                 ))}

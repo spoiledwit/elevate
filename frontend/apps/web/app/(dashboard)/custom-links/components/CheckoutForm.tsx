@@ -177,13 +177,13 @@ export function CheckoutForm({
               setShowSuccessMessage(true)
               triggerConfetti()
 
-              // Hide success message after 5 seconds
+              // Hide success message after 2 seconds
               setTimeout(() => {
                 setShowSuccessMessage(false)
                 if (onOrderSuccess) {
                   onOrderSuccess(result.data)
                 }
-              }, 5000)
+              }, 2000)
             } else {
               toast.success('Order Created Successfully!', {
                 duration: 5000

@@ -6,6 +6,8 @@ import { StorefrontHeaderPreview } from '../../(dashboard)/custom-links/componen
 import { ProductCard } from '../../(dashboard)/custom-links/components/ProductCard'
 import { CheckoutForm } from '../../(dashboard)/custom-links/components/CheckoutForm'
 import { trackProfileViewAction, trackLinkClickAction } from '@/actions'
+import logo from '@/assets/logo.png'
+import Image from 'next/image'
 
 interface PublicStorefrontProps {
   username: string
@@ -73,15 +75,28 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
       <div className="hidden md:flex h-screen">
         {/* Fixed Header - Left Side */}
         <div className="w-[35%] bg-white fixed left-0 top-0 h-full overflow-y-auto border-r border-gray-200">
-          <div className="h-full flex items-center justify-center p-8">
-            <StorefrontHeaderPreview
-              profileImage={profile?.profile_image}
-              displayName={profile?.display_name || username}
-              bio={profile?.bio}
-              socialIcons={profile?.social_icons || []}
-              video={profile?.embedded_video}
-              size="large"
-            />
+          <div className="h-full flex flex-col items-center justify-center p-8">
+            <div className="flex-1 flex items-center justify-center">
+              <StorefrontHeaderPreview
+                profileImage={profile?.profile_image}
+                displayName={profile?.display_name || username}
+                bio={profile?.bio}
+                socialIcons={profile?.social_icons || []}
+                video={profile?.embedded_video}
+                size="large"
+              />
+            </div>
+            {/* Logo Footer */}
+            <div className="pb-8 flex items-center gap-2">
+              <Image
+                src={logo}
+                alt="Elevate Social logo"
+                width={30}
+                height={30}
+                className="opacity-30 hover:opacity-50 transition-opacity"
+              />
+              <span className="text-gray-400 text-sm font-medium">elevate social</span>
+            </div>
           </div>
         </div>
 
@@ -218,6 +233,18 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
                     />
                   </div>
                 ))}
+              </div>
+
+              {/* Logo Footer */}
+              <div className="flex items-center justify-center gap-2 pt-4 pb-8">
+                <Image
+                  src={logo}
+                  alt="Elevate Social logo"
+                  width={30}
+                  height={30}
+                  className="opacity-30 hover:opacity-50 transition-opacity"
+                />
+                <span className="text-gray-400 text-sm font-medium">elevate social</span>
               </div>
             </div>
           </div>

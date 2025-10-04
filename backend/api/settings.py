@@ -292,6 +292,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'api.tasks.send_scheduled_followup_emails',
         'schedule': 300.0,  # Every 5 minutes
     },
+    'send-optin-followup-emails': {
+        'task': 'api.tasks.send_scheduled_optin_emails',
+        'schedule': 300.0,  # Every 5 minutes
+    },
 }
 
 ######################################################################
@@ -569,9 +573,19 @@ UNFOLD = {
                         "link": reverse_lazy("admin:api_freebiefollowupemail_changelist"),
                     },
                     {
-                        "title": _("Scheduled Emails"),
+                        "title": _("Opt-in Email Templates"),
+                        "icon": "email",
+                        "link": reverse_lazy("admin:api_optinfollowupemail_changelist"),
+                    },
+                    {
+                        "title": _("Scheduled Freebie Emails"),
                         "icon": "schedule_send",
                         "link": reverse_lazy("admin:api_scheduledfollowupemail_changelist"),
+                    },
+                    {
+                        "title": _("Scheduled Opt-in Emails"),
+                        "icon": "schedule_send",
+                        "link": reverse_lazy("admin:api_scheduledoptinemail_changelist"),
                     },
                 ],
             },

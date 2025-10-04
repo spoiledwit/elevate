@@ -214,10 +214,10 @@ def send_product_delivery_email(order: Order) -> bool:
 
     # Determine product type from type field and additional_info structure
     if 'digital_file_url' in additional_info or 'download_instructions' in additional_info:
-        # Check product type - opt_in should use digital product email
+        # Check product type - opt_in should use opt-in specific email
         if product_type == 'opt_in':
             logger.info(f"Detected opt-in page for order {order.order_id}")
-            return send_digital_product_email(order)
+            return send_optin_email(order)
         # Check if this is a freebie (free product)
         is_free = not custom_link.checkout_price or custom_link.checkout_price <= 0
         if is_free:
@@ -267,6 +267,41 @@ def send_digital_product_email(order: Order) -> bool:
     return send_email(
         template_name='digital_product_delivery',
         subject=f'Your download is ready: {context["product_title"]}',
+        to_email=order.customer_email,
+        context=context
+    )
+
+
+def send_optin_email(order: Order) -> bool:
+    """Send opt-in page delivery email with HTP Elevate welcome message."""
+    custom_link = order.custom_link
+    additional_info = custom_link.additional_info or {}
+
+    # Get seller's profile information
+    seller_profile = custom_link.user_profile
+    seller_user = seller_profile.user
+
+    # Extract first name from customer name or order email
+    first_name = order.customer_name.split()[0] if order.customer_name else ""
+
+    context = {
+        'customer_name': order.customer_name,
+        'first_name': first_name,
+        'order_id': order.order_id,
+        'product_title': custom_link.title or custom_link.checkout_title or 'HTP Elevate',
+        'product_subtitle': custom_link.subtitle,
+        'purchase_date': order.created_at,
+        'digital_file_url': additional_info.get('digital_file_url'),
+        'download_instructions': additional_info.get('download_instructions'),
+        'form_responses': order.get_formatted_responses(),
+        'sender_name': seller_profile.display_name or seller_user.get_full_name() or seller_user.username,
+        'affiliate_link': seller_profile.affiliate_link or '',
+        'contact_email': seller_profile.contact_email or '',
+    }
+
+    return send_email(
+        template_name='optin_delivery',
+        subject='Welcome to HTP Elevate - your built-for-you business starts here',
         to_email=order.customer_email,
         context=context
     )
@@ -399,6 +434,44 @@ def send_generic_product_email(order: Order) -> bool:
     return send_email(
         template_name='generic_product_delivery',
         subject=f'Order received: {context["product_title"]}',
+        to_email=order.customer_email,
+        context=context
+    )
+
+
+def send_optin_followup_email(scheduled_email) -> bool:
+    """
+    Send a follow-up email from the opt-in sequence.
+    """
+    order = scheduled_email.order
+    template = scheduled_email.email_template
+    custom_link = order.custom_link
+    seller_profile = custom_link.user_profile
+    seller_user = seller_profile.user
+
+    # Extract first name from customer name
+    first_name = order.customer_name.split()[0] if order.customer_name else ""
+
+    # Replace template variables in body
+    email_body = template.body
+    email_body = email_body.replace('{{ first_name }}', first_name)
+    email_body = email_body.replace('{{ sender_name }}', seller_profile.display_name or seller_user.get_full_name() or seller_user.username)
+    email_body = email_body.replace('{{ affiliate_link }}', seller_profile.affiliate_link or '')
+    email_body = email_body.replace('{{ personal_email }}', seller_profile.contact_email or '')
+
+    # Convert line breaks to HTML
+    email_body = email_body.replace('\n', '<br>')
+
+    context = {
+        'customer_name': order.customer_name,
+        'first_name': first_name,
+        'email_body': email_body,
+        'sender_name': seller_profile.display_name or seller_user.get_full_name() or seller_user.username,
+    }
+
+    return send_email(
+        template_name='optin_followup',
+        subject=template.subject,
         to_email=order.customer_email,
         context=context
     )

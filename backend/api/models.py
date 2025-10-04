@@ -1225,6 +1225,12 @@ def send_product_delivery_on_completion(sender, instance, created, **kwargs):
                         from .tasks import schedule_freebie_email_sequence
                         logger.info(f"Scheduling freebie follow-up sequence for order {instance.order_id}")
                         schedule_freebie_email_sequence.delay(instance.id)
+
+                    # Schedule follow-up email sequence for opt-ins
+                    if instance.custom_link.type == 'opt_in':
+                        from .tasks import schedule_optin_email_sequence
+                        logger.info(f"Scheduling opt-in follow-up sequence for order {instance.order_id}")
+                        schedule_optin_email_sequence.delay(instance.id)
                 else:
                     logger.debug(f"Order {instance.order_id} was already completed, skipping email")
             else:
@@ -1658,6 +1664,56 @@ class ScheduledFollowupEmail(models.Model):
         db_table = "scheduled_followup_emails"
         verbose_name = _("Scheduled Follow-up Email")
         verbose_name_plural = _("Scheduled Follow-up Emails")
+        ordering = ['scheduled_for']
+        indexes = [
+            models.Index(fields=['sent', 'scheduled_for']),
+            models.Index(fields=['order']),
+        ]
+
+    def __str__(self):
+        status = "Sent" if self.sent else "Pending"
+        return f"{self.order.order_id} - Email {self.email_template.step_number} - {status}"
+
+
+class OptinFollowupEmail(models.Model):
+    """
+    Email templates for opt-in follow-up sequence.
+    """
+    step_number = models.IntegerField(_("step number"), unique=True, help_text="Email sequence number (1-20)")
+    delay_days = models.IntegerField(_("delay days"), help_text="Days after opt-in to send email")
+    send_time = models.TimeField(_("send time"), default="10:00", help_text="Time of day to send email (e.g., 10:00 AM)")
+    subject = models.CharField(_("subject"), max_length=255)
+    body = models.TextField(_("email body"), help_text="Email content with template variables: {{ first_name }}, {{ sender_name }}, {{ affiliate_link }}, {{ personal_email }}")
+    is_active = models.BooleanField(_("is active"), default=True)
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    modified_at = models.DateTimeField(_("modified at"), auto_now=True)
+
+    class Meta:
+        db_table = "optin_followup_emails"
+        verbose_name = _("Opt-in Follow-up Email")
+        verbose_name_plural = _("Opt-in Follow-up Emails")
+        ordering = ['step_number']
+
+    def __str__(self):
+        return f"Email {self.step_number} - Day {self.delay_days}: {self.subject}"
+
+
+class ScheduledOptinEmail(models.Model):
+    """
+    Track scheduled follow-up emails for opt-in orders.
+    """
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='optin_followup_emails')
+    email_template = models.ForeignKey(OptinFollowupEmail, on_delete=models.CASCADE)
+    scheduled_for = models.DateTimeField(_("scheduled for"), help_text="Exact datetime to send email")
+    sent = models.BooleanField(_("sent"), default=False)
+    sent_at = models.DateTimeField(_("sent at"), null=True, blank=True)
+    error_message = models.TextField(_("error message"), blank=True)
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+
+    class Meta:
+        db_table = "scheduled_optin_emails"
+        verbose_name = _("Scheduled Opt-in Email")
+        verbose_name_plural = _("Scheduled Opt-in Emails")
         ordering = ['scheduled_for']
         indexes = [
             models.Index(fields=['sent', 'scheduled_for']),

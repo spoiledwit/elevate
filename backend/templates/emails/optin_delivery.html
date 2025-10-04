@@ -1,0 +1,100 @@
+{% extends "emails/base.html" %}
+
+{% block title %}Welcome to HTP Elevate - Your Built-For-You Business Starts Here{% endblock %}
+
+{% block header_title %}You're In!{% endblock %}
+
+{% block content %}
+<h2>Welcome to HTP Elevate - your built-for-you business starts here</h2>
+
+<p>Hi {{ first_name|default:customer_name|default:"friend" }},</p>
+
+<p>Let's keep this simple:</p>
+
+<p><strong>You did not opt into another training.</strong><br>
+You unlocked HTP Elevate — a built-for-you digital business designed to scale.</p>
+
+<div class="info-box" style="background-color: #f8f9fa; border-left: 4px solid #714efe; padding: 20px; margin: 25px 0;">
+    <h3>
+        <svg class="icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Join us live every Tuesday at 8 PM CST
+    </h3>
+    <p style="margin: 10px 0;">We will walk through exactly how Elevate works and show real results from everyday people.</p>
+    <a href="https://us06web.zoom.us/j/89413312212" class="download-button" style="color: white !important; display: inline-block; margin-top: 10px;">Join Zoom Call</a>
+</div>
+
+{% if digital_file_url %}
+<div class="download-section">
+    <h3>
+        <svg class="icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="7,10 12,15 17,10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Get Your Quick Start Guide
+    </h3>
+    <p>Download your resources to get started right away:</p>
+    <a href="{{ digital_file_url }}" class="download-button" style="color: white !important;">Download Now</a>
+</div>
+{% endif %}
+
+{% if download_instructions %}
+<div class="info-box">
+    <h3>
+        <svg class="icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Instructions
+    </h3>
+    <p>{{ download_instructions|linebreaks }}</p>
+</div>
+{% endif %}
+
+<div class="info-box">
+    <h3>
+        <svg class="icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <polyline points="20 6 9 17 4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Why Elevate works
+    </h3>
+    <ul style="margin: 10px 0; padding-left: 20px;">
+        <li style="margin: 8px 0;">Pre-built funnel (add your name and go live)</li>
+        <li style="margin: 8px 0;">Done-for-you email sequence that delivers and nurtures</li>
+        <li style="margin: 8px 0;">Automation so sales work while you are offline</li>
+        <li style="margin: 8px 0;">One sale - 6 ways to earn</li>
+        <li style="margin: 8px 0;">Storefront, monthly content, and live coaching included</li>
+    </ul>
+</div>
+
+<div style="background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 20px; margin: 25px 0;">
+    <p style="margin: 0; color: #856404;"><strong>New? Perfect.</strong><br>
+    Elevate is built for beginners and busy creators — even if you have never sold online, have no product, or are not techy.</p>
+</div>
+
+{% if form_responses %}
+<div class="info-box">
+    <h3>
+        <svg class="icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2"/>
+            <polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Your Information
+    </h3>
+    {% for response in form_responses %}
+    <p><strong>{{ response.question }}:</strong> {{ response.answer }}</p>
+    {% endfor %}
+</div>
+{% endif %}
+
+<p><strong>See you Tuesday!</strong></p>
+
+<p>— The HTP Elevate Team</p>
+
+<p style="font-size: 12px; color: #999; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+    <em>Compliance: Results vary by effort and consistency. No income is guaranteed. Examples are illustrative only.</em>
+</p>
+
+{% endblock %}

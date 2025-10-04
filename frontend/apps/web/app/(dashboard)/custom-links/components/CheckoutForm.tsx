@@ -8,7 +8,7 @@ import confetti from 'canvas-confetti'
 
 interface CheckoutFormProps {
   linkId?: string
-  productType: 'digital' | 'opt-in' | 'url-media' | 'freebie' | null
+  productType: 'digital' | 'opt_in' | 'url-media' | 'freebie' | null
   thumbnail: string | null
   title: string
   subtitle?: string
@@ -53,7 +53,7 @@ export function CheckoutForm({
   onOrderSuccess
 }: CheckoutFormProps) {
   const hasDiscount = discountedPrice && parseFloat(discountedPrice) < parseFloat(price)
-  const isFreebie = productType === 'freebie' || productType === 'opt-in'
+  const isFreebie = productType === 'freebie' || productType === 'opt_in'
 
   // Form state for active mode
   const [formData, setFormData] = useState<Record<string, string | string[]>>({})
@@ -439,10 +439,10 @@ export function CheckoutForm({
           <div className="absolute inset-0 bg-white/95 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="text-center px-6">
               <h2 className="text-5xl md:text-6xl font-bold text-brand-600 mb-4">
-                Check your email!
+                {productType === 'opt_in' ? "You're in! 🎉" : "Check your email!"}
               </h2>
               <p className="text-3xl md:text-4xl font-semibold text-gray-700">
-                Your gift is on its way! 🎁
+                {productType === 'opt_in' ? "Check your email for next steps!" : "Your gift is on its way! 🎁"}
               </p>
             </div>
           </div>
@@ -684,10 +684,10 @@ export function CheckoutForm({
         <div className="absolute inset-0 bg-white/95 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
           <div className="text-center px-6">
             <h2 className="text-4xl md:text-5xl font-bold text-brand-600 mb-2">
-              Check your email!
+              {productType === 'opt_in' ? "You're in! 🎉" : "Check your email!"}
             </h2>
             <p className="text-2xl md:text-3xl font-semibold text-gray-700">
-              Your gift is on its way! 🎁
+              {productType === 'opt_in' ? "Check your email for next steps!" : "Your gift is on its way! 🎁"}
             </p>
           </div>
         </div>

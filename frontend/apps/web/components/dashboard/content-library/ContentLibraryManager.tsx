@@ -274,7 +274,7 @@ export function ContentLibraryManager({
 
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-[#714efe] text-white rounded-lg hover:bg-[#5f3fd6] transition-colors"
               >
                 <Filter className="w-4 h-4" />
                 {showFilters ? 'Hide Filters' : 'Show Filters'}

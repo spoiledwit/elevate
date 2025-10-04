@@ -54,6 +54,14 @@ export function Footer() {
             © 2025 Elevate. All rights reserved.
           </p>
 
+          <div className="flex gap-4 order-1 sm:order-2">
+            <Link href="/terms" className="text-white text-xs sm:text-sm hover:text-gray-300 transition-colors">
+              Terms & Conditions
+            </Link>
+            <Link href="/privacy" className="text-white text-xs sm:text-sm hover:text-gray-300 transition-colors">
+              Privacy Policy
+            </Link>
+          </div>
         </div>
       </div>
     </footer>

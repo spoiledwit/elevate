@@ -18,7 +18,7 @@ from .models import (
     ProfileView, LinkClick, BannerClick, Order,
     SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, PaymentEvent, Plan, PlanFeature, StripeCustomer,
     Folder, Media, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply, AIConfiguration, MiloPrompt,
-    StripeConnectAccount, PaymentTransaction, ConnectWebhookEvent, FreebieFollowupEmail, ScheduledFollowupEmail
+    StripeConnectAccount, PaymentTransaction, ConnectWebhookEvent, FreebieFollowupEmail, ScheduledFollowupEmail, OptinFollowupEmail, ScheduledOptinEmail
 )
 from tinymce.widgets import TinyMCE
 from django import forms
@@ -1447,6 +1447,66 @@ class ScheduledFollowupEmailAdmin(ModelAdmin, ImportExportModelAdmin):
     export_form_class = ExportForm
     """
     Admin interface for scheduled follow-up emails.
+    """
+    list_display = ['order', 'email_template', 'scheduled_for', 'sent', 'sent_at', 'created_at']
+    list_filter = ['sent', 'scheduled_for', 'sent_at']
+    search_fields = ['order__order_id', 'order__customer_email', 'order__customer_name']
+    readonly_fields = ['created_at', 'sent_at', 'error_message']
+    ordering = ['-scheduled_for']
+
+    fieldsets = (
+        ('Email Information', {
+            'fields': ('order', 'email_template')
+        }),
+        ('Schedule', {
+            'fields': ('scheduled_for', 'sent', 'sent_at')
+        }),
+        ('Error Details', {
+            'fields': ('error_message',),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def has_add_permission(self, request):
+        """Prevent manual creation - emails are auto-scheduled"""
+        return False
+
+
+@admin.register(OptinFollowupEmail)
+class OptinFollowupEmailAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    """
+    Admin interface for opt-in follow-up email templates.
+    """
+    list_display = ['step_number', 'delay_days', 'send_time', 'subject', 'is_active', 'modified_at']
+    list_filter = ['is_active', 'delay_days']
+    search_fields = ['subject', 'body']
+    ordering = ['step_number']
+
+    fieldsets = (
+        ('Email Configuration', {
+            'fields': ('step_number', 'delay_days', 'send_time', 'is_active')
+        }),
+        ('Email Content', {
+            'fields': ('subject', 'body'),
+            'description': 'Use template variables: {{ first_name }}, {{ sender_name }}, {{ affiliate_link }}, {{ personal_email }}'
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'modified_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    readonly_fields = ['created_at', 'modified_at']
+
+
+@admin.register(ScheduledOptinEmail)
+class ScheduledOptinEmailAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    """
+    Admin interface for scheduled opt-in follow-up emails.
     """
     list_display = ['order', 'email_template', 'scheduled_for', 'sent', 'sent_at', 'created_at']
     list_filter = ['sent', 'scheduled_for', 'sent_at']

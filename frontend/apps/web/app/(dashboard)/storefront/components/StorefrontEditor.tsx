@@ -47,11 +47,11 @@ interface StorefrontEditorProps {
 
 const socialPlatforms = [
   { key: 'facebook', label: 'Facebook', icon: FaFacebook, color: '#1877F2', placeholder: 'https://www.facebook.com/username' },
-  { key: 'tiktok', label: 'TikTok', icon: FaTiktok, color: '#000000', placeholder: 'https://tiktok.com/@username' },
-  { key: 'instagram', label: 'Instagram', icon: FaInstagram, color: '#E4405F', placeholder: 'https://instagram.com/username' },
-  { key: 'pinterest', label: 'Pinterest', icon: FaPinterest, color: '#BD081C', placeholder: 'https://pinterest.com/username' },
-  { key: 'youtube', label: 'YouTube', icon: FaYoutube, color: '#FF0000', placeholder: 'https://youtube.com/c/username' },
-  { key: 'website', label: 'Url', icon: Globe, color: '#6B7280', placeholder: 'https://yourwebsite.com' },
+  { key: 'tiktok', label: 'TikTok', icon: FaTiktok, color: '#000000', placeholder: 'https://www.tiktok.com/@username' },
+  { key: 'instagram', label: 'Instagram', icon: FaInstagram, color: '#E4405F', placeholder: 'https://www.instagram.com/username' },
+  { key: 'pinterest', label: 'Pinterest', icon: FaPinterest, color: '#BD081C', placeholder: 'https://www.pinterest.com/username' },
+  { key: 'youtube', label: 'YouTube', icon: FaYoutube, color: '#FF0000', placeholder: 'https://www.youtube.com/c/username' },
+  { key: 'website', label: 'Url', icon: Globe, color: '#6B7280', placeholder: 'https://www.yourwebsite.com' },
   { key: 'email', label: 'Email', icon: FaEnvelope, color: '#6B7280', placeholder: 'mailto:your.email@example.com' },
 ]
 

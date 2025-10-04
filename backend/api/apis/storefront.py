@@ -867,9 +867,9 @@ class CustomLinkViewSet(viewsets.ModelViewSet):
         
         # Rate limiting check
         client_ip = get_client_ip(request)
-        if is_rate_limited(f"{client_ip}:{link.id}", 'order_create', limit=3, window=300):
+        if is_rate_limited(f"{client_ip}:{link.id}", 'order_create', limit=20, window=300):
             return Response(
-                {"detail": "Rate limit exceeded"}, 
+                {"detail": "Rate limit exceeded"},
                 status=status.HTTP_429_TOO_MANY_REQUESTS
             )
         

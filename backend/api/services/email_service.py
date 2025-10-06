@@ -337,7 +337,7 @@ def send_freebie_email(order: Order) -> bool:
 
     return send_email(
         template_name='freebie_delivery',
-        subject='Your 5-Minute Content Engine is ready 🚀',
+        subject=f'{first_name}, You\'ll never run out of content again',
         to_email=order.customer_email,
         context=context
     )

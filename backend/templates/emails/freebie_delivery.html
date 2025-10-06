@@ -1,18 +1,29 @@
 {% extends "emails/base.html" %}
 
-{% block title %}Your 5-Minute Content Engine is ready 🚀{% endblock %}
+{% block title %}{{ first_name|default:"Friend" }}, You'll never run out of content again{% endblock %}
 
-{% block header_title %}Your 5-Minute Content Engine is ready 🚀{% endblock %}
+{% block header_title %}{{ first_name|default:"Friend" }}, You'll never run out of content again{% endblock %}
 
 {% block content %}
-<p>Hey {{ first_name|default:"there" }},</p>
+<p>{{ first_name|default:"Friend" }}, Let's be real — content burnout is real.</p>
 
-<p>You're in! Here's your <strong>5-Minute / 30-Post Content Engine.</strong><br>
-Tap the button to access everything in one place:</p>
+<p>You sit down to post, and your brain's like, "Nope. Not today."</p>
+
+<p>And that becomes your biggest enemy when, like so many of us, you're using social media to earn a healthy income online.</p>
+
+<p><strong>That burnout ends now.</strong></p>
+
+<p>Your <strong>5-Minute 30-Day Content Engine</strong> is officially unlocked 🎉</p>
+
+<p>It's the exact framework I use to batch 30 days of scroll-stopping content in less time than it takes to make coffee.</p>
+
+<p>This is plug, play, and post.</p>
+
+<p>And yes… it's a gift. (Totally free... for now 😉)</p>
 
 <div style="text-align: center; margin: 30px 0;">
     {% if digital_file_url %}
-    <a href="{{ digital_file_url }}" style="display: inline-block; background-color: #714efe; color: white !important; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 16px;">Access Your Content Engine Hub</a>
+    <a href="{{ digital_file_url }}" style="display: inline-block; background-color: #714efe; color: white !important; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 16px;">Grab it here</a>
     {% else %}
     <p><em>Download link will be provided shortly via email.</em></p>
     {% endif %}
@@ -22,21 +33,18 @@ Tap the button to access everything in one place:</p>
 <p>Or use this link: <a href="{{ digital_file_url }}" style="color: #714efe;">{{ digital_file_url }}</a></p>
 {% endif %}
 
-<div style="margin: 30px 0;">
-    <p><strong>Quick steps:</strong></p>
-    <p>Open the link → click spreadsheet → copy the prompt → paste into <strong>Elevate Engine GPT</strong> → generate your rows.</p>
-    <p>Open the Canva template → <em>Apps</em> → <em>Bulk Create</em> → map your columns.</p>
-    <p>Preview, download, and post. Watch the mini course/walkthrough video for more details. Repeat monthly in minutes.</p>
-</div>
+<p style="margin-top: 30px;"><strong>P.S.</strong> Over the next few days, I'll be dropping some exclusive goodies about how you can pair this engine with a system that turns your content into cashflow — where one sale = six ways to earn.</p>
 
-<p>– {{ sender_name|default:"The Elevate Social Team" }}</p>
+<p>Yeah, seriously.</p>
 
-<p style="font-size: 15px; color: #666; margin-top: 30px;"><strong>P.S.</strong> Bulk Create requires Canva Pro. A free trial works great if you're just getting started.</p>
-
-<p style="font-size: 15px; color: #666;"><strong>P.P.S.</strong> I'll send a few more quick wins and goodies over the next few days—keep an eye out. To learn more about how to get more of where this came from, {% if affiliate_link %}check out <a href="{{ affiliate_link }}" style="color: #714efe;">my recommended resources</a>{% else %}stay tuned for more resources{% endif %}. I'd love to support you directly. Enjoy—and hit reply with any questions!</p>
+<p>We teach you exactly how inside → {% if affiliate_link %}<a href="{{ affiliate_link }}" style="color: #714efe;">{{ affiliate_link }}</a>{% else %}[affiliate link coming soon]{% endif %}</p>
 
 {% if contact_email %}
-<p style="font-size: 15px; color: #666; margin-top: 20px;">If you want to get in touch, contact me at <a href="mailto:{{ contact_email }}" style="color: #714efe;">{{ contact_email }}</a></p>
+<p>If you have any questions, I'd love for you to reach out at <a href="mailto:{{ contact_email }}" style="color: #714efe;">{{ contact_email }}</a> — I read every message personally.</p>
 {% endif %}
+
+<p>Happy posting ✨</p>
+
+<p>{{ sender_name|default:"The Elevate Social Team" }}</p>
 
 {% endblock %}

@@ -325,11 +325,12 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
                                       link.type === 'ecourse' ? 'Course' :
                                         link.type === 'url_media' ? 'URL/Media' :
                                           link.type === 'freebie' ? 'Freebie' :
+                                            link.type === 'opt_in_type' ? 'Opt-in' :
                                             link.type}
                                 </span>
                               )}
-                              {/* Price */}
-                              {link.checkout_price && (
+                              {/* Price - Hide for freebie and opt_in */}
+                              {link.checkout_price && link.type !== 'freebie' && link.type !== 'opt_in' && (
                                 <span className="text-sm font-semibold text-gray-900">
                                   ${link.checkout_discounted_price || link.checkout_price}
                                   {link.checkout_discounted_price && (

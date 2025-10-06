@@ -759,3 +759,4 @@ def send_scheduled_optin_emails():
 
     logger.info(f"Opt-in follow-up emails processed: {sent_count} sent, {failed_count} failed")
     return {'sent': sent_count, 'failed': failed_count}
+

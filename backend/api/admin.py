@@ -321,8 +321,49 @@ class CustomLinkTemplateAdmin(ModelAdmin, ImportExportModelAdmin):
                     for i in range(0, len(links_to_create), BATCH_SIZE):
                         batch = links_to_create[i:i + BATCH_SIZE]
                         try:
-                            CustomLink.objects.bulk_create(batch, ignore_conflicts=True)
+                            # Bulk create without ignore_conflicts to get IDs
+                            CustomLink.objects.bulk_create(batch)
                             total_created += len(batch)
+
+                            # Get the profile IDs from this batch
+                            batch_profile_ids = [link.user_profile_id for link in batch]
+
+                            # Fetch the created links to get their IDs
+                            created_links = CustomLink.objects.filter(
+                                user_profile_id__in=batch_profile_ids,
+                                template=template
+                            )
+
+                            # Create default collect info fields (name and email) for each link
+                            collect_info_fields = []
+                            for link in created_links:
+                                # Name field
+                                collect_info_fields.append(
+                                    CollectInfoField(
+                                        custom_link=link,
+                                        field_type='text',
+                                        label='Full Name',
+                                        placeholder='Enter your full name',
+                                        is_required=True,
+                                        order=0
+                                    )
+                                )
+                                # Email field
+                                collect_info_fields.append(
+                                    CollectInfoField(
+                                        custom_link=link,
+                                        field_type='email',
+                                        label='Email Address',
+                                        placeholder='Enter your email address',
+                                        is_required=True,
+                                        order=1
+                                    )
+                                )
+
+                            # Bulk create collect info fields
+                            if collect_info_fields:
+                                CollectInfoField.objects.bulk_create(collect_info_fields)
+
                         except Exception as batch_error:
                             logger.exception(
                                 "Error in bulk_create batch for template %s: %s",

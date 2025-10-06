@@ -903,9 +903,14 @@ class CustomLinkViewSet(viewsets.ModelViewSet):
         if is_free_product:
             logger.info("DEBUG - Processing free product order")
 
+            # Send delivery email asynchronously BEFORE marking as completed
+            # This prevents the post_save signal from blocking the response
+            from ..tasks import send_product_delivery_email_async
+            send_product_delivery_email_async.delay(order.id)
+
             # Mark order as completed immediately
             order.status = 'completed'
-            order.save(update_fields=['status'])
+            order.save(update_fields=['status', 'email_sent_at'])
 
             logger.info(f"DEBUG - Free product order {order.order_id} marked as completed")
 

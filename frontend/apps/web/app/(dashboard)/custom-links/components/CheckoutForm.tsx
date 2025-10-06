@@ -226,17 +226,19 @@ export function CheckoutForm({
               <h1 className="text-4xl font-bold text-gray-900 mb-4">
                 {checkoutTitle || title || 'Product Title'}
               </h1>
-              {/* Price Section */}
-              <div className="mb-6">
-                {hasDiscount ? (
-                  <div className="flex items-center justify-center gap-3">
-                    <span className="text-xl text-gray-500 line-through">${price}</span>
-                    <span className="text-3xl font-bold text-brand-600">${discountedPrice}</span>
-                  </div>
-                ) : (
-                  <span className="text-3xl font-bold text-brand-600">${price}</span>
-                )}
-              </div>
+              {/* Price Section - Hide for freebie and opt_in */}
+              {!isFreebie && (
+                <div className="mb-6">
+                  {hasDiscount ? (
+                    <div className="flex items-center justify-center gap-3">
+                      <span className="text-xl text-gray-500 line-through">${price}</span>
+                      <span className="text-3xl font-bold text-brand-600">${discountedPrice}</span>
+                    </div>
+                  ) : (
+                    <span className="text-3xl font-bold text-brand-600">${price}</span>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Product Image */}
@@ -488,17 +490,19 @@ export function CheckoutForm({
       {/* Checkout Content */}
       <div className="p-4">
         <div className="space-y-4">
-          {/* Price Section */}
-          <div className="text-left">
-            {hasDiscount ? (
-              <div className="flex items-center gap-3">
-                <span className="text-lg text-gray-500 line-through">${price}</span>
-                <span className="text-2xl font-bold text-brand-600">${discountedPrice}</span>
-              </div>
-            ) : (
-              <span className="text-2xl font-bold text-brand-600">${price}</span>
-            )}
-          </div>
+          {/* Price Section - Hide for freebie and opt_in */}
+          {!isFreebie && (
+            <div className="text-left">
+              {hasDiscount ? (
+                <div className="flex items-center gap-3">
+                  <span className="text-lg text-gray-500 line-through">${price}</span>
+                  <span className="text-2xl font-bold text-brand-600">${discountedPrice}</span>
+                </div>
+              ) : (
+                <span className="text-2xl font-bold text-brand-600">${price}</span>
+              )}
+            </div>
+          )}
 
           {/* Product Description */}
           {checkoutDescription && (

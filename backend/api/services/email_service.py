@@ -301,7 +301,7 @@ def send_optin_email(order: Order) -> bool:
 
     return send_email(
         template_name='optin_delivery',
-        subject='Welcome to HTP Elevate - your built-for-you business starts here',
+        subject=f'{first_name}, you just unlocked something powerful.',
         to_email=order.customer_email,
         context=context
     )

@@ -27,6 +27,7 @@ const registerFormSchema = z
   })
 
 const profileFormSchema = z.object({
+  username: z.string().min(3, 'Username must be at least 3 characters').optional(),
   firstName: z.string().optional(),
   lastName: z.string().optional()
 })

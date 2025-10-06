@@ -102,7 +102,20 @@ const authOptions: AuthOptions = {
 
       return session
     },
-    jwt: async ({ token, user, account }) => {
+    jwt: async ({ token, user, account, trigger, session }) => {
+      // Handle session update (when updateSession is called)
+      if (trigger === 'update' && session) {
+        // Update the token with new session data
+        if (session.username) {
+          token.username = session.username
+          // Also update the backend_user object if it exists
+          if (token.backend_user) {
+            token.backend_user = { ...token.backend_user, username: session.username }
+          }
+        }
+        return token
+      }
+
       // Handle Google OAuth
       if (account?.provider === 'google' && user?.access_token) {
         if (user.access_token === 'REQUIRES_REGISTRATION') {
@@ -113,7 +126,7 @@ const authOptions: AuthOptions = {
           token.username = user.backend_user?.email
           return token
         }
-        
+
         token.access = user.access_token
         token.refresh = user.refresh_token
         token.backend_user = user.backend_user

@@ -203,16 +203,20 @@ class UserViewSet(
         Returns {"available": true/false, "username": "requested_username"}
         """
         username = request.data.get('username', '').strip()
-        
+
         if not username:
             return Response(
-                {"error": "Username is required"}, 
+                {"error": "Username is required"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
-        # Check if username exists (case-insensitive)
-        is_taken = User.objects.filter(username__iexact=username).exists()
-        
+
+        # Check if username exists (case-insensitive), excluding current user if authenticated
+        query = User.objects.filter(username__iexact=username)
+        if request.user.is_authenticated:
+            query = query.exclude(id=request.user.id)
+
+        is_taken = query.exists()
+
         return Response({
             "username": username,
             "available": not is_taken

@@ -18,6 +18,7 @@ export async function profileAction(
     const apiClient = await getApiClient(session)
 
     await apiClient.users.usersMePartialUpdate({
+      username: data.username,
       first_name: data.firstName,
       last_name: data.lastName
     })

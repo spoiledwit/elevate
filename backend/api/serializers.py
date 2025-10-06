@@ -92,11 +92,14 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 class UserCurrentSerializer(serializers.ModelSerializer):
     permissions = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = User
         fields = ["username", "first_name", "last_name", "permissions"]
-    
+        extra_kwargs = {
+            'username': {'required': False}
+        }
+
     def get_permissions(self, obj):
         """Get user permissions or create default permissions if they don't exist"""
         try:
@@ -104,8 +107,17 @@ class UserCurrentSerializer(serializers.ModelSerializer):
         except UserPermissions.DoesNotExist:
             # Create permissions if they don't exist
             permissions = UserPermissions.objects.create(user=obj)
-        
+
         return UserPermissionsSerializer(permissions).data
+
+    def validate_username(self, value):
+        """Validate username is unique, excluding current user"""
+        if value:
+            # Check if username already exists for another user
+            user_with_username = User.objects.filter(username__iexact=value).exclude(id=self.instance.id if self.instance else None).first()
+            if user_with_username:
+                raise serializers.ValidationError("This username is already taken.")
+        return value
 
 
 class UserCurrentErrorSerializer(serializers.Serializer):

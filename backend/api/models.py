@@ -45,8 +45,8 @@ class UserProfile(models.Model):
         return f"{self.user.username} - {self.display_name}"
 
     def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.user.username)
+        # Always update slug to match current username
+        self.slug = slugify(self.user.username)
         super().save(*args, **kwargs)
 
 

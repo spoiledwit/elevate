@@ -893,36 +893,56 @@ class CustomLinkViewSet(viewsets.ModelViewSet):
         except Exception as e:
             logger.error(f"DEBUG - Order serializer validation failed: {e}")
             logger.error(f"DEBUG - Serializer errors: {serializer.errors}")
-            raise
-        
+            return Response({
+                "error": "Validation failed",
+                "details": serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         # Save the order
-        order = serializer.save()
-        logger.info(f"DEBUG - Created order: {order.order_id}")
+        try:
+            order = serializer.save()
+            logger.info(f"DEBUG - Created order: {order.order_id}")
+        except Exception as e:
+            logger.error(f"DEBUG - Failed to save order: {e}", exc_info=True)
+            return Response({
+                "error": "Failed to create order",
+                "details": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         # Handle free products differently - no Stripe payment needed
         if is_free_product:
             logger.info("DEBUG - Processing free product order")
 
-            # Send delivery email asynchronously BEFORE marking as completed
-            # This prevents the post_save signal from blocking the response
-            from ..tasks import send_product_delivery_email_async
-            send_product_delivery_email_async.delay(order.id)
+            try:
 
-            # Mark order as completed immediately
-            order.status = 'completed'
-            order.save(update_fields=['status', 'email_sent_at'])
+                # Send delivery email asynchronously BEFORE marking as completed
+                # This prevents the post_save signal from blocking the response
+                from ..tasks import send_product_delivery_email_async
+                logger.info(f"DEBUG - Scheduling async email for order {order.id}")
+                send_product_delivery_email_async.delay(order.id)
 
-            logger.info(f"DEBUG - Free product order {order.order_id} marked as completed")
+                # Mark order as completed immediately
+                logger.info(f"DEBUG - Marking order {order.order_id} as completed")
+                order.status = 'completed'
+                order.save(update_fields=['status'])
 
-            # For free products, we can provide direct download access
-            # No need for payment processing
-            return Response({
-                "success": True,
-                "order": OrderSerializer(order).data,
-                "is_free": True,
-                "message": "Free download ready! No payment required.",
-                "download_access": True
-            }, status=status.HTTP_201_CREATED)
+                logger.info(f"DEBUG - Free product order {order.order_id} marked as completed")
+
+                # For free products, we can provide direct download access
+                # No need for payment processing
+                return Response({
+                    "success": True,
+                    "order": OrderSerializer(order).data,
+                    "is_free": True,
+                    "message": "Free download ready! No payment required.",
+                    "download_access": True
+                }, status=status.HTTP_201_CREATED)
+            except Exception as e:
+                logger.error(f"DEBUG - Error processing free order: {e}", exc_info=True)
+                return Response({
+                    "error": "Failed to process free order",
+                    "details": str(e)
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         # Create Stripe Connect checkout session for paid products
         try:

@@ -452,6 +452,13 @@ def send_optin_followup_email(scheduled_email) -> bool:
     # Extract first name from customer name
     first_name = order.customer_name.split()[0] if order.customer_name else ""
 
+    # Replace template variables in subject
+    email_subject = template.subject
+    email_subject = email_subject.replace('{{ first_name }}', first_name)
+    email_subject = email_subject.replace('{{ sender_name }}', seller_profile.display_name or seller_user.get_full_name() or seller_user.username)
+    email_subject = email_subject.replace('{{ affiliate_link }}', seller_profile.affiliate_link or '')
+    email_subject = email_subject.replace('{{ personal_email }}', seller_profile.contact_email or '')
+
     # Replace template variables in body
     email_body = template.body
     email_body = email_body.replace('{{ first_name }}', first_name)
@@ -471,7 +478,7 @@ def send_optin_followup_email(scheduled_email) -> bool:
 
     return send_email(
         template_name='optin_followup',
-        subject=template.subject,
+        subject=email_subject,
         to_email=order.customer_email,
         context=context
     )
@@ -489,6 +496,13 @@ def send_freebie_followup_email(scheduled_email) -> bool:
 
     # Extract first name from customer name
     first_name = order.customer_name.split()[0] if order.customer_name else ""
+
+    # Replace template variables in subject
+    email_subject = template.subject
+    email_subject = email_subject.replace('{{ first_name }}', first_name)
+    email_subject = email_subject.replace('{{ sender_name }}', seller_profile.display_name or seller_user.get_full_name() or seller_user.username)
+    email_subject = email_subject.replace('{{ affiliate_link }}', seller_profile.affiliate_link or '')
+    email_subject = email_subject.replace('{{ personal_email }}', seller_profile.contact_email or '')
 
     # Replace template variables in body
     email_body = template.body
@@ -509,7 +523,7 @@ def send_freebie_followup_email(scheduled_email) -> bool:
 
     return send_email(
         template_name='freebie_followup',
-        subject=template.subject,
+        subject=email_subject,
         to_email=order.customer_email,
         context=context
     )

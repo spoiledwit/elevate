@@ -1,30 +1,43 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { useSession } from 'next-auth/react'
-import { useState } from 'react'
-import lgoblack from "@/assets/logo.png"
+import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { useState, useEffect } from "react";
+import lgoblack from "@/assets/logo.png";
 
 export function Navbar() {
-  const { data: session, status } = useSession()
-  const isLoading = status === 'loading'
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const { data: session, status } = useSession();
+  const isLoading = status === "loading";
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 0);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 w-full px-4 sm:px-6 lg:px-20 py-4 lg:py-6 bg-white z-50" style={{ boxShadow: '0 2px 8px 0 rgba(0,0,0,0.08)' }}>
+    <nav
+      className={`fixed top-0 left-0 right-0 w-full px-4 sm:px-6 lg:px-20 py-4 lg:py-6 bg-transparent z-50 ${
+        scrolled ? "bg-white" : "bg-transparent"
+      }`}
+      style={{ boxShadow: scrolled ? "0 2px 8px 0 rgba(0,0,0,0.08)" : "none" }}
+    >
       <div className="flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <Link
+          href="/"
+          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+        >
           <img
             src={lgoblack.src}
             alt="Elevate Social"
-            className='h-8 sm:h-10 lg:h-12'
+            className="h-8 sm:h-10 lg:h-12"
           />
-          <span className='font-bold text-base sm:text-lg'>
-            elevate.social
-          </span>
+          <span className="font-bold text-base sm:text-lg">elevate.social</span>
         </Link>
-
-
 
         {/* Desktop Auth Buttons */}
         <div className="hidden lg:flex items-center gap-4 text-[16px]">
@@ -34,7 +47,7 @@ export function Navbar() {
             <Link
               href="/dashboard"
               className="font-semibold text-white px-6 py-2.5 rounded-lg hover:scale-105 transition-all"
-              style={{ backgroundColor: '#714efe' }}
+              style={{ backgroundColor: "#714efe" }}
             >
               Dashboard
             </Link>
@@ -46,7 +59,7 @@ export function Navbar() {
               <Link
                 href="/get-started"
                 className="font-semibold text-white px-6 py-2.5 rounded-lg hover:scale-105 transition-all"
-                style={{ backgroundColor: '#714efe' }}
+                style={{ backgroundColor: "#714efe" }}
               >
                 Get Started
               </Link>
@@ -61,12 +74,32 @@ export function Navbar() {
           aria-label="Toggle mobile menu"
         >
           {isMobileMenuOpen ? (
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           ) : (
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
             </svg>
           )}
         </button>
@@ -112,9 +145,13 @@ export function Navbar() {
                 <Link
                   href="/dashboard"
                   className="block font-semibold text-white px-6 py-2.5 rounded-lg text-center transition-colors"
-                  style={{ backgroundColor: '#714efe' }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#5f3fd6'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#714efe'}
+                  style={{ backgroundColor: "#714efe" }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = "#5f3fd6")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "#714efe")
+                  }
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Dashboard
@@ -131,9 +168,13 @@ export function Navbar() {
                   <Link
                     href="/get-started"
                     className="block font-semibold text-white px-6 py-2.5 rounded-lg text-center transition-colors"
-                    style={{ backgroundColor: '#714efe' }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#5f3fd6'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#714efe'}
+                    style={{ backgroundColor: "#714efe" }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.backgroundColor = "#5f3fd6")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.backgroundColor = "#714efe")
+                    }
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Get Started
@@ -145,5 +186,5 @@ export function Navbar() {
         </div>
       )}
     </nav>
-  )
+  );
 }

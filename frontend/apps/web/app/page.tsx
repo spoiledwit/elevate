@@ -1,38 +1,23 @@
-import { redirect } from 'next/navigation'
-import { Navbar } from '@/components/landing/navbar'
-import { Hero } from '@/components/landing/hero'
-import { CreatorsShowcase } from '@/components/landing/creators-showcase'
-import { ContentConsistency } from '@/components/landing/content-consistency'
-import { FeaturesStack } from '@/components/landing/features-stack'
-import { HowItWorks } from '@/components/landing/how-it-works'
-import { ContentSection } from '@/components/landing/content-section'
-import { PricingPlans } from '@/components/landing/pricing-plans'
-import { Testimonials } from '@/components/landing/testimonials'
-import { CTASection } from '@/components/landing/cta-section'
-import { FAQ } from '@/components/landing/faq'
-import { Footer } from '@/components/landing/footer'
-import { FloatingUsernameClaim } from '@/components/landing/floating-username-claim'
-import { getPlansAction } from '@/actions'
+import { Navbar } from "@/components/landing/navbar";
+import Hero from "@/components/home/Hero";
+import IncomeModel from "@/components/home/IncomeModel";
+import Welcome from "@/components/home/Welcome";
+import Pricing from "@/components/home/Pricing";
+import { Footer } from "@/components/landing/footer";
+import ProblemSol from "@/components/home/ProblemSol";
+import WhyIBuilt from "@/components/home/WhyIBuilt";
 
-export default async function Home() {
-  redirect('/login')
-  // Fetch plans data on the server
-  const plansData = await getPlansAction()
+export default function Home() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen">
       <Navbar />
       <Hero />
-      <CreatorsShowcase />
-      <ContentConsistency />
-      <FeaturesStack />
-      <PricingPlans plansData={plansData} />
-      <Testimonials />
-      <ContentSection />
-      <HowItWorks />
-      <CTASection />
-      <FAQ />
+      <IncomeModel />
+      <Welcome />
+      <ProblemSol />
+      <WhyIBuilt />
+      <Pricing />
       <Footer />
-      <FloatingUsernameClaim />
     </div>
-  )
+  );
 }

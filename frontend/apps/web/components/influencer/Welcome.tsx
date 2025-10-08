@@ -34,7 +34,7 @@ const Welcome = () => {
           <p className="text-sm">Community-Driven</p>
         </div>
       </div>
-      <h3 className="text-brand mt-10">WELCOME TO</h3>
+      <h3 className="text-brand font-semibold mt-10">WELCOME TO</h3>
       <h1 className="text-5xl font-semibold text-center">
         Your Affiliate marketing{" "}
         <span className="text-brand">Business-In-A-Box</span> Solution That{" "}
@@ -46,7 +46,13 @@ const Welcome = () => {
         <span className="font-bold">momentum builds</span> and{" "}
         <span className="font-bold">people succeed</span>
       </p>
-      <div className="w-3/5 h-[50vh] bg-gray-200 rounded-3xl border-[10px] border-white mt-10 outline outline-[10px] outline-brand shadow-2xl"></div>
+      <div className="w-3/5 bg-gray-200 rounded-3xl border-[10px] border-white mt-10 outline outline-[10px] outline-brand shadow-2xl">
+        <img
+          src="/welcome.jpg"
+          alt=""
+          className="w-full h-full object-cover rounded-3xl"
+        />
+      </div>
     </Container>
   );
 };

@@ -21,7 +21,7 @@ export function Navbar() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 w-full px-4 sm:px-6 lg:px-20 py-4 lg:py-6 bg-transparent z-50 ${
+      className={`fixed top-0 left-0 right-0 w-full px-8 md:px-16 lg:px-24 py-4 lg:py-6 bg-transparent z-50 ${
         scrolled ? "bg-white" : "bg-transparent"
       }`}
       style={{ boxShadow: scrolled ? "0 2px 8px 0 rgba(0,0,0,0.08)" : "none" }}

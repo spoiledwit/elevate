@@ -24,29 +24,31 @@ const Pillars = () => {
   ];
 
   return (
-    <Container className="bg-[#F5F3EF]">
-      {/* Header */}
-      <h2 className="text-4xl font-bold text-black mb-12">
-        The 3 Pillars of Elevate
-      </h2>
+    <div className="bg-[#F5F3EF]">
+      <Container>
+        {/* Header */}
+        <h2 className="text-4xl font-bold text-black mb-12">
+          The 3 Pillars of Elevate
+        </h2>
 
-      {/* 3 Pillar Cards */}
-      <div className="grid md:grid-cols-3 gap-6">
-        {pillars.map((pillar, index) => (
-          <div
-            key={index}
-            className="bg-white rounded-2xl p-8 shadow-xl border border-gray-200 hover:shadow-md transition-shadow duration-200"
-          >
-            <h3 className="text-brand font-bold text-lg mb-4">
-              {pillar.letter} — {pillar.title}
-            </h3>
-            <p className="text-gray-900 text-base leading-relaxed">
-              {pillar.description}
-            </p>
-          </div>
-        ))}
-      </div>
-    </Container>
+        {/* 3 Pillar Cards */}
+        <div className="grid md:grid-cols-3 gap-6">
+          {pillars.map((pillar, index) => (
+            <div
+              key={index}
+              className="bg-white rounded-2xl p-8 shadow-xl border border-gray-200 hover:shadow-md transition-shadow duration-200"
+            >
+              <h3 className="text-brand font-bold text-lg mb-4">
+                {pillar.letter} — {pillar.title}
+              </h3>
+              <p className="text-gray-900 text-base leading-relaxed">
+                {pillar.description}
+              </p>
+            </div>
+          ))}
+        </div>
+      </Container>
+    </div>
   );
 };
 

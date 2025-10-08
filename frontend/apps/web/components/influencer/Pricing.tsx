@@ -64,18 +64,18 @@ const Pricing = () => {
   return (
     <Container>
       {/* Header */}
-      <div className="text-center mb-12">
-        <h2 className="text-4xl md:text-5xl font-bold text-black mb-4">
+      <div className="text-center mb-12 px-4">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-black mb-4">
           Choose Your <span className="text-brand">Path to Prosper</span>
         </h2>
-        <p className="text-gray-600 text-base max-w-3xl mx-auto">
+        <p className="text-gray-600 text-sm sm:text-base max-w-3xl mx-auto">
           Whether you're ready to dive in completely or want to start earning
           immediately, we have the perfect option for you.
         </p>
       </div>
 
       {/* Pricing Cards */}
-      <div className="grid md:grid-cols-3 gap-6 mb-12">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
         {plans.map((plan, index) => (
           <div
             key={index}

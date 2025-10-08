@@ -45,64 +45,66 @@ const FAQs = () => {
   };
 
   return (
-    <Container className="bg-gradient-to-b from-[#F9FAFB] to-[#FFFFFF]">
-      {/* Header */}
-      <div className="text-center mb-12">
-        <h2 className="text-4xl md:text-5xl font-bold text-black mb-4">
-          Questions, <span className="text-brand">Answered.</span>
-        </h2>
-        <p className="text-gray-600 text-base">
-          Everything you need to know about joining the Elevate social.
-        </p>
-      </div>
+    <div className="bg-gradient-to-b from-[#F9FAFB] to-[#FFFFFF]">
+      <Container>
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h2 className="text-4xl md:text-5xl font-bold text-black mb-4">
+            Questions, <span className="text-brand">Answered.</span>
+          </h2>
+          <p className="text-gray-600 text-base">
+            Everything you need to know about joining the Elevate social.
+          </p>
+        </div>
 
-      {/* FAQ Accordion */}
-      <div className="space-y-4">
-        {faqs.map((faq, index) => (
-          <div
-            key={index}
-            className="border border-gray-200 rounded-lg overflow-hidden"
-          >
-            {/* Question Header */}
-            <button
-              onClick={() => toggleFAQ(index)}
-              className="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors duration-200"
+        {/* FAQ Accordion */}
+        <div className="space-y-4">
+          {faqs.map((faq, index) => (
+            <div
+              key={index}
+              className="border border-gray-200 rounded-lg overflow-hidden"
             >
-              <span className="text-brand font-semibold text-base">
-                {faq.question}
-              </span>
-              <div className="flex-shrink-0 ml-4">
-                {openIndex === index ? (
-                  <Minus className="w-5 h-5 text-brand" />
-                ) : (
-                  <Plus className="w-5 h-5 text-brand" />
-                )}
-              </div>
-            </button>
+              {/* Question Header */}
+              <button
+                onClick={() => toggleFAQ(index)}
+                className="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors duration-200"
+              >
+                <span className="text-brand font-semibold text-base">
+                  {faq.question}
+                </span>
+                <div className="flex-shrink-0 ml-4">
+                  {openIndex === index ? (
+                    <Minus className="w-5 h-5 text-brand" />
+                  ) : (
+                    <Plus className="w-5 h-5 text-brand" />
+                  )}
+                </div>
+              </button>
 
-            {/* Answer Content */}
-            {openIndex === index && (
-              <div className="px-5 pb-5 pt-2">
-                <p className="text-gray-700 text-sm leading-relaxed">
-                  {faq.answer}
-                </p>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+              {/* Answer Content */}
+              {openIndex === index && (
+                <div className="px-5 pb-5 pt-2">
+                  <p className="text-gray-700 text-sm leading-relaxed">
+                    {faq.answer}
+                  </p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
 
-      {/* Contact Support */}
-      <div className="text-center mt-12">
-        <p className="text-gray-600 text-sm mb-3">Still have questions?</p>
-        <a
-          href="#contact"
-          className="text-brand font-semibold text-sm hover:text-indigo-700 transition-colors duration-200"
-        >
-          Contact our support team
-        </a>
-      </div>
-    </Container>
+        {/* Contact Support */}
+        <div className="text-center mt-12">
+          <p className="text-gray-600 text-sm mb-3">Still have questions?</p>
+          <a
+            href="#contact"
+            className="text-brand font-semibold text-sm hover:text-indigo-700 transition-colors duration-200"
+          >
+            Contact our support team
+          </a>
+        </div>
+      </Container>
+    </div>
   );
 };
 

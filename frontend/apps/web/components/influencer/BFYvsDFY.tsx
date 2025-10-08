@@ -19,12 +19,12 @@ const BFYvsDFY = () => {
   return (
     <Container>
       {/* Header */}
-      <div className="text-center mb-12">
-        <h2 className="text-4xl md:text-5xl font-bold text-black mb-4">
+      <div className="text-center mb-12 px-4">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-black mb-4">
           Why <span className="text-brand">Built-For-You</span> Beats
           Done-For-You
         </h2>
-        <p className="text-gray-600 text-base max-w-3xl mx-auto">
+        <p className="text-gray-600 text-sm sm:text-base max-w-3xl mx-auto">
           We don't just hand you tools and disappear. We build with you, teach
           you, and support you every step.
         </p>
@@ -33,8 +33,8 @@ const BFYvsDFY = () => {
       {/* Comparison Section */}
       <div className="grid lg:grid-cols-2 gap-8 mb-12">
         {/* Done-For-You - Left Side (Issues) */}
-        <div className="bg-white rounded-2xl p-8 border-2 border-red-200 relative">
-          <div className="absolute top-0 -translate-y-1/2 left-10 inline-block bg-red-500 text-white text-xs font-semibold px-4 py-2 rounded-full mb-6">
+        <div className="bg-white rounded-2xl p-6 sm:p-8 border-2 border-red-200 relative mt-6">
+          <div className="absolute top-0 -translate-y-1/2 left-4 sm:left-10 inline-block bg-red-500 text-white text-xs font-semibold px-4 py-2 rounded-full mb-6">
             ❌ Done-For-You
           </div>
           <ul className="space-y-4">
@@ -50,8 +50,8 @@ const BFYvsDFY = () => {
         </div>
 
         {/* Built-For-You - Right Side (Benefits) */}
-        <div className="bg-brand rounded-2xl p-8 text-white relative shadow-xl">
-          <div className="absolute top-0 -translate-y-1/2 left-10 inline-block bg-white text-brand text-xs font-semibold px-4 py-2 rounded-full mb-6">
+        <div className="bg-brand rounded-2xl p-6 sm:p-8 text-white relative shadow-xl mt-6">
+          <div className="absolute top-0 -translate-y-1/2 left-4 sm:left-10 inline-block bg-white text-brand text-xs font-semibold px-4 py-2 rounded-full mb-6">
             ✅ Built-For-You
           </div>
           <ul className="space-y-4">
@@ -68,8 +68,8 @@ const BFYvsDFY = () => {
       </div>
 
       {/* The BFY Advantage - Bottom Box */}
-      <div className="bg-white rounded-2xl p-8 border border-gray-200 max-w-2xl mx-auto shadow-xl">
-        <h3 className="text-2xl font-bold text-brand text-center mb-4">
+      <div className="bg-white rounded-2xl p-6 sm:p-8 border border-gray-200 max-w-2xl mx-auto shadow-xl">
+        <h3 className="text-xl sm:text-2xl font-bold text-brand text-center mb-4">
           The BFY Advantage
         </h3>
         <p className="text-gray-700 text-sm leading-relaxed text-center max-w-4xl mx-auto">

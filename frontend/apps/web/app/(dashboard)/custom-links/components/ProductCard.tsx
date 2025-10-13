@@ -86,7 +86,7 @@ export function ProductCard({
             {subtitle}
           </p>
         )}
-        {price && productType !== 'freebie' && productType !== 'opt_in' && (
+        {price && productType !== 'freebie' && productType !== 'opt_in' && productType !== 'url-media' && (
           <div>
             {hasDiscount ? (
               <div className="flex items-center gap-2">

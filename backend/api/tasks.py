@@ -574,7 +574,7 @@ def schedule_freebie_email_sequence(order_id):
     Schedule all follow-up emails for a freebie order.
     Called automatically when freebie order is completed.
     """
-    from .models import Order, FreebieFollowupEmail, ScheduledFollowupEmail
+    from .models import Order, FreebieFollowupEmail, ScheduledFollowupEmail, ScheduledOptinEmail
     from datetime import timedelta
 
     try:
@@ -584,6 +584,22 @@ def schedule_freebie_email_sequence(order_id):
         if order.custom_link.type != 'freebie':
             logger.info(f"Skipping email sequence for non-freebie order {order.order_id}")
             return
+
+        # Check if this email is already enrolled in any active sequence from ANY community leader
+        customer_email = order.customer_email
+        existing_freebie_sequences = ScheduledFollowupEmail.objects.filter(
+            order__customer_email=customer_email,
+            sent=False
+        ).exists()
+
+        existing_optin_sequences = ScheduledOptinEmail.objects.filter(
+            order__customer_email=customer_email,
+            sent=False
+        ).exists()
+
+        if existing_freebie_sequences or existing_optin_sequences:
+            logger.info(f"Email {customer_email} is already enrolled in an active nurturing sequence. Skipping for order {order.order_id}")
+            return {'success': False, 'reason': 'already_enrolled', 'message': 'Customer is already in an active email sequence'}
 
         # Get all active email templates
         email_templates = FreebieFollowupEmail.objects.filter(is_active=True).order_by('step_number')
@@ -670,7 +686,7 @@ def schedule_optin_email_sequence(order_id):
     Schedule all follow-up emails for an opt-in order.
     Called automatically when opt-in order is completed.
     """
-    from .models import Order, OptinFollowupEmail, ScheduledOptinEmail
+    from .models import Order, OptinFollowupEmail, ScheduledOptinEmail, ScheduledFollowupEmail
     from datetime import timedelta
 
     try:
@@ -680,6 +696,22 @@ def schedule_optin_email_sequence(order_id):
         if order.custom_link.type != 'opt_in':
             logger.info(f"Skipping email sequence for non-opt-in order {order.order_id}")
             return
+
+        # Check if this email is already enrolled in any active sequence from ANY community leader
+        customer_email = order.customer_email
+        existing_optin_sequences = ScheduledOptinEmail.objects.filter(
+            order__customer_email=customer_email,
+            sent=False
+        ).exists()
+
+        existing_freebie_sequences = ScheduledFollowupEmail.objects.filter(
+            order__customer_email=customer_email,
+            sent=False
+        ).exists()
+
+        if existing_optin_sequences or existing_freebie_sequences:
+            logger.info(f"Email {customer_email} is already enrolled in an active nurturing sequence. Skipping for order {order.order_id}")
+            return {'success': False, 'reason': 'already_enrolled', 'message': 'Customer is already in an active email sequence'}
 
         # Get all active email templates
         email_templates = OptinFollowupEmail.objects.filter(is_active=True).order_by('step_number')

@@ -53,7 +53,7 @@ export function CheckoutForm({
   onOrderSuccess
 }: CheckoutFormProps) {
   const hasDiscount = discountedPrice && parseFloat(discountedPrice) < parseFloat(price)
-  const isFreebie = productType === 'freebie' || productType === 'opt_in'
+  const isFreebie = productType === 'freebie' || productType === 'opt_in' || productType === 'url-media'
 
   // Form state for active mode
   const [formData, setFormData] = useState<Record<string, string | string[]>>({})

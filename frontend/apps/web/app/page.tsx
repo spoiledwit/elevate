@@ -15,7 +15,7 @@ import { FloatingUsernameClaim } from "@/components/landing/floating-username-cl
 import { getPlansAction } from "@/actions";
 
 export default async function Home() {
-  redirect("/login");
+  redirect("https://start.elevate.social");
   // Fetch plans data on the server
   const plansData = await getPlansAction();
   return (

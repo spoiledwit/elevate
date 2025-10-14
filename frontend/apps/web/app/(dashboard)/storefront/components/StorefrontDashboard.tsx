@@ -215,18 +215,24 @@ export function StorefrontDashboard({
 
                       {/* Products */}
                       <div className="space-y-4">
-                        {customLinks.filter(link => link.is_active).map((link) => (
-                          <ProductCard
-                            key={link.id}
-                            productType={link.type?.replace('_product', '') || 'digital'}
-                            thumbnail={link.thumbnail}
-                            title={link.title || link.text}
-                            subtitle={link.subtitle}
-                            displayStyle={link.style}
-                            price={link.checkout_price}
-                            discountedPrice={link.checkout_discounted_price}
-                          />
-                        ))}
+                        {customLinks.filter(link => link.is_active).map((link) => {
+                          // Convert backend type format to frontend format
+                          let productType = link.type?.replace('_product', '') || 'digital';
+                          if (productType === 'url_media') productType = 'url-media';
+
+                          return (
+                            <ProductCard
+                              key={link.id}
+                              productType={productType as any}
+                              thumbnail={link.thumbnail}
+                              title={link.title || link.text}
+                              subtitle={link.subtitle}
+                              displayStyle={link.style}
+                              price={link.checkout_price}
+                              discountedPrice={link.checkout_discounted_price}
+                            />
+                          );
+                        })}
                       </div>
                     </div>
                   </div>

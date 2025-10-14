@@ -326,15 +326,15 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       setCheckoutPrice('0.00')
       setCheckoutDiscountedPrice('')
 
-      // Step 3: Checkout details
-      setCheckoutTitle('Get Access to Premium Media')
-      setCheckoutDescription('<h3>Exclusive Access Includes:</h3><ul><li>✅ High-quality media content</li><li>✅ Instant online access</li><li>✅ Compatible with all devices</li><li>✅ Regular content updates</li></ul><p>Unlock premium content that will elevate your knowledge and skills. Join our community and start your journey today!</p>')
-      setCheckoutBottomTitle('Ready to Access?')
-      setCheckoutCtaButtonText('Get Access Now')
+      // Step 3: Checkout details - Set placeholders since they're not needed for links
+      setCheckoutTitle('Link Checkout')
+      setCheckoutDescription('<p>Link checkout page</p>')
+      setCheckoutBottomTitle('Click to continue')
+      setCheckoutCtaButtonText('Continue')
 
       // Set default media URL
-      setMediaUrl('https://example.com/your-premium-content')
-      setButtonText('Access Content')
+      setMediaUrl('https://example.com/your-link')
+      setButtonText('Visit Link')
 
       // Also set checkout image to the same
       setCheckoutImagePreview(urlMediaImg.src)
@@ -393,7 +393,12 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
     if (step === 1 && selectedType) {
       setStep(2)
     } else if (step === 2 && title.trim() && selectedStyle && (selectedType === 'url-media' || selectedType === 'opt_in' || selectedType === 'freebie' || checkoutPrice)) {
-      setStep(3)
+      // Skip checkout configuration (step 3) and collect info (step 4) for url-media, go straight to step 5
+      if (selectedType === 'url-media') {
+        setStep(5)
+      } else {
+        setStep(3)
+      }
     } else if (step === 3) {
       // Skip collect info step (step 4) for url-media, go straight to step 5
       if (selectedType === 'url-media') {
@@ -413,9 +418,9 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
 
   const handleBack = () => {
     if (step > 1) {
-      // Skip step 4 when going back from step 5 for url-media
+      // Skip step 3 and 4 when going back from step 5 for url-media
       if (step === 5 && selectedType === 'url-media') {
-        setStep(3)
+        setStep(2)
       } else {
         setStep(step - 1)
       }
@@ -864,7 +869,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
               {link ? 'Edit Product' : 'Add New Product'}
             </h2>
             <p className="text-sm text-gray-600">
-              Step {step} of 5: {
+              Step {selectedType === 'url-media' && step === 5 ? '3' : step} of {selectedType === 'url-media' ? '3' : '5'}: {
                 step === 1 ? 'Choose your product type' :
                   step === 2 ? 'Add basic information' :
                     step === 3 ? 'Configure checkout & pricing' :

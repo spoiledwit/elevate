@@ -329,8 +329,8 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
                                             link.type}
                                 </span>
                               )}
-                              {/* Price - Hide for freebie and opt_in */}
-                              {link.checkout_price && link.type !== 'freebie' && link.type !== 'opt_in' && (
+                              {/* Price - Hide for freebie, opt_in, and url_media */}
+                              {link.checkout_price && link.type !== 'freebie' && link.type !== 'opt_in' && link.type !== 'url_media' && (
                                 <span className="text-sm font-semibold text-gray-900">
                                   ${link.checkout_discounted_price || link.checkout_price}
                                   {link.checkout_discounted_price && (
@@ -480,18 +480,24 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
 
                       {/* Products */}
                       <div className="space-y-4">
-                        {links.filter(link => link.is_active).map((link) => (
-                          <ProductCard
-                            key={link.id}
-                            productType={link.type?.replace('_product', '') || 'digital'}
-                            thumbnail={link.thumbnail}
-                            title={link.title || link.text}
-                            subtitle={link.subtitle}
-                            displayStyle={link.style}
-                            price={link.checkout_price}
-                            discountedPrice={link.checkout_discounted_price}
-                          />
-                        ))}
+                        {links.filter(link => link.is_active).map((link) => {
+                          // Convert backend type format to frontend format
+                          let productType = link.type?.replace('_product', '') || 'digital';
+                          if (productType === 'url_media') productType = 'url-media';
+
+                          return (
+                            <ProductCard
+                              key={link.id}
+                              productType={productType as any}
+                              thumbnail={link.thumbnail}
+                              title={link.title || link.text}
+                              subtitle={link.subtitle}
+                              displayStyle={link.style}
+                              price={link.checkout_price}
+                              discountedPrice={link.checkout_discounted_price}
+                            />
+                          );
+                        })}
                       </div>
                     </div>
                   </div>

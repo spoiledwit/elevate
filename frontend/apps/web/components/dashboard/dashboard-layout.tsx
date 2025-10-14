@@ -26,7 +26,8 @@ import {
   Zap,
   ChevronRight,
   ChevronDown,
-  Users
+  Users,
+  ExternalLink
 } from 'lucide-react'
 import logo from '@/assets/logo.png'
 
@@ -379,6 +380,20 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             )}
           </div>
         </nav>
+
+        {/* HTP Elevate Button */}
+        <div className="flex-shrink-0 px-4 pb-4">
+          <a
+            href="https://HTPelevate.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white rounded-lg transition-all duration-200 hover:shadow-lg"
+            style={{background: 'linear-gradient(135deg, #714efe 0%, #5f3fd6 100%)'}}
+          >
+            <span>Visit HTP Elevate</span>
+            <ExternalLink className="w-4 h-4" />
+          </a>
+        </div>
 
         {/* Bottom section - User profile */}
         <div

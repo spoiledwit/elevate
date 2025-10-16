@@ -211,6 +211,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         return { itemId: 'subscription', sectionId: 'business' }
       case '/settings':
         return { itemId: 'settings', sectionId: 'account' }
+      case '/community':
+        return { itemId: 'community', sectionId: 'community' }
       default:
         return { itemId: 'dashboard', sectionId: 'overview' }
     }
@@ -333,50 +335,68 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 ))}
               </>
             ) : (
-              allowedSidebarSections.map((section) => (
-                <div key={section.id}>
-                  {/* Section Header - Clickable */}
-                  <button
-                    onClick={() => toggleSection(section.id)}
-                    data-tour={`${section.id}-section`}
-                    className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <section.icon className="w-5 h-5 text-gray-500" />
-                      <span>{section.title}</span>
-                    </div>
-                    {expandedSections.includes(section.id) ? (
-                      <ChevronDown className="w-4 h-4 text-gray-400" />
-                    ) : (
-                      <ChevronRight className="w-4 h-4 text-gray-400" />
-                    )}
-                  </button>
+              <>
+                {allowedSidebarSections.map((section) => (
+                  <div key={section.id}>
+                    {/* Section Header - Clickable */}
+                    <button
+                      onClick={() => toggleSection(section.id)}
+                      data-tour={`${section.id}-section`}
+                      className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <section.icon className="w-5 h-5 text-gray-500" />
+                        <span>{section.title}</span>
+                      </div>
+                      {expandedSections.includes(section.id) ? (
+                        <ChevronDown className="w-4 h-4 text-gray-400" />
+                      ) : (
+                        <ChevronRight className="w-4 h-4 text-gray-400" />
+                      )}
+                    </button>
 
-                  {/* Section Items - Collapsible with smooth animation */}
-                  <div
-                    className={`ml-6 mt-1 space-y-1 overflow-hidden transition-all duration-300 ease-in-out ${expandedSections.includes(section.id)
-                      ? 'max-h-96 opacity-100'
-                      : 'max-h-0 opacity-0'
-                      }`}
-                  >
-                    {section.items.map((item) => (
-                      <button
-                        key={item.id}
-                        onClick={() => handleItemClick(item.id, section.id)}
-                        data-tour={item.id}
-                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 transform border ${activeItem === item.id
-                          ? 'text-white border shadow-sm'
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-transparent'
-                          }`}
-                        style={activeItem === item.id ? {backgroundColor: '#714efe1a', color: '#714efe', borderColor: '#714efe33'} : {}}
-                      >
-                        <item.icon className={`w-4 h-4 transition-colors duration-200 ${activeItem === item.id ? '' : 'text-gray-400'}`} style={activeItem === item.id ? {color: '#714efe'} : {}} />
-                        <span>{item.label}</span>
-                      </button>
-                    ))}
+                    {/* Section Items - Collapsible with smooth animation */}
+                    <div
+                      className={`ml-6 mt-1 space-y-1 overflow-hidden transition-all duration-300 ease-in-out ${expandedSections.includes(section.id)
+                        ? 'max-h-96 opacity-100'
+                        : 'max-h-0 opacity-0'
+                        }`}
+                    >
+                      {section.items.map((item) => (
+                        <button
+                          key={item.id}
+                          onClick={() => handleItemClick(item.id, section.id)}
+                          data-tour={item.id}
+                          className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 transform border ${activeItem === item.id
+                            ? 'text-white border shadow-sm'
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-transparent'
+                            }`}
+                          style={activeItem === item.id ? {backgroundColor: '#714efe1a', color: '#714efe', borderColor: '#714efe33'} : {}}
+                        >
+                          <item.icon className={`w-4 h-4 transition-colors duration-200 ${activeItem === item.id ? '' : 'text-gray-400'}`} style={activeItem === item.id ? {color: '#714efe'} : {}} />
+                          <span>{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))
+                ))}
+
+                {/* Community - Standalone clickable item */}
+                <button
+                  onClick={() => {
+                    setActiveItem('community')
+                    router.push('/community')
+                  }}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors ${
+                    activeItem === 'community'
+                      ? 'text-gray-900 bg-gray-50'
+                      : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <Users className="w-5 h-5 text-gray-500" />
+                  <span>Community</span>
+                </button>
+              </>
             )}
           </div>
         </nav>

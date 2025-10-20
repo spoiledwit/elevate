@@ -148,6 +148,7 @@ export {
 // Order actions
 export {
   getOrdersAction,
+  getOrdersPaginatedAction,
   getOrderByIdAction,
   getOrderStatsAction,
   updateOrderStatusAction

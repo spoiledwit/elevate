@@ -9,12 +9,17 @@ export const metadata: Metadata = {
 
 export default async function LeadsPage() {
   // Fetch orders server-side
-  const ordersResult = await getOrdersAction()
+  const ordersResult = await getOrdersAction({ page: 1 })
   const orders = 'error' in ordersResult ? [] : (ordersResult.results || [])
+  const totalCount = 'error' in ordersResult ? 0 : (ordersResult.count || 0)
 
   return (
     <div className="flex-1 bg-gray-50">
-      <LeadsManager initialOrders={orders} />
+      <LeadsManager
+        initialOrders={orders}
+        initialPage={1}
+        initialCount={totalCount}
+      />
     </div>
   )
 }

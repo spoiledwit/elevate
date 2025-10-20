@@ -58,6 +58,13 @@ export async function getOrdersAction(filters?: OrderFilters) {
 }
 
 /**
+ * Get orders with pagination (client-side version)
+ */
+export async function getOrdersPaginatedAction(page: number = 1) {
+  return getOrdersAction({ page })
+}
+
+/**
  * Get a single order by ID
  */
 export async function getOrderByIdAction(orderId: string) {

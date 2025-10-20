@@ -35,7 +35,7 @@ export class AuthService {
      * @throws ApiError
      */
     public authCheckUsernameCreate(
-        requestBody: UserCurrent,
+        requestBody?: UserCurrent,
     ): CancelablePromise<any> {
         return this.httpRequest.request({
             method: 'POST',
@@ -102,7 +102,7 @@ export class AuthService {
      * @throws ApiError
      */
     public authMeUpdate(
-        requestBody: UserCurrent,
+        requestBody?: UserCurrent,
     ): CancelablePromise<UserCurrent> {
         return this.httpRequest.request({
             method: 'PUT',

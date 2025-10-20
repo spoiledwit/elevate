@@ -18,7 +18,8 @@ from .models import (
     ProfileView, LinkClick, BannerClick, Order,
     SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, PaymentEvent, Plan, PlanFeature, StripeCustomer,
     Folder, Media, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply, AIConfiguration, MiloPrompt,
-    StripeConnectAccount, PaymentTransaction, ConnectWebhookEvent, FreebieFollowupEmail, ScheduledFollowupEmail, OptinFollowupEmail, ScheduledOptinEmail
+    StripeConnectAccount, PaymentTransaction, ConnectWebhookEvent, FreebieFollowupEmail, ScheduledFollowupEmail, OptinFollowupEmail, ScheduledOptinEmail,
+    EmailAccount, EmailMessage, EmailAttachment, EmailDraft
 )
 from tinymce.widgets import TinyMCE
 from django import forms
@@ -1825,3 +1826,173 @@ class ConnectWebhookEventAdmin(ModelAdmin, ImportExportModelAdmin):
     def has_change_permission(self, request, obj=None):
         """Make webhook events read-only except for processed status"""
         return request.user.is_superuser
+
+
+# ============================================================================
+# Email Integration Admin
+# ============================================================================
+
+@admin.register(EmailAccount)
+class EmailAccountAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    list_display = ['user', 'email_address', 'is_active', 'last_synced', 'created_at']
+    list_filter = ['is_active', 'created_at', 'last_synced']
+    search_fields = ['user__username', 'user__email', 'email_address']
+    readonly_fields = ['created_at', 'modified_at', 'last_synced', 'token_expiry']
+    fieldsets = (
+        ('Account Information', {
+            'fields': ('user', 'email_address', 'is_active')
+        }),
+        ('OAuth Tokens', {
+            'fields': ('token_expiry',),
+            'description': 'OAuth tokens are encrypted and not displayed for security'
+        }),
+        ('Sync Information', {
+            'fields': ('last_synced',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'modified_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user')
+
+
+@admin.register(EmailMessage)
+class EmailMessageAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    list_display = ['subject_short', 'from_email', 'account_email', 'received_at', 'is_read', 'is_starred', 'has_attachments']
+    list_filter = ['is_read', 'is_starred', 'has_attachments', 'received_at', 'account']
+    search_fields = ['subject', 'from_email', 'from_name', 'body_text', 'account__email_address']
+    readonly_fields = ['message_id', 'thread_id', 'received_at', 'created_at']
+    date_hierarchy = 'received_at'
+    fieldsets = (
+        ('Message Information', {
+            'fields': ('account', 'message_id', 'thread_id')
+        }),
+        ('From/To', {
+            'fields': ('from_email', 'from_name', 'to_emails', 'cc_emails')
+        }),
+        ('Content', {
+            'fields': ('subject', 'snippet', 'body_text', 'body_html')
+        }),
+        ('Metadata', {
+            'fields': ('received_at', 'is_read', 'is_starred', 'has_attachments', 'labels')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at',),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def subject_short(self, obj):
+        """Display shortened subject"""
+        return obj.subject[:50] + '...' if len(obj.subject) > 50 else obj.subject
+    subject_short.short_description = 'Subject'
+
+    def account_email(self, obj):
+        """Display account email address"""
+        return obj.account.email_address
+    account_email.short_description = 'Account'
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('account')
+
+
+@admin.register(EmailAttachment)
+class EmailAttachmentAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    list_display = ['filename', 'message_subject', 'content_type', 'size_display', 'created_at']
+    list_filter = ['content_type', 'created_at']
+    search_fields = ['filename', 'message__subject']
+    readonly_fields = ['attachment_id', 'size', 'created_at']
+    fieldsets = (
+        ('Attachment Information', {
+            'fields': ('message', 'attachment_id', 'filename', 'content_type')
+        }),
+        ('File', {
+            'fields': ('file', 'size')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at',),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def message_subject(self, obj):
+        """Display message subject"""
+        subject = obj.message.subject
+        return subject[:30] + '...' if len(subject) > 30 else subject
+    message_subject.short_description = 'Message'
+
+    def size_display(self, obj):
+        """Display file size in human-readable format"""
+        size = obj.size
+        for unit in ['B', 'KB', 'MB', 'GB']:
+            if size < 1024.0:
+                return f"{size:.1f} {unit}"
+            size /= 1024.0
+        return f"{size:.1f} TB"
+    size_display.short_description = 'Size'
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('message', 'message__account')
+
+
+@admin.register(EmailDraft)
+class EmailDraftAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    list_display = ['subject_short', 'account_email', 'to_emails_display', 'created_at', 'modified_at']
+    list_filter = ['created_at', 'modified_at', 'account']
+    search_fields = ['subject', 'body_html', 'account__email_address']
+    readonly_fields = ['created_at', 'modified_at']
+    date_hierarchy = 'modified_at'
+    fieldsets = (
+        ('Draft Information', {
+            'fields': ('account',)
+        }),
+        ('Recipients', {
+            'fields': ('to_emails', 'cc_emails', 'bcc_emails')
+        }),
+        ('Content', {
+            'fields': ('subject', 'body_html')
+        }),
+        ('Attachments', {
+            'fields': ('attachments',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'modified_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def subject_short(self, obj):
+        """Display shortened subject"""
+        if not obj.subject:
+            return '(No subject)'
+        return obj.subject[:50] + '...' if len(obj.subject) > 50 else obj.subject
+    subject_short.short_description = 'Subject'
+
+    def account_email(self, obj):
+        """Display account email address"""
+        return obj.account.email_address
+    account_email.short_description = 'Account'
+
+    def to_emails_display(self, obj):
+        """Display to emails"""
+        if not obj.to_emails:
+            return '-'
+        emails = obj.to_emails if isinstance(obj.to_emails, list) else []
+        if len(emails) > 2:
+            return f"{', '.join(emails[:2])}... (+{len(emails) - 2})"
+        return ', '.join(emails)
+    to_emails_display.short_description = 'To'
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('account')

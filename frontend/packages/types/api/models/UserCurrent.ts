@@ -6,7 +6,7 @@ export type UserCurrent = {
     /**
      * Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.
      */
-    username: string;
+    username?: string;
     first_name?: string;
     last_name?: string;
     readonly permissions: string;

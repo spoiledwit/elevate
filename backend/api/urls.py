@@ -127,6 +127,20 @@ from .apis.upload import (
 )
 from .apis.orders import OrderViewSet
 from .apis.milo import MiloPromptViewSet
+from .apis.email import (
+    GmailAuthUrlView,
+    GmailCallbackView,
+    EmailAccountListView,
+    EmailAccountDisconnectView,
+    EmailMessageListView,
+    EmailMessageDetailView,
+    EmailSendView,
+    EmailSyncView,
+    EmailMarkReadView,
+    EmailDeleteView,
+    EmailDraftListView,
+    EmailDraftDetailView,
+)
 
 router = routers.DefaultRouter()
 router.register("users", UserViewSet, basename="api-users")
@@ -297,6 +311,20 @@ urlpatterns = [
     # Realtime AI URLs
     path("api/realtime/session/", create_realtime_session, name="realtime_create_session"),
     path("api/realtime/status/", realtime_status, name="realtime_status"),
+
+    # Email Integration URLs
+    path("api/email/auth/google/", GmailAuthUrlView.as_view(), name="gmail_auth_url"),
+    path("api/email/callback/google/", GmailCallbackView.as_view(), name="gmail_callback"),
+    path("api/email/accounts/", EmailAccountListView.as_view(), name="email_accounts_list"),
+    path("api/email/accounts/<int:account_id>/disconnect/", EmailAccountDisconnectView.as_view(), name="email_account_disconnect"),
+    path("api/email/messages/", EmailMessageListView.as_view(), name="email_messages_list"),
+    path("api/email/messages/<int:message_id>/", EmailMessageDetailView.as_view(), name="email_message_detail"),
+    path("api/email/messages/<int:message_id>/read/", EmailMarkReadView.as_view(), name="email_mark_read"),
+    path("api/email/messages/<int:message_id>/delete/", EmailDeleteView.as_view(), name="email_delete"),
+    path("api/email/send/", EmailSendView.as_view(), name="email_send"),
+    path("api/email/sync/", EmailSyncView.as_view(), name="email_sync"),
+    path("api/email/drafts/", EmailDraftListView.as_view(), name="email_drafts_list"),
+    path("api/email/drafts/<int:draft_id>/", EmailDraftDetailView.as_view(), name="email_draft_detail"),
 
     path("admin/", admin.site.urls),
     

@@ -296,6 +296,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'api.tasks.send_scheduled_optin_emails',
         'schedule': 300.0,  # Every 5 minutes
     },
+    'sync-gmail-accounts': {
+        'task': 'api.tasks.sync_all_email_accounts',
+        'schedule': 300.0,  # Every 5 minutes
+    },
 }
 
 ######################################################################
@@ -311,6 +315,14 @@ DEFAULT_FROM_EMAIL = environ.get('DEFAULT_FROM_EMAIL', '')
 
 # Resend API Configuration
 RESEND_API_KEY = environ.get('RESEND_API_KEY', '')
+
+# Gmail Integration Configuration (for user email management)
+GOOGLE_EMAIL_CLIENT_ID = environ.get('GOOGLE_EMAIL_CLIENT_ID', '')
+GOOGLE_EMAIL_CLIENT_SECRET = environ.get('GOOGLE_EMAIL_CLIENT_SECRET', '')
+GOOGLE_EMAIL_REDIRECT_URI = environ.get('GOOGLE_EMAIL_REDIRECT_URI', f"{environ.get('BACKEND_URL', 'http://localhost:8000')}/api/email/callback/google/")
+
+# Email Token Encryption Key (must be 32 url-safe base64-encoded bytes)
+EMAIL_ENCRYPTION_KEY = environ.get('EMAIL_ENCRYPTION_KEY', '')
 
 ######################################################################
 # Logging Configuration
@@ -705,6 +717,32 @@ UNFOLD = {
                         "title": _("Media Files"),
                         "icon": "photo",
                         "link": reverse_lazy("admin:api_media_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("Email Integration"),
+                "separator": True,
+                "items": [
+                    {
+                        "title": _("Email Accounts"),
+                        "icon": "alternate_email",
+                        "link": reverse_lazy("admin:api_emailaccount_changelist"),
+                    },
+                    {
+                        "title": _("Email Messages"),
+                        "icon": "mail",
+                        "link": reverse_lazy("admin:api_emailmessage_changelist"),
+                    },
+                    {
+                        "title": _("Email Attachments"),
+                        "icon": "attach_file",
+                        "link": reverse_lazy("admin:api_emailattachment_changelist"),
+                    },
+                    {
+                        "title": _("Email Drafts"),
+                        "icon": "drafts",
+                        "link": reverse_lazy("admin:api_emaildraft_changelist"),
                     },
                 ],
             },

@@ -52,7 +52,7 @@ export class UsersService {
      * @throws ApiError
      */
     public usersCheckUsernameCreate(
-        requestBody: UserCurrent,
+        requestBody?: UserCurrent,
     ): CancelablePromise<any> {
         return this.httpRequest.request({
             method: 'POST',
@@ -90,7 +90,7 @@ export class UsersService {
      * @throws ApiError
      */
     public usersMeUpdate(
-        requestBody: UserCurrent,
+        requestBody?: UserCurrent,
     ): CancelablePromise<UserCurrent> {
         return this.httpRequest.request({
             method: 'PUT',
@@ -134,7 +134,7 @@ export class UsersService {
         });
     }
     /**
-     * Send password reset email if the username exists. Always returns 200.
+     * Send password reset email if the username or email exists. Always returns 200.
      * @param requestBody
      * @returns any No response body
      * @throws ApiError

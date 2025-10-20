@@ -16,6 +16,10 @@ export type PatchedUserProfile = {
      * Affiliate/purchase link for funnel injection
      */
     affiliate_link?: string;
+    /**
+     * Contact email displayed on storefront
+     */
+    contact_email?: string;
     is_active?: boolean;
     readonly social_icons?: Array<SocialIcon>;
     readonly custom_links?: Array<CustomLink>;

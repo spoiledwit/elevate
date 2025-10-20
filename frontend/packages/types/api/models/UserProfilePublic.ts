@@ -11,6 +11,10 @@ export type UserProfilePublic = {
     bio?: string;
     readonly profile_image: string;
     embedded_video?: string;
+    /**
+     * Affiliate/purchase link for funnel injection
+     */
+    affiliate_link?: string;
     readonly social_icons: Array<SocialIcon>;
     readonly custom_links: Array<CustomLink>;
     readonly cta_banner: CTABanner;

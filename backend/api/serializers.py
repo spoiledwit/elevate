@@ -7,7 +7,7 @@ from rest_framework import exceptions, serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.db.models import Q
 
-from .models import UserProfile, UserSocialLinks, UserPermissions, SocialIcon, CustomLink, CollectInfoField, CollectInfoResponse, CTABanner, SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, Plan, PlanFeature, Subscription, Folder, Media, ProfileView, LinkClick, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply, Order, StripeConnectAccount, PaymentTransaction, ConnectWebhookEvent, MiloPrompt
+from .models import UserProfile, UserSocialLinks, UserPermissions, SocialIcon, CustomLink, CollectInfoField, CollectInfoResponse, CTABanner, SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, Plan, PlanFeature, Subscription, Folder, Media, ProfileView, LinkClick, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply, Order, StripeConnectAccount, PaymentTransaction, ConnectWebhookEvent, MiloPrompt, EmailAccount, EmailMessage, EmailAttachment, EmailDraft
 
 # Backwards compatibility aliases
 CommentAutomationRule = AutomationRule
@@ -2268,3 +2268,170 @@ class MiloPromptSerializer(serializers.ModelSerializer):
         model = MiloPrompt
         fields = ['id', 'system_prompt', 'created_at', 'modified_at']
         read_only_fields = ['id', 'created_at', 'modified_at']
+
+
+# ============================================================================
+# Email Integration Serializers
+# ============================================================================
+
+class EmailAccountSerializer(serializers.ModelSerializer):
+    """Serializer for email accounts"""
+    user_email = serializers.EmailField(source='user.email', read_only=True)
+    username = serializers.CharField(source='user.username', read_only=True)
+
+    class Meta:
+        model = EmailAccount
+        fields = [
+            'id', 'user', 'username', 'user_email', 'email_address',
+            'is_active', 'last_synced', 'token_expiry', 'created_at', 'modified_at'
+        ]
+        read_only_fields = ['id', 'user', 'token_expiry', 'last_synced', 'created_at', 'modified_at']
+
+
+class EmailAttachmentSerializer(serializers.ModelSerializer):
+    """Serializer for email attachments"""
+    file_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EmailAttachment
+        fields = ['id', 'attachment_id', 'filename', 'content_type', 'size', 'file_url', 'created_at']
+        read_only_fields = ['id', 'attachment_id', 'created_at']
+
+    def get_file_url(self, obj):
+        if obj.file:
+            return obj.file.url
+        return None
+
+
+class EmailMessageSerializer(serializers.ModelSerializer):
+    """Serializer for email messages"""
+    account_email = serializers.EmailField(source='account.email_address', read_only=True)
+    attachments = EmailAttachmentSerializer(many=True, read_only=True)
+    has_attachments_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EmailMessage
+        fields = [
+            'id', 'account', 'account_email', 'message_id', 'thread_id',
+            'from_email', 'from_name', 'to_emails', 'cc_emails',
+            'subject', 'body_text', 'body_html', 'snippet',
+            'received_at', 'is_read', 'is_starred', 'has_attachments',
+            'has_attachments_count', 'labels', 'attachments', 'created_at', 'labels'
+        ]
+        read_only_fields = ['id', 'message_id', 'thread_id', 'received_at', 'created_at']
+
+    def get_has_attachments_count(self, obj):
+        return obj.attachments.count() if obj.has_attachments else 0
+
+
+class EmailMessageListSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for listing emails"""
+    account_email = serializers.EmailField(source='account.email_address', read_only=True)
+
+    class Meta:
+        model = EmailMessage
+        fields = [
+            'id', 'account_email', 'message_id', 'from_email', 'from_name',
+            'subject', 'snippet', 'received_at', 'is_read', 'is_starred',
+            'has_attachments', 'labels'
+        ]
+        read_only_fields = ['id', 'message_id', 'received_at']
+
+
+class EmailDraftSerializer(serializers.ModelSerializer):
+    """Serializer for email drafts"""
+    account_email = serializers.EmailField(source='account.email_address', read_only=True)
+
+    class Meta:
+        model = EmailDraft
+        fields = [
+            'id', 'account', 'account_email', 'to_emails', 'cc_emails',
+            'bcc_emails', 'subject', 'body_html', 'attachments',
+            'created_at', 'modified_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'modified_at']
+
+
+# Request/Response Serializers for Gmail API endpoints
+
+class GmailAuthUrlSerializer(serializers.Serializer):
+    """Serializer for Gmail OAuth URL response"""
+    auth_url = serializers.URLField()
+
+
+class GmailConnectSerializer(serializers.Serializer):
+    """Serializer for Gmail account connection"""
+    code = serializers.CharField(required=True, help_text="OAuth authorization code from Google")
+    state = serializers.CharField(required=False, allow_blank=True)
+
+
+class GmailAccountResponseSerializer(serializers.Serializer):
+    """Serializer for Gmail connection response"""
+    id = serializers.IntegerField()
+    email_address = serializers.EmailField()
+    is_active = serializers.BooleanField()
+    created_at = serializers.DateTimeField()
+    message = serializers.CharField()
+
+
+class EmailSendSerializer(serializers.Serializer):
+    """Serializer for sending emails"""
+    account_id = serializers.IntegerField(required=True)
+    to_emails = serializers.ListField(
+        child=serializers.EmailField(),
+        required=True,
+        help_text="List of recipient email addresses"
+    )
+    cc_emails = serializers.ListField(
+        child=serializers.EmailField(),
+        required=False,
+        allow_empty=True,
+        help_text="List of CC email addresses"
+    )
+    bcc_emails = serializers.ListField(
+        child=serializers.EmailField(),
+        required=False,
+        allow_empty=True,
+        help_text="List of BCC email addresses"
+    )
+    subject = serializers.CharField(required=True, max_length=500)
+    body_html = serializers.CharField(required=True, help_text="HTML body content")
+    attachments = serializers.ListField(
+        child=serializers.DictField(),
+        required=False,
+        allow_empty=True,
+        help_text="List of attachment dicts with 'filename' and 'content'"
+    )
+
+    def validate_to_emails(self, value):
+        if not value or len(value) == 0:
+            raise serializers.ValidationError("At least one recipient is required")
+        return value
+
+
+class EmailSendResponseSerializer(serializers.Serializer):
+    """Serializer for email send response"""
+    message_id = serializers.CharField()
+    thread_id = serializers.CharField()
+    success = serializers.BooleanField()
+    message = serializers.CharField()
+
+
+class EmailSyncSerializer(serializers.Serializer):
+    """Serializer for email sync request"""
+    account_id = serializers.IntegerField(required=True)
+    max_results = serializers.IntegerField(required=False, default=50, min_value=1, max_value=100)
+
+
+class EmailSyncResponseSerializer(serializers.Serializer):
+    """Serializer for email sync response"""
+    synced_count = serializers.IntegerField()
+    account_email = serializers.EmailField()
+    last_synced = serializers.DateTimeField()
+    message = serializers.CharField()
+
+
+class EmailMarkReadSerializer(serializers.Serializer):
+    """Serializer for marking email as read"""
+    message_id = serializers.CharField(required=True)
+    is_read = serializers.BooleanField(required=True)

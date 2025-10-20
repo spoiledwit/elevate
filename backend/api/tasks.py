@@ -792,3 +792,63 @@ def send_scheduled_optin_emails():
     logger.info(f"Opt-in follow-up emails processed: {sent_count} sent, {failed_count} failed")
     return {'sent': sent_count, 'failed': failed_count}
 
+
+# ============================================================================
+# Email Integration Tasks
+# ============================================================================
+
+@shared_task
+def sync_all_email_accounts():
+    """
+    Sync emails from all active Gmail accounts.
+    Runs every 5 minutes via Celery Beat.
+    """
+    from .models import EmailAccount
+
+    logger.info("Starting email sync for all active accounts")
+
+    accounts = EmailAccount.objects.filter(is_active=True)
+    synced_count = 0
+    failed_count = 0
+
+    for account in accounts:
+        try:
+            # Dispatch individual sync task
+            sync_single_email_account.delay(account.id)
+            synced_count += 1
+        except Exception as e:
+            failed_count += 1
+            logger.error(f"Failed to queue sync for account {account.id}: {e}")
+
+    logger.info(f"Email sync queued: {synced_count} accounts, {failed_count} failed")
+    return {'queued': synced_count, 'failed': failed_count}
+
+
+@shared_task
+def sync_single_email_account(account_id):
+    """
+    Sync emails from a single Gmail account.
+
+    Args:
+        account_id: ID of the EmailAccount to sync
+    """
+    from .models import EmailAccount
+    from .services.integrations import GmailService
+
+    try:
+        account = EmailAccount.objects.get(id=account_id, is_active=True)
+        logger.info(f"Syncing email account: {account.email_address}")
+
+        service = GmailService(email_account=account)
+        messages = service.fetch_messages(max_results=50)
+
+        logger.info(f"Successfully synced {len(messages)} emails for {account.email_address}")
+        return {'account_id': account_id, 'synced_count': len(messages)}
+
+    except EmailAccount.DoesNotExist:
+        logger.error(f"Email account {account_id} not found or inactive")
+        return {'error': 'Account not found'}
+    except Exception as e:
+        logger.error(f"Failed to sync account {account_id}: {e}")
+        return {'error': str(e)}
+

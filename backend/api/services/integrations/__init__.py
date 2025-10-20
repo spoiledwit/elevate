@@ -6,5 +6,6 @@ for content publishing and account management.
 """
 
 from .meta_service import MetaService
+from .gmail_service import GmailService
 
-__all__ = ['MetaService']
+__all__ = ['MetaService', 'GmailService']

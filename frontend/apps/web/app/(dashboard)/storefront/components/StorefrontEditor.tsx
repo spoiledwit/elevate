@@ -76,8 +76,8 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
     }, {}) || {}
   )
 
-  // Keep track of existing social icons for updates
-  const [existingSocialIcons, setExistingSocialIcons] = useState<Record<string, any>>(
+  // Keep track of ORIGINAL social icons from database (never modified)
+  const originalSocialIcons = useRef<Record<string, any>>(
     profile?.social_icons?.reduce((acc: any, icon: any) => {
       acc[icon.platform] = icon
       return acc
@@ -85,7 +85,7 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
   )
 
   console.log('DEBUG - Existing social icons on load:', profile?.social_icons)
-  console.log('DEBUG - existingSocialIcons state:', existingSocialIcons)
+  console.log('DEBUG - originalSocialIcons:', originalSocialIcons.current)
 
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -146,7 +146,7 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
       for (const [platform, url] of Object.entries(socialLinks)) {
         if (url && url.trim() !== '') {
           // Check if this social icon already exists
-          const existingIcon = existingSocialIcons[platform]
+          const existingIcon = originalSocialIcons.current[platform]
 
           if (existingIcon && existingIcon.id) {
             // Update existing social icon
@@ -167,10 +167,10 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
               })
             )
           }
-        } else if (existingSocialIcons[platform] && existingSocialIcons[platform].id) {
+        } else if (originalSocialIcons.current[platform] && originalSocialIcons.current[platform].id) {
           // If URL is empty but we had an existing icon, delete it
           socialLinkPromises.push(
-            deleteSocialIconAction(existingSocialIcons[platform].id.toString())
+            deleteSocialIconAction(originalSocialIcons.current[platform].id.toString())
           )
         }
       }
@@ -183,6 +183,20 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
       if (failedSocialOps.length > 0) {
         console.error('Some social links failed to save:', failedSocialOps)
       }
+
+      // Update the original social icons reference with the current state
+      originalSocialIcons.current = Object.entries(socialLinks)
+        .filter(([_, url]) => url && url.trim() !== '')
+        .reduce((acc, [platform, url]) => {
+          const existingId = originalSocialIcons.current[platform]?.id
+          acc[platform] = {
+            id: existingId,
+            platform,
+            url,
+            is_active: true
+          }
+          return acc
+        }, {} as Record<string, any>)
 
       setSaveSuccess(true)
       onUpdate()
@@ -212,33 +226,20 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
   const handleSocialLinkChange = (platform: string, url: string) => {
     setSocialLinks(prev => ({ ...prev, [platform]: url }))
 
-    // Update existing social icons state
-    if (url) {
-      setExistingSocialIcons(prev => ({
-        ...prev,
-        [platform]: { platform, url, is_active: true }
-      }))
-    } else {
-      // Remove icon if URL is empty
-      setExistingSocialIcons(prev => {
-        const updated = { ...prev }
-        delete updated[platform]
-        return updated
-      })
-    }
-
     // Update preview social icons in real-time
     if (onPreviewUpdate) {
       // Get all current social icons including the one being updated
-      const allIcons = { ...existingSocialIcons }
+      const allIcons = { ...socialLinks, [platform]: url }
 
-      if (url) {
-        allIcons[platform] = { platform, url, is_active: true }
-      } else {
-        delete allIcons[platform]
-      }
+      // Convert to array and filter out empty URLs
+      const updatedSocialIcons = Object.entries(allIcons)
+        .filter(([_, iconUrl]) => iconUrl && iconUrl.trim() !== '')
+        .map(([plat, iconUrl]) => ({
+          platform: plat,
+          url: iconUrl,
+          is_active: true
+        }))
 
-      const updatedSocialIcons = Object.values(allIcons).filter((icon: any) => icon.is_active && icon.url)
       onPreviewUpdate.setSocialIcons(updatedSocialIcons)
     }
   }

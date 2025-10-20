@@ -27,7 +27,8 @@ import {
   ChevronRight,
   ChevronDown,
   Users,
-  ExternalLink
+  ExternalLink,
+  Mail
 } from 'lucide-react'
 import logo from '@/assets/logo.png'
 
@@ -207,6 +208,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         return { itemId: 'automation-settings', sectionId: 'automation' }
       case '/reply-analytics':
         return { itemId: 'reply-analytics', sectionId: 'automation' }
+      case '/inbox':
+        return { itemId: 'inbox', sectionId: 'communication' }
       case '/subscription':
         return { itemId: 'subscription', sectionId: 'business' }
       case '/settings':
@@ -281,6 +284,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         break
       case 'social-accounts':
         router.push('/social-accounts')
+        break
+      case 'inbox':
+        router.push('/inbox')
         break
       case 'settings':
         router.push('/settings')
@@ -371,9 +377,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                             ? 'text-white border shadow-sm'
                             : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-transparent'
                             }`}
-                          style={activeItem === item.id ? {backgroundColor: '#714efe1a', color: '#714efe', borderColor: '#714efe33'} : {}}
+                          style={activeItem === item.id ? { backgroundColor: '#714efe1a', color: '#714efe', borderColor: '#714efe33' } : {}}
                         >
-                          <item.icon className={`w-4 h-4 transition-colors duration-200 ${activeItem === item.id ? '' : 'text-gray-400'}`} style={activeItem === item.id ? {color: '#714efe'} : {}} />
+                          <item.icon className={`w-4 h-4 transition-colors duration-200 ${activeItem === item.id ? '' : 'text-gray-400'}`} style={activeItem === item.id ? { color: '#714efe' } : {}} />
                           <span>{item.label}</span>
                         </button>
                       ))}
@@ -387,11 +393,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     setActiveItem('community')
                     router.push('/community')
                   }}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors ${
-                    activeItem === 'community'
-                      ? 'text-gray-900 bg-gray-50'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  }`}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors ${activeItem === 'community'
+                    ? 'text-gray-900 bg-gray-50'
+                    : 'text-gray-700 hover:bg-gray-50'
+                    }`}
                 >
                   <Users className="w-5 h-5 text-gray-500" />
                   <span>Community</span>
@@ -408,7 +413,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             target="_blank"
             rel="noopener noreferrer"
             className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white rounded-lg transition-all duration-200 hover:shadow-lg"
-            style={{background: 'linear-gradient(135deg, #714efe 0%, #5f3fd6 100%)'}}
+            style={{ background: 'linear-gradient(135deg, #714efe 0%, #5f3fd6 100%)' }}
           >
             <span>Visit HTP Elevate</span>
             <ExternalLink className="w-4 h-4" />
@@ -422,7 +427,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           }}
           className="flex-shrink-0 p-4 border-t border-gray-200">
           <div data-tour="user-profile" className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
-            <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{background: 'linear-gradient(135deg, #714efe 0%, #5f3fd6 100%)'}}>
+            <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #714efe 0%, #5f3fd6 100%)' }}>
               <span className="text-sm font-semibold text-white">
                 {session?.user?.username?.[0]?.toUpperCase() || 'U'}
               </span>
@@ -439,7 +444,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
 
       {/* Main content with left margin for fixed sidebar */}
-      <div className="ml-64 flex-1">
+      <div className="ml-64 flex-1 min-w-0">
         {children}
       </div>
 

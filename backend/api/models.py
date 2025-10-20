@@ -1726,6 +1726,120 @@ class ScheduledOptinEmail(models.Model):
 
 
 # ============================================================================
+# Email Integration Models
+# ============================================================================
+
+class EmailAccount(models.Model):
+    """
+    Stores user's connected Gmail accounts via OAuth.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='email_accounts')
+    email_address = models.EmailField(_("email address"))
+    access_token = models.TextField(_("access token"), help_text="Encrypted OAuth access token")
+    refresh_token = models.TextField(_("refresh token"), help_text="Encrypted OAuth refresh token")
+    token_expiry = models.DateTimeField(_("token expiry"), null=True, blank=True)
+    is_active = models.BooleanField(_("is active"), default=True)
+    last_synced = models.DateTimeField(_("last synced"), null=True, blank=True)
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    modified_at = models.DateTimeField(_("modified at"), auto_now=True)
+
+    class Meta:
+        db_table = "email_accounts"
+        verbose_name = _("Email Account")
+        verbose_name_plural = _("Email Accounts")
+        unique_together = [['user', 'email_address']]
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.email_address}"
+
+
+class EmailMessage(models.Model):
+    """
+    Stores synced email messages from Gmail.
+    """
+    account = models.ForeignKey(EmailAccount, on_delete=models.CASCADE, related_name='messages')
+    message_id = models.CharField(_("message ID"), max_length=255, help_text="Gmail message ID")
+    thread_id = models.CharField(_("thread ID"), max_length=255, blank=True)
+    from_email = models.EmailField(_("from email"))
+    from_name = models.CharField(_("from name"), max_length=255, blank=True)
+    to_emails = models.JSONField(_("to emails"), default=list)
+    cc_emails = models.JSONField(_("cc emails"), default=list, blank=True)
+    subject = models.TextField(_("subject"), blank=True)
+    body_text = models.TextField(_("body text"), blank=True)
+    body_html = models.TextField(_("body html"), blank=True)
+    snippet = models.TextField(_("snippet"), blank=True, help_text="Email preview text")
+    received_at = models.DateTimeField(_("received at"))
+    is_read = models.BooleanField(_("is read"), default=False)
+    is_starred = models.BooleanField(_("is starred"), default=False)
+    has_attachments = models.BooleanField(_("has attachments"), default=False)
+    labels = models.JSONField(_("labels"), default=list, blank=True)
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+
+    class Meta:
+        db_table = "email_messages"
+        verbose_name = _("Email Message")
+        verbose_name_plural = _("Email Messages")
+        unique_together = [['account', 'message_id']]
+        ordering = ['-received_at']
+        indexes = [
+            models.Index(fields=['account', '-received_at']),
+            models.Index(fields=['message_id']),
+            models.Index(fields=['thread_id']),
+            models.Index(fields=['is_read']),
+        ]
+
+    def __str__(self):
+        return f"{self.subject[:50]} - {self.from_email}"
+
+
+class EmailAttachment(models.Model):
+    """
+    Stores email attachments.
+    """
+    message = models.ForeignKey(EmailMessage, on_delete=models.CASCADE, related_name='attachments')
+    attachment_id = models.CharField(_("attachment ID"), max_length=255, help_text="Gmail attachment ID")
+    filename = models.CharField(_("filename"), max_length=255)
+    content_type = models.CharField(_("content type"), max_length=100)
+    size = models.BigIntegerField(_("size"), help_text="File size in bytes")
+    file = CloudinaryField('email_attachment', blank=True, null=True, help_text="Stored attachment file")
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+
+    class Meta:
+        db_table = "email_attachments"
+        verbose_name = _("Email Attachment")
+        verbose_name_plural = _("Email Attachments")
+        ordering = ['filename']
+
+    def __str__(self):
+        return f"{self.filename} ({self.size} bytes)"
+
+
+class EmailDraft(models.Model):
+    """
+    Stores draft emails.
+    """
+    account = models.ForeignKey(EmailAccount, on_delete=models.CASCADE, related_name='drafts')
+    to_emails = models.JSONField(_("to emails"), default=list)
+    cc_emails = models.JSONField(_("cc emails"), default=list, blank=True)
+    bcc_emails = models.JSONField(_("bcc emails"), default=list, blank=True)
+    subject = models.TextField(_("subject"), blank=True)
+    body_html = models.TextField(_("body html"), blank=True)
+    attachments = models.JSONField(_("attachments"), default=list, blank=True, help_text="List of attachment file URLs")
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    modified_at = models.DateTimeField(_("modified at"), auto_now=True)
+
+    class Meta:
+        db_table = "email_drafts"
+        verbose_name = _("Email Draft")
+        verbose_name_plural = _("Email Drafts")
+        ordering = ['-modified_at']
+
+    def __str__(self):
+        return f"Draft: {self.subject[:50]}"
+
+
+# ============================================================================
 
 @receiver(post_save, sender=CustomLinkTemplate)
 def auto_sync_template_on_save(sender, instance, created, **kwargs):

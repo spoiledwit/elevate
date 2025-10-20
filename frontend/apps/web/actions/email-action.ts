@@ -94,9 +94,6 @@ export async function disconnectEmailAccountAction(
  * Get list of email messages
  */
 export async function getEmailMessagesAction(params?: {
-  accountId?: number
-  isRead?: boolean
-  isStarred?: boolean
   page?: number
   pageSize?: number
 }): Promise<PaginatedEmailMessageListList | { error: string }> {
@@ -109,9 +106,6 @@ export async function getEmailMessagesAction(params?: {
   try {
     const apiClient = await getApiClient(session)
     const response = await apiClient.email.emailMessagesList(
-      params?.accountId,
-      params?.isRead,
-      params?.isStarred,
       params?.page,
       params?.pageSize
     )

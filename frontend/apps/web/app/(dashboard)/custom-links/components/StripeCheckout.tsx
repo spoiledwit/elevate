@@ -79,6 +79,7 @@ export function StripeCheckout({
 }: StripeCheckoutProps) {
   const [stripePromise, setStripePromise] = useState<Promise<any> | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [hasError, setHasError] = useState(false)
 
   useEffect(() => {
     if (publishableKey && isOpen) {
@@ -89,8 +90,14 @@ export function StripeCheckout({
   useEffect(() => {
     if (!isOpen) {
       setIsLoading(true)
+      setHasError(false)
       return
     }
+
+    // Reset loading state after a timeout to prevent infinite loading
+    const loadingTimeout = setTimeout(() => {
+      setIsLoading(false)
+    }, 3000) // Give iframe 3 seconds to load
 
     // Listen for messages from Stripe iframe (for iframe fallback mode)
     const handleMessage = (event: MessageEvent) => {
@@ -104,7 +111,10 @@ export function StripeCheckout({
     }
 
     window.addEventListener('message', handleMessage)
-    return () => window.removeEventListener('message', handleMessage)
+    return () => {
+      window.removeEventListener('message', handleMessage)
+      clearTimeout(loadingTimeout)
+    }
   }, [isOpen, onComplete])
 
   if (!isOpen) return null
@@ -181,9 +191,17 @@ export function StripeCheckout({
           <iframe
             src={checkoutUrl}
             className="w-full h-[calc(90vh-73px)] border-0"
-            onLoad={() => setIsLoading(false)}
+            onLoad={() => {
+              setIsLoading(false)
+              setHasError(false)
+            }}
+            onError={() => {
+              setIsLoading(false)
+              setHasError(true)
+            }}
             title="Stripe Checkout"
             allow="payment"
+            sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
           />
         </div>
       </div>

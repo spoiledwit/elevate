@@ -83,31 +83,18 @@ export function StripeCheckout({
   const checkoutRef = useRef<HTMLDivElement>(null)
   const embeddedCheckoutRef = useRef<any>(null)
 
-  // Debug: Log props when component renders
-  console.log('StripeCheckout rendered:', {
-    isOpen,
-    hasCheckoutUrl: !!checkoutUrl,
-    checkoutUrl,
-    hasClientSecret: !!clientSecret,
-    hasPublishableKey: !!publishableKey
-  })
-
   useEffect(() => {
     if (publishableKey && isOpen) {
       setStripePromise(loadStripe(publishableKey))
     }
   }, [publishableKey, isOpen])
 
-  // Handle embedded checkout with checkoutUrl using initEmbeddedCheckout
+  // Handle embedded checkout with checkoutUrl using initEmbeddedCheckout (fallback for old endpoint)
   useEffect(() => {
-    console.log('useEffect triggered:', { isOpen, checkoutUrl, clientSecret, publishableKey })
-
     if (!isOpen || !checkoutUrl || clientSecret || !publishableKey) {
-      console.log('useEffect early return - conditions not met')
       return
     }
 
-    console.log('useEffect proceeding with initialization')
     let mounted = true
 
     const initializeEmbeddedCheckout = async () => {
@@ -117,8 +104,6 @@ export function StripeCheckout({
 
         const stripe = await loadStripe(publishableKey)
         if (!stripe || !mounted) return
-
-        console.log('Initializing embedded checkout with URL:', checkoutUrl)
 
         // Try to extract client secret from the checkout URL
         // Checkout URLs from Stripe typically contain the session ID (client secret)
@@ -133,7 +118,6 @@ export function StripeCheckout({
         }
 
         const clientSecretFromUrl = sessionMatch[0]
-        console.log('Extracted client secret:', clientSecretFromUrl)
 
         // Mount embedded checkout using initEmbeddedCheckout
         const checkout = await stripe.initEmbeddedCheckout({
@@ -144,7 +128,6 @@ export function StripeCheckout({
           embeddedCheckoutRef.current = checkout
           checkout.mount(checkoutRef.current)
           setIsLoading(false)
-          console.log('Embedded checkout mounted successfully')
         }
       } catch (err) {
         if (mounted) {
@@ -185,6 +168,7 @@ export function StripeCheckout({
   }
 
   // Render embedded checkout if clientSecret is provided (recommended approach)
+  // This works when backend creates session with ui_mode='embedded' and returns client_secret
   if (clientSecret && stripePromise) {
     return (
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">

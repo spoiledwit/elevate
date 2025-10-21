@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { createOrderAction, type OrderCreateData } from '@/actions/storefront-action'
 import confetti from 'canvas-confetti'
 import { StripeCheckout } from './StripeCheckout'
+import { createOrderEmbeddedAction } from '@/actions/storefront-action'
 
 interface CheckoutFormProps {
   linkId?: string
@@ -162,11 +163,12 @@ export function CheckoutForm({
           form_responses: formResponses
         }
 
-        const result = await createOrderAction(linkId, orderData)
+        // Use the new embedded checkout endpoint
+        const result = await createOrderEmbeddedAction(linkId, orderData)
 
         if (result.success && result.data) {
-          // Check if we have a checkout URL or client secret from Stripe
-          if (result.data.checkout_url || (result.data as any).client_secret) {
+          // Check if we have a client secret from Stripe embedded checkout
+          if ((result.data as any).client_secret) {
             toast.success('Opening payment checkout...', {
               duration: 2000
             })
@@ -174,8 +176,7 @@ export function CheckoutForm({
             // Clear form data
             setFormData({})
 
-            // Open inline Stripe checkout instead of redirecting
-            setStripeCheckoutUrl(result.data.checkout_url)
+            // Open inline Stripe checkout with client_secret
             setStripeClientSecret((result.data as any).client_secret)
             setShowStripeCheckout(true)
           } else {

@@ -915,9 +915,9 @@ export async function createOrderAction(linkId: string, data: OrderCreateData) {
   try {
     const apiClient = await getApiClient() // No session needed for public order creation
     const response = await apiClient.storefront.storefrontLinksCreateOrderCreate(linkId, data as Order)
-    
-    return { 
-      success: true, 
+
+    return {
+      success: true,
       data: {
         ...response,
         // TypeScript workaround - the backend returns additional fields
@@ -928,6 +928,45 @@ export async function createOrderAction(linkId: string, data: OrderCreateData) {
     }
   } catch (error) {
     console.error('Failed to create order:', error)
+    if (error instanceof ApiError) {
+      return { success: false, error: error.body?.error || 'Failed to create order' }
+    }
+    return { success: false, error: 'Failed to create order' }
+  }
+}
+
+/**
+ * Create an order with embedded Stripe checkout
+ * This returns a client_secret for inline checkout rendering
+ */
+export async function createOrderEmbeddedAction(linkId: string, data: OrderCreateData) {
+  try {
+    const apiClient = await getApiClient() // No session needed for public order creation
+
+    // Call the new embedded checkout endpoint
+    const response = await apiClient.storefront.httpRequest.request({
+      method: 'POST',
+      url: `/api/storefront/links/${linkId}/create-order-embedded/`,
+      body: data,
+      mediaType: 'application/json',
+    })
+
+    return {
+      success: true,
+      data: {
+        ...response,
+        // TypeScript workaround - the backend returns additional fields
+        client_secret: (response as any).client_secret,
+        session_id: (response as any).session_id,
+        order: (response as any).order,
+        error: (response as any).error,
+        message: (response as any).message,
+        is_free: (response as any).is_free,
+        download_access: (response as any).download_access
+      }
+    }
+  } catch (error) {
+    console.error('Failed to create embedded order:', error)
     if (error instanceof ApiError) {
       return { success: false, error: error.body?.error || 'Failed to create order' }
     }

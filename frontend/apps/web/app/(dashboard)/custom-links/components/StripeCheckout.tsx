@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { loadStripe } from '@stripe/stripe-js'
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe-js'
 import { X } from 'lucide-react'
@@ -79,7 +79,9 @@ export function StripeCheckout({
 }: StripeCheckoutProps) {
   const [stripePromise, setStripePromise] = useState<Promise<any> | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [hasError, setHasError] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const checkoutRef = useRef<HTMLDivElement>(null)
+  const embeddedCheckoutRef = useRef<any>(null)
 
   useEffect(() => {
     if (publishableKey && isOpen) {
@@ -87,35 +89,70 @@ export function StripeCheckout({
     }
   }, [publishableKey, isOpen])
 
+  // Handle embedded checkout with checkoutUrl using initEmbeddedCheckout
   useEffect(() => {
-    if (!isOpen) {
-      setIsLoading(true)
-      setHasError(false)
-      return
-    }
+    if (!isOpen || !checkoutUrl || clientSecret || !publishableKey) return
 
-    // Reset loading state after a timeout to prevent infinite loading
-    const loadingTimeout = setTimeout(() => {
-      setIsLoading(false)
-    }, 3000) // Give iframe 3 seconds to load
+    let mounted = true
 
-    // Listen for messages from Stripe iframe (for iframe fallback mode)
-    const handleMessage = (event: MessageEvent) => {
-      // Only accept messages from Stripe
-      if (event.origin !== 'https://checkout.stripe.com') return
+    const initializeEmbeddedCheckout = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
 
-      // Handle checkout completion
-      if (event.data?.type === 'stripe-checkout-complete') {
-        onComplete?.(event.data.sessionId)
+        const stripe = await loadStripe(publishableKey)
+        if (!stripe || !mounted) return
+
+        // Mount embedded checkout using initEmbeddedCheckout
+        const checkout = await stripe.initEmbeddedCheckout({
+          fetchClientSecret: async () => {
+            // Extract session ID from checkout URL if possible
+            // Format: https://checkout.stripe.com/c/pay/cs_test_xxx
+            const sessionMatch = checkoutUrl.match(/cs_[a-zA-Z0-9_]+/)
+            if (sessionMatch) {
+              return sessionMatch[0]
+            }
+            // If we can't extract it, the backend needs to provide client_secret directly
+            throw new Error('Could not extract session from checkout URL. Please contact support.')
+          },
+        })
+
+        if (mounted && checkoutRef.current) {
+          embeddedCheckoutRef.current = checkout
+          checkout.mount(checkoutRef.current)
+          setIsLoading(false)
+        }
+      } catch (err) {
+        if (mounted) {
+          console.error('Failed to initialize embedded checkout:', err)
+          setError(err instanceof Error ? err.message : 'Failed to load checkout')
+          setIsLoading(false)
+        }
       }
     }
 
-    window.addEventListener('message', handleMessage)
+    initializeEmbeddedCheckout()
+
     return () => {
-      window.removeEventListener('message', handleMessage)
-      clearTimeout(loadingTimeout)
+      mounted = false
+      if (embeddedCheckoutRef.current) {
+        embeddedCheckoutRef.current.destroy()
+        embeddedCheckoutRef.current = null
+      }
     }
-  }, [isOpen, onComplete])
+  }, [isOpen, checkoutUrl, clientSecret, publishableKey])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    if (!isOpen) {
+      setIsLoading(true)
+      setError(null)
+      if (embeddedCheckoutRef.current) {
+        embeddedCheckoutRef.current.destroy()
+        embeddedCheckoutRef.current = null
+      }
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -159,8 +196,7 @@ export function StripeCheckout({
     )
   }
 
-  // Fallback: Render iframe if only checkoutUrl is provided
-  // NOTE: This is not the recommended approach but works with current backend
+  // Fallback: Use checkoutUrl with initEmbeddedCheckout
   if (checkoutUrl) {
     return (
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -177,32 +213,44 @@ export function StripeCheckout({
             </button>
           </div>
 
-          {/* Loading indicator */}
-          {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-white z-10">
-              <div className="text-center">
-                <div className="inline-block w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-                <p className="text-gray-600">Loading checkout...</p>
+          {/* Content Area */}
+          <div className="overflow-y-auto max-h-[calc(90vh-73px)] relative">
+            {/* Loading State */}
+            {isLoading && !error && (
+              <div className="flex items-center justify-center p-12">
+                <div className="text-center">
+                  <div className="inline-block w-10 h-10 border-4 border-brand-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+                  <p className="text-gray-600">Loading checkout...</p>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Stripe Checkout iframe */}
-          <iframe
-            src={checkoutUrl}
-            className="w-full h-[calc(90vh-73px)] border-0"
-            onLoad={() => {
-              setIsLoading(false)
-              setHasError(false)
-            }}
-            onError={() => {
-              setIsLoading(false)
-              setHasError(true)
-            }}
-            title="Stripe Checkout"
-            allow="payment"
-            sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
-          />
+            {/* Error State */}
+            {error && (
+              <div className="p-8">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+                  <div className="text-red-600 mb-3">
+                    <X className="w-12 h-12 mx-auto" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-red-900 mb-2">Checkout Error</h3>
+                  <p className="text-red-700 mb-4">{error}</p>
+                  <p className="text-sm text-red-600 mb-4">
+                    Your backend needs to create a Stripe Checkout Session with <code>ui_mode='embedded'</code>
+                    and return the <code>client_secret</code> instead of a checkout URL.
+                  </p>
+                  <button
+                    onClick={handleClose}
+                    className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Embedded Checkout Mount Point */}
+            <div ref={checkoutRef} className="min-h-[400px]" />
+          </div>
         </div>
       </div>
     )

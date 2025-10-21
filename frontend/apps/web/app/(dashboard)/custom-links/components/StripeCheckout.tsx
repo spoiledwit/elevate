@@ -83,6 +83,15 @@ export function StripeCheckout({
   const checkoutRef = useRef<HTMLDivElement>(null)
   const embeddedCheckoutRef = useRef<any>(null)
 
+  // Debug: Log props when component renders
+  console.log('StripeCheckout rendered:', {
+    isOpen,
+    hasCheckoutUrl: !!checkoutUrl,
+    checkoutUrl,
+    hasClientSecret: !!clientSecret,
+    hasPublishableKey: !!publishableKey
+  })
+
   useEffect(() => {
     if (publishableKey && isOpen) {
       setStripePromise(loadStripe(publishableKey))
@@ -91,8 +100,14 @@ export function StripeCheckout({
 
   // Handle embedded checkout with checkoutUrl using initEmbeddedCheckout
   useEffect(() => {
-    if (!isOpen || !checkoutUrl || clientSecret || !publishableKey) return
+    console.log('useEffect triggered:', { isOpen, checkoutUrl, clientSecret, publishableKey })
 
+    if (!isOpen || !checkoutUrl || clientSecret || !publishableKey) {
+      console.log('useEffect early return - conditions not met')
+      return
+    }
+
+    console.log('useEffect proceeding with initialization')
     let mounted = true
 
     const initializeEmbeddedCheckout = async () => {

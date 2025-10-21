@@ -103,24 +103,33 @@ export function StripeCheckout({
         const stripe = await loadStripe(publishableKey)
         if (!stripe || !mounted) return
 
+        console.log('Initializing embedded checkout with URL:', checkoutUrl)
+
+        // Try to extract client secret from the checkout URL
+        // Checkout URLs from Stripe typically contain the session ID (client secret)
+        // Format: https://checkout.stripe.com/c/pay/cs_test_xxx or cs_live_xxx
+        const sessionMatch = checkoutUrl.match(/cs_[a-zA-Z0-9_]+/)
+
+        if (!sessionMatch) {
+          throw new Error(
+            'Unable to embed checkout: The checkout URL does not contain a valid session ID. ' +
+            'Please update your backend to return the client_secret from the Stripe session instead.'
+          )
+        }
+
+        const clientSecretFromUrl = sessionMatch[0]
+        console.log('Extracted client secret:', clientSecretFromUrl)
+
         // Mount embedded checkout using initEmbeddedCheckout
         const checkout = await stripe.initEmbeddedCheckout({
-          fetchClientSecret: async () => {
-            // Extract session ID from checkout URL if possible
-            // Format: https://checkout.stripe.com/c/pay/cs_test_xxx
-            const sessionMatch = checkoutUrl.match(/cs_[a-zA-Z0-9_]+/)
-            if (sessionMatch) {
-              return sessionMatch[0]
-            }
-            // If we can't extract it, the backend needs to provide client_secret directly
-            throw new Error('Could not extract session from checkout URL. Please contact support.')
-          },
+          clientSecret: clientSecretFromUrl,
         })
 
         if (mounted && checkoutRef.current) {
           embeddedCheckoutRef.current = checkout
           checkout.mount(checkoutRef.current)
           setIsLoading(false)
+          console.log('Embedded checkout mounted successfully')
         }
       } catch (err) {
         if (mounted) {

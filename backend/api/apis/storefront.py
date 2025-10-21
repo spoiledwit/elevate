@@ -1126,16 +1126,11 @@ class CustomLinkViewSet(viewsets.ModelViewSet):
             logger.info("DEBUG - Creating Stripe EMBEDDED checkout session")
             stripe_service = StripeConnectService()
 
-            from django.conf import settings
-            frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
-            return_url = f"{frontend_url}/order-return?session_id={{CHECKOUT_SESSION_ID}}"
-
-            logger.info(f"DEBUG - Return URL: {return_url}")
-
+            # Don't pass return_url for embedded mode - we handle completion in the modal
+            # This prevents Stripe from redirecting after payment
             client_secret, session_id = stripe_service.create_embedded_checkout_session_for_product(
                 custom_link=link,
                 connect_account=connect_account,
-                return_url=return_url,
                 order_id=order.order_id,
                 customer_email=order.customer_email,
                 metadata={'order_id': order.order_id}

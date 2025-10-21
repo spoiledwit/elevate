@@ -78,10 +78,7 @@ export function StripeCheckout({
   isOpen
 }: StripeCheckoutProps) {
   const [stripePromise, setStripePromise] = useState<Promise<any> | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const checkoutRef = useRef<HTMLDivElement>(null)
-  const embeddedCheckoutRef = useRef<any>(null)
+  const [paymentComplete, setPaymentComplete] = useState(false)
 
   useEffect(() => {
     if (publishableKey && isOpen) {
@@ -89,75 +86,10 @@ export function StripeCheckout({
     }
   }, [publishableKey, isOpen])
 
-  // Handle embedded checkout with checkoutUrl using initEmbeddedCheckout (fallback for old endpoint)
-  useEffect(() => {
-    if (!isOpen || !checkoutUrl || clientSecret || !publishableKey) {
-      return
-    }
-
-    let mounted = true
-
-    const initializeEmbeddedCheckout = async () => {
-      try {
-        setIsLoading(true)
-        setError(null)
-
-        const stripe = await loadStripe(publishableKey)
-        if (!stripe || !mounted) return
-
-        // Try to extract client secret from the checkout URL
-        // Checkout URLs from Stripe typically contain the session ID (client secret)
-        // Format: https://checkout.stripe.com/c/pay/cs_test_xxx or cs_live_xxx
-        const sessionMatch = checkoutUrl.match(/cs_[a-zA-Z0-9_]+/)
-
-        if (!sessionMatch) {
-          throw new Error(
-            'Unable to embed checkout: The checkout URL does not contain a valid session ID. ' +
-            'Please update your backend to return the client_secret from the Stripe session instead.'
-          )
-        }
-
-        const clientSecretFromUrl = sessionMatch[0]
-
-        // Mount embedded checkout using initEmbeddedCheckout
-        const checkout = await stripe.initEmbeddedCheckout({
-          clientSecret: clientSecretFromUrl,
-        })
-
-        if (mounted && checkoutRef.current) {
-          embeddedCheckoutRef.current = checkout
-          checkout.mount(checkoutRef.current)
-          setIsLoading(false)
-        }
-      } catch (err) {
-        if (mounted) {
-          console.error('Failed to initialize embedded checkout:', err)
-          setError(err instanceof Error ? err.message : 'Failed to load checkout')
-          setIsLoading(false)
-        }
-      }
-    }
-
-    initializeEmbeddedCheckout()
-
-    return () => {
-      mounted = false
-      if (embeddedCheckoutRef.current) {
-        embeddedCheckoutRef.current.destroy()
-        embeddedCheckoutRef.current = null
-      }
-    }
-  }, [isOpen, checkoutUrl, clientSecret, publishableKey])
-
   // Cleanup on unmount
   useEffect(() => {
     if (!isOpen) {
-      setIsLoading(true)
-      setError(null)
-      if (embeddedCheckoutRef.current) {
-        embeddedCheckoutRef.current.destroy()
-        embeddedCheckoutRef.current = null
-      }
+      setPaymentComplete(false)
     }
   }, [isOpen])
 
@@ -167,45 +99,56 @@ export function StripeCheckout({
     onCancel?.()
   }
 
-  // Render embedded checkout if clientSecret is provided (recommended approach)
-  // This works when backend creates session with ui_mode='embedded' and returns client_secret
-  if (clientSecret && stripePromise) {
+  // Show success state when payment is complete
+  if (paymentComplete) {
     return (
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden relative">
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
-            <h2 className="text-xl font-semibold text-gray-900">Complete Your Purchase</h2>
-            <button
-              onClick={handleClose}
-              className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
-              aria-label="Close checkout"
-            >
-              <X className="w-5 h-5 text-gray-600" />
-            </button>
-          </div>
+        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md">
+          <div className="text-center">
+            {/* Success Checkmark */}
+            <div className="mb-6">
+              <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-green-100">
+                <svg
+                  className="h-12 w-12 text-green-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={3}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+            </div>
 
-          {/* Embedded Checkout */}
-          <div className="overflow-y-auto max-h-[calc(90vh-73px)]">
-            <EmbeddedCheckoutProvider
-              stripe={stripePromise}
-              options={{
-                clientSecret,
-                onComplete: () => {
-                  onComplete?.()
-                }
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">
+              Purchase Successful!
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Your payment has been processed successfully.
+            </p>
+
+            <button
+              onClick={() => {
+                setPaymentComplete(false)
+                onComplete?.()
               }}
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
             >
-              <EmbeddedCheckout />
-            </EmbeddedCheckoutProvider>
+              Continue
+            </button>
           </div>
         </div>
       </div>
     )
   }
 
-  // Fallback: Use checkoutUrl with initEmbeddedCheckout
-  if (checkoutUrl) {
+  // Always show the modal with checkout skeleton or actual checkout
+  // This provides a smooth UX without any flashing states
+  if (isOpen) {
     return (
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden relative">
@@ -221,69 +164,64 @@ export function StripeCheckout({
             </button>
           </div>
 
-          {/* Content Area */}
-          <div className="overflow-y-auto max-h-[calc(90vh-73px)] relative">
-            {/* Loading State */}
-            {isLoading && !error && (
-              <div className="flex items-center justify-center p-12">
-                <div className="text-center">
-                  <div className="inline-block w-10 h-10 border-4 border-brand-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-                  <p className="text-gray-600">Loading checkout...</p>
+          {/* Embedded Checkout or Skeleton */}
+          <div className="overflow-y-auto max-h-[calc(90vh-73px)]">
+            {clientSecret && stripePromise ? (
+              <EmbeddedCheckoutProvider
+                stripe={stripePromise}
+                options={{
+                  clientSecret,
+                  onComplete: () => {
+                    // Show success state instead of redirecting
+                    setPaymentComplete(true)
+                  }
+                }}
+              >
+                <EmbeddedCheckout />
+              </EmbeddedCheckoutProvider>
+            ) : (
+              /* Checkout Skeleton - shown while loading */
+              <div className="p-6 space-y-6 animate-pulse">
+                {/* Email field skeleton */}
+                <div>
+                  <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
+                  <div className="h-12 bg-gray-200 rounded"></div>
+                </div>
+
+                {/* Card information skeleton */}
+                <div>
+                  <div className="h-4 bg-gray-200 rounded w-32 mb-2"></div>
+                  <div className="h-12 bg-gray-200 rounded"></div>
+                </div>
+
+                {/* Name field skeleton */}
+                <div>
+                  <div className="h-4 bg-gray-200 rounded w-28 mb-2"></div>
+                  <div className="h-12 bg-gray-200 rounded"></div>
+                </div>
+
+                {/* Country/Region skeleton */}
+                <div>
+                  <div className="h-4 bg-gray-200 rounded w-36 mb-2"></div>
+                  <div className="h-12 bg-gray-200 rounded"></div>
+                </div>
+
+                {/* Pay button skeleton */}
+                <div className="h-12 bg-gray-300 rounded"></div>
+
+                {/* Powered by Stripe */}
+                <div className="flex items-center justify-center gap-2 pt-4">
+                  <div className="h-4 bg-gray-200 rounded w-20"></div>
+                  <div className="h-4 bg-gray-200 rounded w-12"></div>
                 </div>
               </div>
             )}
-
-            {/* Error State */}
-            {error && (
-              <div className="p-8">
-                <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-                  <div className="text-red-600 mb-3">
-                    <X className="w-12 h-12 mx-auto" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-red-900 mb-2">Checkout Error</h3>
-                  <p className="text-red-700 mb-4">{error}</p>
-                  <p className="text-sm text-red-600 mb-4">
-                    Your backend needs to create a Stripe Checkout Session with <code>ui_mode='embedded'</code>
-                    and return the <code>client_secret</code> instead of a checkout URL.
-                  </p>
-                  <button
-                    onClick={handleClose}
-                    className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Embedded Checkout Mount Point */}
-            <div ref={checkoutRef} className="min-h-[400px]" />
           </div>
         </div>
       </div>
     )
   }
 
-  // No checkout data provided
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md">
-        <div className="text-center">
-          <div className="text-red-600 mb-4">
-            <X className="w-16 h-16 mx-auto" />
-          </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">Checkout Error</h3>
-          <p className="text-gray-600 mb-6">
-            No checkout session available. Please try again.
-          </p>
-          <button
-            onClick={handleClose}
-            className="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  )
+  // If modal is not open, don't render anything
+  return null
 }

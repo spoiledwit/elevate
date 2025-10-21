@@ -272,8 +272,8 @@ class StripeConnectService:
         self,
         custom_link: CustomLink,
         connect_account: StripeConnectAccount,
-        return_url: str,
         order_id: str,
+        return_url: Optional[str] = None,
         customer_email: Optional[str] = None,
         metadata: Optional[Dict[str, str]] = None
     ) -> Tuple[str, str]:  # Returns (client_secret, session_id)
@@ -310,10 +310,11 @@ class StripeConnectService:
             }
 
             # Create embedded checkout session with destination charges
-            session = stripe.checkout.Session.create(
-                ui_mode='embedded',  # KEY DIFFERENCE: This enables embedded checkout
-                payment_method_types=['card'],
-                line_items=[{
+            # Build session params
+            session_params = {
+                'ui_mode': 'embedded',  # KEY DIFFERENCE: This enables embedded checkout
+                'payment_method_types': ['card'],
+                'line_items': [{
                     'price_data': {
                         'currency': connect_account.default_currency,
                         'product_data': {
@@ -325,18 +326,26 @@ class StripeConnectService:
                     },
                     'quantity': 1,
                 }],
-                mode='payment',
-                return_url=return_url,  # Single return URL for embedded mode
-                customer_email=customer_email,
-                payment_intent_data={
+                'mode': 'payment',
+                'payment_intent_data': {
                     'application_fee_amount': platform_fee_cents,
                     'transfer_data': {
                         'destination': connect_account.stripe_account_id,
                     },
                     'metadata': session_metadata,
                 },
-                metadata=session_metadata,
-            )
+                'metadata': session_metadata,
+            }
+
+            # Only add return_url if provided (optional for embedded mode)
+            if return_url:
+                session_params['return_url'] = return_url
+
+            # Add customer email if provided
+            if customer_email:
+                session_params['customer_email'] = customer_email
+
+            session = stripe.checkout.Session.create(**session_params)
 
             # Get the existing order and create payment transaction record
             order = Order.objects.get(order_id=order_id)

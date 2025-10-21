@@ -546,7 +546,7 @@ export function CheckoutForm({
         </div>
       )}
 
-      {/* Checkout Content */}my
+      {/* Checkout Content */}
       <div className="p-4">
         <div className="space-y-4">
           {/* Price Section - Hide for freebie and opt_in */}

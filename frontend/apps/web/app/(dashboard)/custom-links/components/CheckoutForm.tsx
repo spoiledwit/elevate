@@ -5,6 +5,7 @@ import { ShoppingCart } from 'lucide-react'
 import { toast } from 'sonner'
 import { createOrderAction, type OrderCreateData } from '@/actions/storefront-action'
 import confetti from 'canvas-confetti'
+import { StripeCheckout } from './StripeCheckout'
 
 interface CheckoutFormProps {
   linkId?: string
@@ -60,6 +61,11 @@ export function CheckoutForm({
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showSuccessMessage, setShowSuccessMessage] = useState(false)
+
+  // Stripe checkout state
+  const [showStripeCheckout, setShowStripeCheckout] = useState(false)
+  const [stripeCheckoutUrl, setStripeCheckoutUrl] = useState<string | undefined>(undefined)
+  const [stripeClientSecret, setStripeClientSecret] = useState<string | undefined>(undefined)
 
   // Confetti animation for freebie success
   const triggerConfetti = () => {
@@ -159,17 +165,19 @@ export function CheckoutForm({
         const result = await createOrderAction(linkId, orderData)
 
         if (result.success && result.data) {
-          // Check if we have a checkout URL from Stripe Connect
-          if (result.data.checkout_url) {
-            toast.success('Redirecting to payment...', {
+          // Check if we have a checkout URL or client secret from Stripe
+          if (result.data.checkout_url || (result.data as any).client_secret) {
+            toast.success('Opening payment checkout...', {
               duration: 2000
             })
 
-            // Clear form data before redirecting
+            // Clear form data
             setFormData({})
 
-            // Redirect to Stripe checkout
-            window.location.href = result.data.checkout_url
+            // Open inline Stripe checkout instead of redirecting
+            setStripeCheckoutUrl(result.data.checkout_url)
+            setStripeClientSecret((result.data as any).client_secret)
+            setShowStripeCheckout(true)
           } else {
             // Fallback for when Stripe checkout fails but order is created
             // For freebies, show special success message with confetti
@@ -218,7 +226,8 @@ export function CheckoutForm({
 
   if (layout === 'fullpage') {
     return (
-      <div className={`bg-white ${className} relative`}>
+      <>
+        <div className={`bg-white ${className} relative`}>
         <div className="max-w-2xl mx-auto p-8">
           <div className="space-y-8">
             {/* Header Section */}
@@ -449,13 +458,62 @@ export function CheckoutForm({
             </div>
           </div>
         )}
-      </div>
+        </div>
+
+        {/* Stripe Checkout Modal */}
+        <StripeCheckout
+          clientSecret={stripeClientSecret}
+          checkoutUrl={stripeCheckoutUrl}
+          publishableKey={process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ''}
+          onComplete={handleStripeComplete}
+          onCancel={handleStripeCancel}
+          isOpen={showStripeCheckout}
+        />
+      </>
     )
+  }
+
+  // Handlers for Stripe checkout
+  const handleStripeComplete = () => {
+    setShowStripeCheckout(false)
+
+    // Show success message for freebies
+    if (isFreebie) {
+      setShowSuccessMessage(true)
+      triggerConfetti()
+
+      setTimeout(() => {
+        setShowSuccessMessage(false)
+        if (onOrderSuccess) {
+          onOrderSuccess({ success: true })
+        }
+      }, 2000)
+    } else {
+      toast.success('Payment Completed Successfully!', {
+        duration: 5000
+      })
+
+      if (onOrderSuccess) {
+        onOrderSuccess({ success: true })
+      }
+    }
+  }
+
+  const handleStripeCancel = () => {
+    setShowStripeCheckout(false)
+    setStripeCheckoutUrl(undefined)
+    setStripeClientSecret(undefined)
+    setIsSubmitting(false)
+
+    toast.info('Checkout cancelled', {
+      duration: 3000
+    })
   }
 
   // Card layout (default)
   return (
-    <div className={`bg-white ${className} relative`}>
+    <>
+      <div className={`bg-white ${className} relative`}>
       {/* Checkout Page Image with Title Overlay */}
       {thumbnail ? (
         <div className="aspect-[3/2] overflow-hidden bg-purple-50 relative">
@@ -677,7 +735,7 @@ export function CheckoutForm({
               className="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50"
               disabled={!isActive || isSubmitting}
             >
-              {isSubmitting ? 'Processing...' : (checkoutCtaButtonText || 'Buy Now')}
+              {isSubmitting ? 'Processing...' : ('Buy Now')}
             </button>
           </div>
         </div>
@@ -696,6 +754,17 @@ export function CheckoutForm({
           </div>
         </div>
       )}
-    </div>
+      </div>
+
+      {/* Stripe Checkout Modal */}
+      <StripeCheckout
+        clientSecret={stripeClientSecret}
+        checkoutUrl={stripeCheckoutUrl}
+        publishableKey={process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ''}
+        onComplete={handleStripeComplete}
+        onCancel={handleStripeCancel}
+        isOpen={showStripeCheckout}
+      />
+    </>
   )
 }

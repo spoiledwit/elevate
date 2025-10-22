@@ -5,8 +5,8 @@ import { ShoppingCart } from 'lucide-react'
 import { toast } from 'sonner'
 import { createOrderAction, type OrderCreateData } from '@/actions/storefront-action'
 import confetti from 'canvas-confetti'
-import { StripeCheckout } from './StripeCheckout'
-import { createOrderEmbeddedAction } from '@/actions/storefront-action'
+import { InlineStripePayment } from './InlineStripePayment'
+import { createOrderPaymentIntentAction } from '@/actions/storefront-action'
 
 interface CheckoutFormProps {
   linkId?: string
@@ -56,6 +56,7 @@ export function CheckoutForm({
 }: CheckoutFormProps) {
   const hasDiscount = discountedPrice && parseFloat(discountedPrice) < parseFloat(price)
   const isFreebie = productType === 'freebie' || productType === 'opt_in' || productType === 'url-media'
+  const effectivePrice = hasDiscount ? discountedPrice : price
 
   // Form state for active mode
   const [formData, setFormData] = useState<Record<string, string | string[]>>({})
@@ -63,10 +64,11 @@ export function CheckoutForm({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showSuccessMessage, setShowSuccessMessage] = useState(false)
 
-  // Stripe checkout state
-  const [showStripeCheckout, setShowStripeCheckout] = useState(false)
-  const [stripeCheckoutUrl, setStripeCheckoutUrl] = useState<string | undefined>(undefined)
+  // Stripe payment state
+  const [showPaymentElement, setShowPaymentElement] = useState(false)
   const [stripeClientSecret, setStripeClientSecret] = useState<string | undefined>(undefined)
+  const [paymentAmount, setPaymentAmount] = useState<number>(0)
+  const [paymentCurrency, setPaymentCurrency] = useState<string>('usd')
 
   // Confetti animation for freebie success
   const triggerConfetti = () => {
@@ -163,22 +165,21 @@ export function CheckoutForm({
           form_responses: formResponses
         }
 
-        // Use the new embedded checkout endpoint
-        const result = await createOrderEmbeddedAction(linkId, orderData)
+        // Use the payment intent endpoint for inline payment
+        const result = await createOrderPaymentIntentAction(linkId, orderData)
 
         if (result.success && result.data) {
-          // Check if we have a client secret from Stripe embedded checkout
+          // Check if we have a client secret from Stripe PaymentIntent
           if ((result.data as any).client_secret) {
-            toast.success('Opening payment checkout...', {
+            toast.success('Please complete payment below', {
               duration: 2000
             })
 
-            // Clear form data
-            setFormData({})
-
-            // Open inline Stripe checkout with client_secret
+            // Show payment element inline with the received data
             setStripeClientSecret((result.data as any).client_secret)
-            setShowStripeCheckout(true)
+            setPaymentAmount((result.data as any).amount || parseFloat(effectivePrice || '0'))
+            setPaymentCurrency((result.data as any).currency || 'usd')
+            setShowPaymentElement(true)
           } else {
             // Fallback for when Stripe checkout fails but order is created
             // For freebies, show special success message with confetti
@@ -223,6 +224,35 @@ export function CheckoutForm({
         setIsSubmitting(false)
       }
     }
+  }
+
+  // Handlers for Stripe payment
+  const handlePaymentSuccess = () => {
+    setShowPaymentElement(false)
+    setStripeClientSecret(undefined)
+
+    // Show success message with confetti for ALL products (freebies and paid)
+    setShowSuccessMessage(true)
+    triggerConfetti()
+
+    // Clear form and reset
+    setFormData({})
+    setIsSubmitting(false)
+
+    setTimeout(() => {
+      setShowSuccessMessage(false)
+      if (onOrderSuccess) {
+        onOrderSuccess({ success: true })
+      }
+    }, 3000) // Show for 3 seconds
+  }
+
+  const handlePaymentError = (error: string) => {
+    toast.error('Payment Failed', {
+      description: error,
+      duration: 5000
+    })
+    setIsSubmitting(false)
   }
 
   if (layout === 'fullpage') {
@@ -432,83 +462,56 @@ export function CheckoutForm({
                 </div>
               )}
 
-              {/* Purchase Button */}
-              <div className="pt-6">
-                <button
-                  onClick={handleBuyNow}
-                  className="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-4 px-6 rounded-lg transition-colors disabled:opacity-50 text-lg"
-                  disabled={!isActive || isSubmitting}
-                >
-                  {isSubmitting ? 'Processing...' : (checkoutCtaButtonText || 'Buy Now')}
-                </button>
-              </div>
+              {/* Purchase Button - Only show if payment element is not visible */}
+              {!showPaymentElement && (
+                <div className="pt-6">
+                  <button
+                    onClick={handleBuyNow}
+                    className="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-4 px-6 rounded-lg transition-colors disabled:opacity-50 text-lg"
+                    disabled={!isActive || isSubmitting}
+                  >
+                    {isSubmitting ? 'Processing...' : (checkoutCtaButtonText || 'Buy Now')}
+                  </button>
+                </div>
+              )}
+
+              {/* Inline Stripe Payment Element */}
+              {showPaymentElement && stripeClientSecret && (
+                <div className="pt-6">
+                  <InlineStripePayment
+                    clientSecret={stripeClientSecret}
+                    publishableKey={process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ''}
+                    amount={paymentAmount}
+                    currency={paymentCurrency}
+                    onSuccess={handlePaymentSuccess}
+                    onError={handlePaymentError}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Success Message Overlay for Freebies - Fullpage */}
-        {showSuccessMessage && isFreebie && (
+        {/* Success Message Overlay - Fullpage */}
+        {showSuccessMessage && (
           <div className="absolute inset-0 bg-white/95 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="text-center px-6">
               <h2 className="text-5xl md:text-6xl font-bold text-brand-600 mb-4">
-                {productType === 'opt_in' ? "You're in! 🎉" : "Check your email!"}
+                {isFreebie
+                  ? (productType === 'opt_in' ? "You're in! 🎉" : "Check your email!")
+                  : "Payment Successful! 🎉"}
               </h2>
               <p className="text-3xl md:text-4xl font-semibold text-gray-700">
-                {productType === 'opt_in' ? "Check your email for next steps!" : "Your gift is on its way! 🎁"}
+                {isFreebie
+                  ? (productType === 'opt_in' ? "Check your email for next steps!" : "Your gift is on its way! 🎁")
+                  : "Thank you for your purchase! Check your email for access."}
               </p>
             </div>
           </div>
         )}
         </div>
-
-        {/* Stripe Checkout Modal */}
-        <StripeCheckout
-          clientSecret={stripeClientSecret}
-          checkoutUrl={stripeCheckoutUrl}
-          publishableKey={process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ''}
-          onComplete={handleStripeComplete}
-          onCancel={handleStripeCancel}
-          isOpen={showStripeCheckout}
-        />
       </>
     )
-  }
-
-  // Handlers for Stripe checkout
-  const handleStripeComplete = () => {
-    setShowStripeCheckout(false)
-
-    // Show success message for freebies
-    if (isFreebie) {
-      setShowSuccessMessage(true)
-      triggerConfetti()
-
-      setTimeout(() => {
-        setShowSuccessMessage(false)
-        if (onOrderSuccess) {
-          onOrderSuccess({ success: true })
-        }
-      }, 2000)
-    } else {
-      toast.success('Payment Completed Successfully!', {
-        duration: 5000
-      })
-
-      if (onOrderSuccess) {
-        onOrderSuccess({ success: true })
-      }
-    }
-  }
-
-  const handleStripeCancel = () => {
-    setShowStripeCheckout(false)
-    setStripeCheckoutUrl(undefined)
-    setStripeClientSecret(undefined)
-    setIsSubmitting(false)
-
-    toast.info('Checkout cancelled', {
-      duration: 3000
-    })
   }
 
   // Card layout (default)
@@ -729,43 +732,53 @@ export function CheckoutForm({
             </div>
           )}
 
-          {/* Purchase Button */}
-          <div className="pt-4">
-            <button
-              onClick={handleBuyNow}
-              className="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50"
-              disabled={!isActive || isSubmitting}
-            >
-              {isSubmitting ? 'Processing...' : ('Buy Now')}
-            </button>
-          </div>
+          {/* Purchase Button - Only show if payment element is not visible */}
+          {!showPaymentElement && (
+            <div className="pt-4">
+              <button
+                onClick={handleBuyNow}
+                className="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50"
+                disabled={!isActive || isSubmitting}
+              >
+                {isSubmitting ? 'Processing...' : (checkoutCtaButtonText || 'Buy Now')}
+              </button>
+            </div>
+          )}
+
+          {/* Inline Stripe Payment Element */}
+          {showPaymentElement && stripeClientSecret && (
+            <div className="pt-4">
+              <InlineStripePayment
+                clientSecret={stripeClientSecret}
+                publishableKey={process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ''}
+                amount={paymentAmount}
+                currency={paymentCurrency}
+                onSuccess={handlePaymentSuccess}
+                onError={handlePaymentError}
+              />
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Success Message Overlay for Freebies */}
-      {showSuccessMessage && isFreebie && (
+      {/* Success Message Overlay */}
+      {showSuccessMessage && (
         <div className="absolute inset-0 bg-white/95 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
           <div className="text-center px-6">
             <h2 className="text-4xl md:text-5xl font-bold text-brand-600 mb-2">
-              {productType === 'opt_in' ? "You're in! 🎉" : "Check your email!"}
+              {isFreebie
+                ? (productType === 'opt_in' ? "You're in! 🎉" : "Check your email!")
+                : "Payment Successful! 🎉"}
             </h2>
             <p className="text-2xl md:text-3xl font-semibold text-gray-700">
-              {productType === 'opt_in' ? "Check your email for next steps!" : "Your gift is on its way! 🎁"}
+              {isFreebie
+                ? (productType === 'opt_in' ? "Check your email for next steps!" : "Your gift is on its way! 🎁")
+                : "Thank you for your purchase! Check your email for access."}
             </p>
           </div>
         </div>
       )}
       </div>
-
-      {/* Stripe Checkout Modal */}
-      <StripeCheckout
-        clientSecret={stripeClientSecret}
-        checkoutUrl={stripeCheckoutUrl}
-        publishableKey={process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ''}
-        onComplete={handleStripeComplete}
-        onCancel={handleStripeCancel}
-        isOpen={showStripeCheckout}
-      />
     </>
   )
 }

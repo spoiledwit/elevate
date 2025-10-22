@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { loadStripe } from '@stripe/stripe-js'
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe-js'
 import { X } from 'lucide-react'
@@ -11,12 +11,6 @@ interface StripeCheckoutProps {
    * Backend should create session with ui_mode: 'embedded'
    */
   clientSecret?: string
-
-  /**
-   * Checkout URL from Stripe (for iframe fallback)
-   * This is what the current backend returns
-   */
-  checkoutUrl?: string
 
   /**
    * Your Stripe publishable key
@@ -71,7 +65,6 @@ interface StripeCheckoutProps {
  */
 export function StripeCheckout({
   clientSecret,
-  checkoutUrl,
   publishableKey,
   onComplete,
   onCancel,
@@ -84,7 +77,7 @@ export function StripeCheckout({
     if (publishableKey && isOpen) {
       setStripePromise(loadStripe(publishableKey))
     }
-  }, [publishableKey, isOpen])
+  }, [publishableKey, isOpen, clientSecret])
 
   // Cleanup on unmount
   useEffect(() => {
@@ -177,7 +170,7 @@ export function StripeCheckout({
                   }
                 }}
               >
-                <EmbeddedCheckout />
+                <EmbeddedCheckout className="stripe-embedded-checkout" />
               </EmbeddedCheckoutProvider>
             ) : (
               /* Checkout Skeleton - shown while loading */

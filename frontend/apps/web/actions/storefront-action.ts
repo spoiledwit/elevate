@@ -974,6 +974,47 @@ export async function createOrderEmbeddedAction(linkId: string, data: OrderCreat
   }
 }
 
+/**
+ * Create an order and get PaymentIntent for inline payment element
+ * This returns a client_secret for PaymentElement
+ */
+export async function createOrderPaymentIntentAction(linkId: string, data: OrderCreateData) {
+  try {
+    const apiClient = await getApiClient() // No session needed for public order creation
+
+    // Call the payment intent endpoint
+    const response = await apiClient.storefront.httpRequest.request({
+      method: 'POST',
+      url: `/api/storefront/links/${linkId}/create-payment-intent/`,
+      body: data,
+      mediaType: 'application/json',
+    })
+
+    return {
+      success: true,
+      data: {
+        ...response,
+        // TypeScript workaround - the backend returns additional fields
+        client_secret: (response as any).client_secret,
+        payment_intent_id: (response as any).payment_intent_id,
+        order: (response as any).order,
+        amount: (response as any).amount,
+        currency: (response as any).currency,
+        error: (response as any).error,
+        message: (response as any).message,
+        is_free: (response as any).is_free,
+        download_access: (response as any).download_access
+      }
+    }
+  } catch (error) {
+    console.error('Failed to create payment intent:', error)
+    if (error instanceof ApiError) {
+      return { success: false, error: error.body?.error || 'Failed to create order' }
+    }
+    return { success: false, error: 'Failed to create order' }
+  }
+}
+
 // =============================================================================
 // HELPER FUNCTIONS
 // =============================================================================

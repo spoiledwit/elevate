@@ -1010,6 +1010,311 @@ class CustomLinkViewSet(viewsets.ModelViewSet):
                 "message": "Order created but payment processing is currently unavailable"
             }, status=status.HTTP_201_CREATED)
 
+    @action(["post"], detail=True, url_path="create-order-embedded", permission_classes=[AllowAny])
+    def create_order_embedded(self, request, pk=None):
+        """
+        Create an order for a digital product with embedded Stripe checkout.
+        This endpoint creates a Stripe session with ui_mode='embedded' and returns
+        the client_secret for inline checkout rendering.
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+
+        logger.info(f"DEBUG - Creating embedded checkout order for link ID: {pk}")
+        logger.info(f"DEBUG - Request data: {request.data}")
+
+        link = get_object_or_404(CustomLink, pk=pk, is_active=True)
+        logger.info(f"DEBUG - Found link: {link.title}, type: {link.type}, owner: {link.user_profile.user.username}")
+
+        # Check if this is a freebie/free product
+        is_free_product = not link.checkout_price or link.checkout_price <= 0
+        logger.info(f"DEBUG - Is free product: {is_free_product}, checkout_price: {link.checkout_price}")
+
+        # Rate limiting check
+        client_ip = get_client_ip(request)
+        if is_rate_limited(f"{client_ip}:{link.id}", 'order_create', limit=20, window=300):
+            return Response(
+                {"detail": "Rate limit exceeded"},
+                status=status.HTTP_429_TOO_MANY_REQUESTS
+            )
+
+        # Prepare order data
+        order_data = request.data.copy()
+        order_data['custom_link'] = link.id
+        logger.info(f"DEBUG - Prepared order data: {order_data}")
+
+        # Create serializer with custom link context
+        serializer = OrderSerializer(
+            data=order_data,
+            context={'request': request, 'custom_link': link}
+        )
+
+        try:
+            serializer.is_valid(raise_exception=True)
+            logger.info("DEBUG - Order serializer is valid")
+        except Exception as e:
+            logger.error(f"DEBUG - Order serializer validation failed: {e}")
+            logger.error(f"DEBUG - Serializer errors: {serializer.errors}")
+            return Response({
+                "error": "Validation failed",
+                "details": serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Save the order
+        try:
+            order = serializer.save()
+            logger.info(f"DEBUG - Created order: {order.order_id}")
+        except Exception as e:
+            logger.error(f"DEBUG - Failed to save order: {e}", exc_info=True)
+            return Response({
+                "error": "Failed to create order",
+                "details": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Handle free products differently - no Stripe payment needed
+        if is_free_product:
+            logger.info("DEBUG - Processing free product order")
+
+            try:
+                # Mark order as completed immediately
+                logger.info(f"DEBUG - Marking order {order.order_id} as completed")
+                order.status = 'completed'
+                order.save(update_fields=['status'])
+
+                logger.info(f"DEBUG - Free product order {order.order_id} marked as completed")
+
+                return Response({
+                    "success": True,
+                    "order": OrderSerializer(order).data,
+                    "is_free": True,
+                    "message": "Free download ready! No payment required.",
+                    "download_access": True
+                }, status=status.HTTP_201_CREATED)
+            except Exception as e:
+                logger.error(f"DEBUG - Error processing free order: {e}", exc_info=True)
+                return Response({
+                    "error": "Failed to process free order",
+                    "details": str(e)
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Create Stripe Connect EMBEDDED checkout session for paid products
+        try:
+            from ..services.stripe_connect_service import StripeConnectService
+
+            # Get the seller's Connect account
+            seller_user = link.user_profile.user
+            logger.info(f"DEBUG - Seller user: {seller_user.username}")
+
+            connect_account = getattr(seller_user, 'connect_account', None)
+            logger.info(f"DEBUG - Connect account found: {connect_account is not None}")
+
+            if not connect_account:
+                logger.error("DEBUG - No Stripe Connect account found for seller")
+                return Response({
+                    "error": "Seller has not connected their Stripe account"
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            logger.info(f"DEBUG - Connect account details: ID={connect_account.stripe_account_id}, charges_enabled={connect_account.charges_enabled}")
+
+            if not connect_account.charges_enabled:
+                logger.error("DEBUG - Stripe account not ready for charges")
+                return Response({
+                    "error": "Seller's Stripe account is not yet ready to accept payments"
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Create EMBEDDED checkout session
+            logger.info("DEBUG - Creating Stripe EMBEDDED checkout session")
+            stripe_service = StripeConnectService()
+
+            # Don't pass return_url for embedded mode - we handle completion in the modal
+            # This prevents Stripe from redirecting after payment
+            client_secret, session_id = stripe_service.create_embedded_checkout_session_for_product(
+                custom_link=link,
+                connect_account=connect_account,
+                order_id=order.order_id,
+                customer_email=order.customer_email,
+                metadata={'order_id': order.order_id}
+            )
+
+            logger.info(f"DEBUG - Embedded checkout session created: {session_id}")
+
+            return Response({
+                "success": True,
+                "order": OrderSerializer(order).data,
+                "client_secret": client_secret,  # Return client_secret instead of checkout_url
+                "session_id": session_id,
+                "message": "Order created successfully. Complete payment below."
+            }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            # If Stripe checkout fails, we still have the order created
+            logger.error(f"DEBUG - Failed to create Stripe embedded checkout session for order {order.order_id}: {str(e)}")
+            logger.error(f"DEBUG - Exception type: {type(e).__name__}")
+            import traceback
+            logger.error(f"DEBUG - Full traceback: {traceback.format_exc()}")
+
+            return Response({
+                "success": True,
+                "order": OrderSerializer(order).data,
+                "error": f"Order created but payment setup failed: {str(e)}",
+                "message": "Order created but payment processing is currently unavailable"
+            }, status=status.HTTP_201_CREATED)
+
+    @action(["post"], detail=True, url_path="create-payment-intent", permission_classes=[AllowAny])
+    def create_payment_intent(self, request, pk=None):
+        """
+        Create a PaymentIntent for inline payment element integration.
+        This is used when showing payment fields inline instead of in a popup.
+        Returns the client_secret for the PaymentIntent.
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+
+        logger.info(f"Creating PaymentIntent for link ID: {pk}")
+        logger.info(f"Request data: {request.data}")
+
+        link = get_object_or_404(CustomLink, pk=pk, is_active=True)
+        logger.info(f"Found link: {link.title}, type: {link.type}")
+
+        # Check if this is a freebie/free product
+        is_free_product = not link.checkout_price or link.checkout_price <= 0
+        logger.info(f"Is free product: {is_free_product}, checkout_price: {link.checkout_price}")
+
+        # Rate limiting check
+        client_ip = get_client_ip(request)
+        if is_rate_limited(f"{client_ip}:{link.id}", 'order_create', limit=20, window=300):
+            return Response(
+                {"detail": "Rate limit exceeded"},
+                status=status.HTTP_429_TOO_MANY_REQUESTS
+            )
+
+        # Prepare order data
+        order_data = request.data.copy()
+        order_data['custom_link'] = link.id
+
+        # Create serializer with custom link context
+        serializer = OrderSerializer(
+            data=order_data,
+            context={'request': request, 'custom_link': link}
+        )
+
+        try:
+            serializer.is_valid(raise_exception=True)
+            logger.info("Order serializer is valid")
+        except Exception as e:
+            logger.error(f"Order serializer validation failed: {e}")
+            logger.error(f"Serializer errors: {serializer.errors}")
+            return Response({
+                "error": "Validation failed",
+                "details": serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Save the order
+        try:
+            order = serializer.save()
+            logger.info(f"Created order: {order.order_id}")
+        except Exception as e:
+            logger.error(f"Failed to save order: {e}", exc_info=True)
+            return Response({
+                "error": "Failed to create order",
+                "details": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Handle free products differently - no Stripe payment needed
+        if is_free_product:
+            logger.info("Processing free product order")
+
+            try:
+                # Mark order as completed immediately
+                order.status = 'completed'
+                order.save(update_fields=['status'])
+
+                logger.info(f"Free product order {order.order_id} marked as completed")
+
+                return Response({
+                    "success": True,
+                    "order": OrderSerializer(order).data,
+                    "is_free": True,
+                    "message": "Free download ready! No payment required.",
+                    "download_access": True
+                }, status=status.HTTP_201_CREATED)
+            except Exception as e:
+                logger.error(f"Error processing free order: {e}", exc_info=True)
+                return Response({
+                    "error": "Failed to process free order",
+                    "details": str(e)
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Create Stripe PaymentIntent for paid products
+        try:
+            from ..services.stripe_connect_service import StripeConnectService
+
+            # Get the seller's Connect account
+            seller_user = link.user_profile.user
+            logger.info(f"Seller user: {seller_user.username}")
+
+            connect_account = getattr(seller_user, 'connect_account', None)
+            logger.info(f"Connect account found: {connect_account is not None}")
+
+            if not connect_account:
+                logger.error("No Stripe Connect account found for seller")
+                return Response({
+                    "error": "Seller has not connected their Stripe account"
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            logger.info(f"Connect account details: ID={connect_account.stripe_account_id}, charges_enabled={connect_account.charges_enabled}")
+
+            if not connect_account.charges_enabled:
+                logger.error("Stripe account not ready for charges")
+                return Response({
+                    "error": "Seller's Stripe account is not yet ready to accept payments"
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Create PaymentIntent
+            logger.info("Creating Stripe PaymentIntent")
+            stripe_service = StripeConnectService()
+
+            client_secret, payment_intent_id = stripe_service.create_payment_intent_for_product(
+                custom_link=link,
+                connect_account=connect_account,
+                order_id=order.order_id,
+                customer_email=order.customer_email,
+                metadata={'order_id': order.order_id}
+            )
+
+            logger.info(f"PaymentIntent created: {payment_intent_id}")
+
+            # Calculate the effective price (use discounted if available)
+            effective_display_price = link.checkout_price
+            if (link.checkout_discounted_price and
+                link.checkout_discounted_price > 0 and
+                link.checkout_discounted_price < link.checkout_price):
+                effective_display_price = link.checkout_discounted_price
+
+            return Response({
+                "success": True,
+                "order": OrderSerializer(order).data,
+                "client_secret": client_secret,
+                "payment_intent_id": payment_intent_id,
+                "amount": effective_display_price,
+                "currency": connect_account.default_currency,
+                "message": "Order created successfully. Complete payment below."
+            }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            # If Stripe PaymentIntent fails, we still have the order created
+            logger.error(f"Failed to create Stripe PaymentIntent for order {order.order_id}: {str(e)}")
+            logger.error(f"Exception type: {type(e).__name__}")
+            import traceback
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+
+            return Response({
+                "success": True,
+                "order": OrderSerializer(order).data,
+                "error": f"Order created but payment setup failed: {str(e)}",
+                "message": "Order created but payment processing is currently unavailable"
+            }, status=status.HTTP_201_CREATED)
+
 
 class SocialIconViewSet(viewsets.ModelViewSet):
     """

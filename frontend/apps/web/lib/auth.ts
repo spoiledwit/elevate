@@ -27,7 +27,7 @@ const authOptions: AuthOptions = {
       if (account?.provider === 'google') {
         try {
           // Send Google token to Django backend for verification
-          const response = await fetch(`${process.env.API_URL || 'http://localhost:8000'}/api/auth/google/`, {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/auth/google/`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

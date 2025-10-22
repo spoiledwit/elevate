@@ -268,6 +268,202 @@ class StripeConnectService:
             logger.error(f"Error creating checkout session: {e}")
             raise
 
+    def create_embedded_checkout_session_for_product(
+        self,
+        custom_link: CustomLink,
+        connect_account: StripeConnectAccount,
+        order_id: str,
+        return_url: Optional[str] = None,
+        customer_email: Optional[str] = None,
+        metadata: Optional[Dict[str, str]] = None
+    ) -> Tuple[str, str]:  # Returns (client_secret, session_id)
+        """
+        Create a Stripe Embedded Checkout Session for a product purchase with Connect.
+        Uses destination charges to automatically transfer funds to the seller.
+        This version uses ui_mode='embedded' for inline checkout rendering.
+        """
+        init_stripe()
+
+        # Validate that the seller can receive payments
+        if not connect_account.charges_enabled:
+            raise ValueError("Seller's payment account is not ready to accept charges")
+
+        # Get price in cents
+        if not custom_link.checkout_price:
+            raise ValueError("Product must have a price set")
+
+        price_cents = int(custom_link.checkout_price * 100)
+
+        # Calculate platform fee
+        platform_fee_cents = connect_account.calculate_platform_fee(price_cents)
+        seller_amount_cents = price_cents - platform_fee_cents
+
+        try:
+            session_metadata = {
+                'order_id': order_id,
+                'user_id': str(custom_link.user_profile.user.id),
+                'custom_link_id': str(custom_link.id),
+                'connect_account_id': connect_account.stripe_account_id,
+                'platform_fee': str(platform_fee_cents),
+                'seller_amount': str(seller_amount_cents),
+                **(metadata or {})
+            }
+
+            # Create embedded checkout session with destination charges
+            # Build session params
+            session_params = {
+                'ui_mode': 'embedded',  # KEY DIFFERENCE: This enables embedded checkout
+                'redirect_on_completion': 'never',  # Required for embedded mode without return_url
+                'payment_method_types': ['card'],
+                'line_items': [{
+                    'price_data': {
+                        'currency': connect_account.default_currency,
+                        'product_data': {
+                            'name': custom_link.title or custom_link.checkout_title or 'Digital Product',
+                            'description': custom_link.subtitle or '',
+                            'images': [custom_link.checkout_image.url] if custom_link.checkout_image else [],
+                        },
+                        'unit_amount': price_cents,
+                    },
+                    'quantity': 1,
+                }],
+                'mode': 'payment',
+                'payment_intent_data': {
+                    'application_fee_amount': platform_fee_cents,
+                    'transfer_data': {
+                        'destination': connect_account.stripe_account_id,
+                    },
+                    'metadata': session_metadata,
+                },
+                'metadata': session_metadata,
+            }
+
+            # Add return_url if provided (optional when redirect_on_completion is 'never')
+            if return_url:
+                session_params['return_url'] = return_url
+                session_params['redirect_on_completion'] = 'always'  # Use redirect if return_url is provided
+
+            # Add customer email if provided
+            if customer_email:
+                session_params['customer_email'] = customer_email
+
+            session = stripe.checkout.Session.create(**session_params)
+
+            # Get the existing order and create payment transaction record
+            order = Order.objects.get(order_id=order_id)
+            PaymentTransaction.objects.create(
+                order=order,
+                seller_account=connect_account,
+                stripe_checkout_session_id=session.id,
+                payment_intent_id=session.payment_intent,
+                total_amount=price_cents,
+                platform_fee=platform_fee_cents,
+                seller_amount=seller_amount_cents,
+                currency=connect_account.default_currency,
+                customer_email=customer_email or '',
+                status='pending',
+                metadata=session_metadata
+            )
+
+            logger.info(f"Created embedded checkout session {session.id} for order {order.id}")
+            return session.client_secret, session.id
+
+        except stripe.error.StripeError as e:
+            logger.error(f"Stripe error creating embedded checkout session: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Error creating embedded checkout session: {e}")
+            raise
+
+    def create_payment_intent_for_product(
+        self,
+        custom_link: 'CustomLink',
+        connect_account: StripeConnectAccount,
+        order_id: str,
+        customer_email: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> Tuple[str, str]:
+        """
+        Create a Stripe PaymentIntent for a product purchase with Connect.
+        This is used for inline payment element instead of embedded checkout.
+        Returns (client_secret, payment_intent_id)
+        """
+        init_stripe()
+
+        # Validate that the seller can receive payments
+        if not connect_account.charges_enabled:
+            raise ValueError("Seller's payment account is not ready to accept charges")
+
+        # Get price in cents - use discounted price if available
+        if not custom_link.checkout_price:
+            raise ValueError("Product must have a price set")
+
+        # Use discounted price if available and less than regular price
+        effective_price = custom_link.checkout_price
+        if (custom_link.checkout_discounted_price and
+            custom_link.checkout_discounted_price > 0 and
+            custom_link.checkout_discounted_price < custom_link.checkout_price):
+            effective_price = custom_link.checkout_discounted_price
+
+        price_cents = int(effective_price * 100)
+
+        # Calculate platform fee
+        platform_fee_cents = connect_account.calculate_platform_fee(price_cents)
+        seller_amount_cents = price_cents - platform_fee_cents
+
+        try:
+            payment_metadata = {
+                'order_id': order_id,
+                'user_id': str(custom_link.user_profile.user.id),
+                'custom_link_id': str(custom_link.id),
+                'connect_account_id': connect_account.stripe_account_id,
+                'platform_fee': str(platform_fee_cents),
+                'seller_amount': str(seller_amount_cents),
+                **(metadata or {})
+            }
+
+            # Create PaymentIntent with destination charges
+            # Enable automatic payment methods to support card, wallets, BNPL, etc.
+            payment_intent = stripe.PaymentIntent.create(
+                amount=price_cents,
+                currency=connect_account.default_currency,
+                automatic_payment_methods={
+                    'enabled': True,
+                    'allow_redirects': 'always'
+                },
+                application_fee_amount=platform_fee_cents,
+                transfer_data={
+                    'destination': connect_account.stripe_account_id,
+                },
+                metadata=payment_metadata,
+                receipt_email=customer_email,
+            )
+
+            # Get the existing order and create payment transaction record
+            order = Order.objects.get(order_id=order_id)
+            PaymentTransaction.objects.create(
+                order=order,
+                seller_account=connect_account,
+                payment_intent_id=payment_intent.id,
+                total_amount=price_cents,
+                platform_fee=platform_fee_cents,
+                seller_amount=seller_amount_cents,
+                currency=connect_account.default_currency,
+                customer_email=customer_email or '',
+                status='pending',
+                metadata=payment_metadata
+            )
+
+            logger.info(f"Created PaymentIntent {payment_intent.id} for order {order.id}")
+            return payment_intent.client_secret, payment_intent.id
+
+        except stripe.error.StripeError as e:
+            logger.error(f"Stripe error creating payment intent: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Error creating payment intent: {e}")
+            raise
+
     def handle_successful_payment(self, payment_intent_id: str) -> Optional[PaymentTransaction]:
         """
         Handle a successful payment by updating the transaction and order status.

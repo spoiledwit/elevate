@@ -25,7 +25,7 @@ export default withAuth(
       // For regular users with valid tokens, verify they exist in database
       if (token.access && token.access !== 'REQUIRES_REGISTRATION') {
         try {
-          const verifyResponse = await fetch(`${process.env.API_URL || 'http://api:8000'}/api/auth/verify-user/`, {
+          const verifyResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/auth/verify-user/`, {
             method: 'GET',
             headers: {
               'Authorization': `Bearer ${token.access}`,

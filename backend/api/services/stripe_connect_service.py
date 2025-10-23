@@ -215,7 +215,12 @@ class StripeConnectService:
 
             # Create checkout session with destination charges
             session = stripe.checkout.Session.create(
-                payment_method_types=['card'],
+                payment_method_types=[
+                    'card',
+                    'affirm',           # US & Canada: Pay in installments
+                    'klarna',           # Multiple regions: Flexible installments
+                    'afterpay_clearpay' # US, Canada, UK, AU, NZ: 4 installments
+                ],
                 line_items=[{
                     'price_data': {
                         'currency': connect_account.default_currency,
@@ -314,7 +319,12 @@ class StripeConnectService:
             session_params = {
                 'ui_mode': 'embedded',  # KEY DIFFERENCE: This enables embedded checkout
                 'redirect_on_completion': 'never',  # Required for embedded mode without return_url
-                'payment_method_types': ['card'],
+                'payment_method_types': [
+                    'card',
+                    'affirm',           # US & Canada: Pay in installments
+                    'klarna',           # Multiple regions: Flexible installments
+                    'afterpay_clearpay' # US, Canada, UK, AU, NZ: 4 installments
+                ],
                 'line_items': [{
                     'price_data': {
                         'currency': connect_account.default_currency,

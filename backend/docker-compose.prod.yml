@@ -5,7 +5,7 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -16,7 +16,7 @@ services:
       dockerfile: Dockerfile.prod
     restart: unless-stopped
     ports:
-      - "8003:8003"
+      - "8003:8001"
     env_file:
       - .env
     depends_on:
@@ -37,7 +37,7 @@ services:
       - SECRET_KEY=${SECRET_KEY}
     depends_on:
       - redis
-    command: ["celery", "-A", "api", "worker", "--loglevel=debug"]
+    command: [ "celery", "-A", "api", "worker", "--loglevel=debug" ]
 
   celery-beat:
     build:
@@ -54,4 +54,4 @@ services:
       - SECRET_KEY=${SECRET_KEY}
     depends_on:
       - redis
-    command: ["celery", "-A", "api", "beat", "--loglevel=info"]
+    command: [ "celery", "-A", "api", "beat", "--loglevel=info" ]

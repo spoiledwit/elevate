@@ -18,13 +18,15 @@ SECRET_KEY = environ.get("SECRET_KEY", get_random_secret_key())
 
 DEBUG = environ.get("DEBUG", "") == "1"
 
-ALLOWED_HOSTS = ["localhost", "api", "admin.elevate.social", "elevate.social", "77d705372425.ngrok-free.app", "*.ngrok-free.app", "*.ngrok.io"]
+ALLOWED_HOSTS = ["localhost", "api", "admin.elevate.social", "elevate.social","twc.elevate.social", "twc-admin.elevate.social", "77d705372425.ngrok-free.app", "*.ngrok-free.app", "*.ngrok.io"]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://admin.elevate.social",
     "https://elevate.social",
     "http://localhost:3000",
     "http://localhost:8000",
+    "https://twc.elevate.social",
+    "https://twc-admin.elevate.social",
 ]
 
 ######################################################################
@@ -34,6 +36,9 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "https://elevate.social",
+    "https://admin.elevate.social",
+    "https://twc.elevate.social",
+    "https://twc-admin.elevate.social",
 ]
 
 CORS_ALLOW_CREDENTIALS = True

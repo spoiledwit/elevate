@@ -954,6 +954,7 @@ export async function createOrderEmbeddedAction(linkId: string, data: OrderCreat
     return {
       success: true,
       data: {
+        //@ts-ignore
         ...response,
         // TypeScript workaround - the backend returns additional fields
         client_secret: (response as any).client_secret,
@@ -993,6 +994,7 @@ export async function createOrderPaymentIntentAction(linkId: string, data: Order
     return {
       success: true,
       data: {
+        //@ts-ignore
         ...response,
         // TypeScript workaround - the backend returns additional fields
         client_secret: (response as any).client_secret,

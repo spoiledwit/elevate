@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { Navbar } from "@/components/landing/navbar";
 import { Hero } from "@/components/landing/hero";
 import { CreatorsShowcase } from "@/components/landing/creators-showcase";
@@ -15,7 +16,16 @@ import { FloatingUsernameClaim } from "@/components/landing/floating-username-cl
 import { getPlansAction } from "@/actions";
 
 export default async function Home() {
-  redirect("https://start.elevate.social");
+  // Check hostname and redirect accordingly
+  const headersList = await headers();
+  const host = headersList.get("host") || "";
+
+  if (host.includes("elevate.social")) {
+    redirect("https://start.elevate.social");
+  } else {
+    redirect("/login");
+  }
+
   // Fetch plans data on the server
   const plansData = await getPlansAction();
   return (

@@ -39,8 +39,8 @@ COPY --from=builder /.venv /.venv
 # Copy application code
 COPY . .
 
-# Collect static files
-RUN python manage.py collectstatic --noinput --clear
+# Collect static files (continue even if it fails, will be done at runtime if needed)
+RUN python manage.py collectstatic --noinput --clear || echo "Collectstatic failed, will run at startup"
 
 # Change ownership to appuser
 RUN chown -R appuser:appuser /app

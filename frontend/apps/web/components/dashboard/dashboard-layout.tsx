@@ -293,6 +293,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       case 'settings':
         router.push('/settings')
         break
+      case 'prompt-library':
+        router.push('/prompt-library')
+        break
       default:
         break
     }

@@ -138,3 +138,27 @@ export async function updateOrderStatusAction(
     return { error: 'Failed to update order status' }
   }
 }
+
+/**
+ * Delete an order
+ */
+export async function deleteOrderAction(orderId: string) {
+  const session = await getServerSession(authOptions)
+
+  if (!session) {
+    return { error: 'Authentication required' }
+  }
+
+  try {
+    const apiClient = await getApiClient(session)
+    await apiClient.orders.ordersDestroy(orderId)
+
+    return { success: true }
+  } catch (error) {
+    console.error('Error deleting order:', error)
+    if (error instanceof ApiError) {
+      return { error: error.message }
+    }
+    return { error: 'Failed to delete order' }
+  }
+}

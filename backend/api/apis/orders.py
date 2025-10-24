@@ -14,13 +14,14 @@ from ..models import Order, CustomLink
 from ..serializers import OrderSerializer
 
 
-class OrderViewSet(viewsets.ReadOnlyModelViewSet):
+class OrderViewSet(viewsets.ModelViewSet):
     """
-    ViewSet for viewing orders.
-    Users can only see orders from their own products (CustomLinks).
+    ViewSet for viewing and managing orders.
+    Users can only see and delete orders from their own products (CustomLinks).
     """
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated]
+    http_method_names = ['get', 'patch', 'delete']  # Explicitly allow only these methods
 
     def get_queryset(self):
         """

@@ -13,9 +13,11 @@ import {
   X,
   FileText,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Trash2
 } from 'lucide-react'
-import { getOrdersPaginatedAction } from '@/actions/orders-action'
+import { getOrdersPaginatedAction, deleteOrderAction } from '@/actions/orders-action'
+import { toast } from 'sonner'
 
 interface LeadsManagerProps {
   initialOrders: any[]
@@ -27,9 +29,12 @@ export function LeadsManager({ initialOrders, initialPage = 1, initialCount = 0 
   const [orders, setOrders] = useState(initialOrders)
   const [selectedOrder, setSelectedOrder] = useState<any>(null)
   const [showDialog, setShowDialog] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [orderToDelete, setOrderToDelete] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(initialPage)
   const [totalCount, setTotalCount] = useState(initialCount)
   const [isLoading, setIsLoading] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const pageSize = 10 // Backend default page size
   const totalPages = Math.ceil(totalCount / pageSize)
@@ -71,6 +76,52 @@ export function LeadsManager({ initialOrders, initialPage = 1, initialCount = 0 
   const closeDialog = () => {
     setShowDialog(false)
     setSelectedOrder(null)
+  }
+
+  const handleDeleteOrder = (orderId: string, event?: React.MouseEvent) => {
+    if (event) {
+      event.stopPropagation()
+    }
+    setOrderToDelete(orderId)
+    setShowDeleteConfirm(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!orderToDelete) return
+
+    setIsDeleting(true)
+    try {
+      const result = await deleteOrderAction(orderToDelete)
+
+      if ('error' in result) {
+        toast.error(result.error)
+        return
+      }
+
+      toast.success('Lead deleted successfully')
+
+      // Refresh the current page
+      await loadPage(currentPage)
+
+      // Close dialog if it's open
+      if (showDialog && selectedOrder?.id === orderToDelete) {
+        closeDialog()
+      }
+
+      // Close delete confirmation
+      setShowDeleteConfirm(false)
+      setOrderToDelete(null)
+    } catch (error) {
+      console.error('Error deleting order:', error)
+      toast.error('Failed to delete lead')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const cancelDelete = () => {
+    setShowDeleteConfirm(false)
+    setOrderToDelete(null)
   }
 
   return (
@@ -212,6 +263,13 @@ export function LeadsManager({ initialOrders, initialPage = 1, initialCount = 0 
                               Cancelled
                             </span>
                           )}
+                          <button
+                            onClick={(e) => handleDeleteOrder(order.id, e)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete lead"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </div>
 
@@ -459,13 +517,70 @@ export function LeadsManager({ initialOrders, initialPage = 1, initialCount = 0 
             </div>
 
             {/* Dialog Footer */}
-            <div className="p-6 border-t border-gray-200 flex justify-end">
+            <div className="p-6 border-t border-gray-200 flex justify-between">
+              <button
+                onClick={() => handleDeleteOrder(selectedOrder.id)}
+                className="px-6 py-2.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium flex items-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete Lead
+              </button>
               <button
                 onClick={closeDialog}
                 className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
               >
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-md w-full" style={{ boxShadow: 'rgba(0, 0, 0, 0.1) 0px 10px 50px' }}>
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                  <Trash2 className="w-6 h-6 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Delete Lead</h3>
+                  <p className="text-sm text-gray-600">This action cannot be undone</p>
+                </div>
+              </div>
+
+              <p className="text-gray-700 mb-6">
+                Are you sure you want to delete this lead? All associated data will be permanently removed.
+              </p>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={cancelDelete}
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isDeleting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4" />
+                      Delete
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>

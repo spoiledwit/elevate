@@ -399,6 +399,52 @@ export class StorefrontService {
         });
     }
     /**
+     * Create an order for a digital product with embedded Stripe checkout.
+     * This endpoint creates a Stripe session with ui_mode='embedded' and returns
+     * the client_secret for inline checkout rendering.
+     * @param id
+     * @param formData
+     * @returns CustomLink
+     * @throws ApiError
+     */
+    public storefrontLinksCreateOrderEmbeddedCreate(
+        id: string,
+        formData?: CustomLink,
+    ): CancelablePromise<CustomLink> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/api/storefront/links/{id}/create-order-embedded/',
+            path: {
+                'id': id,
+            },
+            formData: formData,
+            mediaType: 'multipart/form-data',
+        });
+    }
+    /**
+     * Create a PaymentIntent for inline payment element integration.
+     * This is used when showing payment fields inline instead of in a popup.
+     * Returns the client_secret for the PaymentIntent.
+     * @param id
+     * @param formData
+     * @returns CustomLink
+     * @throws ApiError
+     */
+    public storefrontLinksCreatePaymentIntentCreate(
+        id: string,
+        formData?: CustomLink,
+    ): CancelablePromise<CustomLink> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/api/storefront/links/{id}/create-payment-intent/',
+            path: {
+                'id': id,
+            },
+            formData: formData,
+            mediaType: 'multipart/form-data',
+        });
+    }
+    /**
      * Get form responses for a collect info link
      * Get form responses for a custom link with collect info fields (owner only).
      * @param id

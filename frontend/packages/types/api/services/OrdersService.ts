@@ -10,8 +10,8 @@ import type { BaseHttpRequest } from '../core/BaseHttpRequest';
 export class OrdersService {
     constructor(public readonly httpRequest: BaseHttpRequest) {}
     /**
-     * ViewSet for viewing orders.
-     * Users can only see orders from their own products (CustomLinks).
+     * ViewSet for viewing and managing orders.
+     * Users can only see and delete orders from their own products (CustomLinks).
      * @param page A page number within the paginated result set.
      * @returns PaginatedOrderList
      * @throws ApiError
@@ -28,8 +28,8 @@ export class OrdersService {
         });
     }
     /**
-     * ViewSet for viewing orders.
-     * Users can only see orders from their own products (CustomLinks).
+     * ViewSet for viewing and managing orders.
+     * Users can only see and delete orders from their own products (CustomLinks).
      * @param id
      * @returns Order
      * @throws ApiError
@@ -39,6 +39,46 @@ export class OrdersService {
     ): CancelablePromise<Order> {
         return this.httpRequest.request({
             method: 'GET',
+            url: '/api/orders/{id}/',
+            path: {
+                'id': id,
+            },
+        });
+    }
+    /**
+     * ViewSet for viewing and managing orders.
+     * Users can only see and delete orders from their own products (CustomLinks).
+     * @param id
+     * @param requestBody
+     * @returns Order
+     * @throws ApiError
+     */
+    public ordersPartialUpdate(
+        id: string,
+        requestBody?: PatchedOrder,
+    ): CancelablePromise<Order> {
+        return this.httpRequest.request({
+            method: 'PATCH',
+            url: '/api/orders/{id}/',
+            path: {
+                'id': id,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * ViewSet for viewing and managing orders.
+     * Users can only see and delete orders from their own products (CustomLinks).
+     * @param id
+     * @returns void
+     * @throws ApiError
+     */
+    public ordersDestroy(
+        id: string,
+    ): CancelablePromise<void> {
+        return this.httpRequest.request({
+            method: 'DELETE',
             url: '/api/orders/{id}/',
             path: {
                 'id': id,

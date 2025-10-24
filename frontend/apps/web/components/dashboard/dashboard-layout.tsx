@@ -216,6 +216,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         return { itemId: 'settings', sectionId: 'account' }
       case '/community':
         return { itemId: 'community', sectionId: 'community' }
+      case '/prompt-library':
+        return { itemId: 'prompt-library', sectionId: 'prompt-library' }
       default:
         return { itemId: 'dashboard', sectionId: 'overview' }
     }
@@ -290,6 +292,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         break
       case 'settings':
         router.push('/settings')
+        break
+      case 'prompt-library':
+        router.push('/prompt-library')
         break
       default:
         break
@@ -405,16 +410,19 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 {/* External Links Section */}
                 <div className="pt-4 mt-4 border-t border-gray-200">
                   {/* Prompt Library */}
-                  <a
-                    href="https://thewealthcreator.co/shaygpt"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
+                  <button
+                    onClick={() => {
+                      setActiveItem('prompt-library')
+                      router.push('/prompt-library')
+                    }}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors ${activeItem === 'prompt-library'
+                      ? 'text-gray-900 bg-gray-50'
+                      : 'text-gray-700 hover:bg-gray-50'
+                      }`}
                   >
                     <Bot className="w-5 h-5 text-gray-500" />
                     <span>Prompt Library</span>
-                    <ExternalLink className="w-3 h-3 text-gray-400 ml-auto" />
-                  </a>
+                  </button>
 
                   {/* FAQ */}
                   <a

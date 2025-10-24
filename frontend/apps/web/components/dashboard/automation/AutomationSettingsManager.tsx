@@ -82,8 +82,8 @@ export function AutomationSettingsManager({ initialSettings, facebookPages }: Au
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-[#714efe1a] rounded-xl flex items-center justify-center">
-                  <Settings2 className="w-7 h-7 text-[#714efe]" />
+                <div className="w-12 h-12 bg-[#bea4561a] rounded-xl flex items-center justify-center">
+                  <Settings2 className="w-7 h-7 text-[#bea456]" />
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">Automation Settings</h1>
@@ -106,7 +106,7 @@ export function AutomationSettingsManager({ initialSettings, facebookPages }: Au
                 {pagesWithoutSettings.length > 0 && (
                   <button
                     onClick={() => setShowCreateForm(true)}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#714efe] text-white rounded-lg hover:bg-[#5f3fd6] transition-colors font-medium"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#bea456] text-white rounded-lg hover:bg-[#af9442ff] transition-colors font-medium"
                   >
                     <Plus className="w-4 h-4" />
                     Setup Page

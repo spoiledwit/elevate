@@ -1,6 +1,6 @@
 import { registerAction } from "@/actions/register-action";
 import { MultiStepRegisterForm } from "@/components/forms/multi-step-register-form";
-import registerImage from "@/assets/auth/auth.gif";
+import registerImage from "@/assets/auth/auth.svg";
 import logo from "@/assets/logo.png";
 import type { Metadata } from "next";
 import { Suspense } from "react";
@@ -36,7 +36,7 @@ export default function GetStarted() {
                   <div className="h-11 bg-gray-200 rounded"></div>
                   <div
                     className="h-11 rounded"
-                    style={{ backgroundColor: "#714efe33" }}
+                    style={{ backgroundColor: "#bea45633" }}
                   ></div>
                 </div>
               </div>

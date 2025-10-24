@@ -53,7 +53,7 @@ export function ResetPasswordForm() {
                         type="password"
                         placeholder="Enter new password"
                         className="w-full px-3 h-11 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none text-sm"
-                        onFocus={(e) => e.target.style.boxShadow = `0 0 0 2px #714efe66`}
+                        onFocus={(e) => e.target.style.boxShadow = `0 0 0 2px #bea45666`}
                         onBlur={(e) => e.target.style.boxShadow = ''}
                     />
                     {formState.errors.password && (
@@ -68,7 +68,7 @@ export function ResetPasswordForm() {
                         type="password"
                         placeholder="Confirm new password"
                         className="w-full px-3 h-11 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none text-sm"
-                        onFocus={(e) => e.target.style.boxShadow = `0 0 0 2px #714efe66`}
+                        onFocus={(e) => e.target.style.boxShadow = `0 0 0 2px #bea45666`}
                         onBlur={(e) => e.target.style.boxShadow = ''}
                     />
                     {formState.errors.passwordRetype && (
@@ -76,7 +76,7 @@ export function ResetPasswordForm() {
                     )}
                 </div>
 
-                <button type="submit" className="w-full text-white font-medium h-11 rounded-lg text-sm transition-colors" style={{backgroundColor: '#714efe'}} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#5f3fd6'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#714efe'}>Reset password</button>
+                <button type="submit" className="w-full text-white font-medium h-11 rounded-lg text-sm transition-colors" style={{ backgroundColor: '#bea456' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#af9442ff'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#bea456'}>Reset password</button>
             </form>
         </div>
     )

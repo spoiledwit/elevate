@@ -87,10 +87,10 @@
 
 <p>Best regards,<br>{{ sender_name|default:"The Elevate Social Team" }}</p>
 
-<p style="font-size: 15px; color: #666; margin-top: 30px;"><strong>P.S.</strong> {% if affiliate_link %}Check out <a href="{{ affiliate_link }}" style="color: #714efe;">my recommended resources</a> for more great content and tools.{% else %}Stay tuned for more resources and updates!{% endif %}</p>
+<p style="font-size: 15px; color: #666; margin-top: 30px;"><strong>P.S.</strong> {% if affiliate_link %}Check out <a href="{{ affiliate_link }}" style="color: #bea456;">my recommended resources</a> for more great content and tools.{% else %}Stay tuned for more resources and updates!{% endif %}</p>
 
 {% if contact_email %}
-<p style="font-size: 15px; color: #666; margin-top: 20px;">If you want to get in touch, contact me at <a href="mailto:{{ contact_email }}" style="color: #714efe;">{{ contact_email }}</a></p>
+<p style="font-size: 15px; color: #666; margin-top: 20px;">If you want to get in touch, contact me at <a href="mailto:{{ contact_email }}" style="color: #bea456;">{{ contact_email }}</a></p>
 {% endif %}
 
 {% endblock %}

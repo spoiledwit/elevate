@@ -75,20 +75,20 @@ export function LibraryUpload({ folders, onClose, onUpload, onCreateFolder }: Li
   const simulateUpload = async () => {
     // Simulate upload process
     for (let i = 0; i < uploadFiles.length; i++) {
-      setUploadFiles(prev => prev.map((file, index) => 
+      setUploadFiles(prev => prev.map((file, index) =>
         index === i ? { ...file, status: 'uploading' } : file
       ))
 
       // Simulate progress
       for (let progress = 0; progress <= 100; progress += 10) {
         await new Promise(resolve => setTimeout(resolve, 50))
-        setUploadFiles(prev => prev.map((file, index) => 
+        setUploadFiles(prev => prev.map((file, index) =>
           index === i ? { ...file, progress } : file
         ))
       }
 
       // Mark as complete
-      setUploadFiles(prev => prev.map((file, index) => 
+      setUploadFiles(prev => prev.map((file, index) =>
         index === i ? { ...file, status: 'success', progress: 100 } : file
       ))
     }
@@ -129,7 +129,7 @@ export function LibraryUpload({ folders, onClose, onUpload, onCreateFolder }: Li
               </label>
               <button
                 onClick={() => setShowCreateFolder(true)}
-                className="text-sm text-[#714efe] hover:text-[#714efe] font-medium"
+                className="text-sm text-[#bea456] hover:text-[#bea456] font-medium"
               >
                 + New Folder
               </button>
@@ -137,7 +137,7 @@ export function LibraryUpload({ folders, onClose, onUpload, onCreateFolder }: Li
             <select
               value={selectedFolder}
               onChange={(e) => setSelectedFolder(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#714efe] focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#bea456] focus:border-transparent"
             >
               {folders.map(folder => (
                 <option key={folder} value={folder}>{folder}</option>
@@ -157,7 +157,7 @@ export function LibraryUpload({ folders, onClose, onUpload, onCreateFolder }: Li
                   value={newFolderName}
                   onChange={(e) => setNewFolderName(e.target.value)}
                   placeholder="Enter folder name"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#714efe] focus:border-transparent"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#bea456] focus:border-transparent"
                 />
                 <button
                   onClick={() => {
@@ -169,7 +169,7 @@ export function LibraryUpload({ folders, onClose, onUpload, onCreateFolder }: Li
                     }
                   }}
                   disabled={!newFolderName.trim()}
-                  className="px-3 py-2 bg-[#714efe] text-white rounded-lg hover:bg-[#5f3fd6] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-2 bg-[#bea456] text-white rounded-lg hover:bg-[#af9442ff] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Create
                 </button>
@@ -191,7 +191,7 @@ export function LibraryUpload({ folders, onClose, onUpload, onCreateFolder }: Li
             className={cn(
               "border-2 border-dashed rounded-lg p-8 text-center transition-colors",
               isDragging
-                ? "border-[#714efe] bg-[#714efe1a]"
+                ? "border-[#bea456] bg-[#bea4561a]"
                 : "border-gray-300 hover:border-gray-400"
             )}
             onDrop={handleDrop}
@@ -203,7 +203,7 @@ export function LibraryUpload({ folders, onClose, onUpload, onCreateFolder }: Li
               Drag and drop files here, or{' '}
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="text-[#714efe] hover:text-[#714efe] font-medium"
+                className="text-[#bea456] hover:text-[#bea456] font-medium"
               >
                 browse
               </button>
@@ -226,7 +226,7 @@ export function LibraryUpload({ folders, onClose, onUpload, onCreateFolder }: Li
             <div className="space-y-3 max-h-60 overflow-y-auto">
               {uploadFiles.map((uploadFile, index) => {
                 const Icon = getFileIcon(uploadFile.file)
-                
+
                 return (
                   <div
                     key={index}
@@ -247,13 +247,13 @@ export function LibraryUpload({ folders, onClose, onUpload, onCreateFolder }: Li
                       <p className="text-xs text-gray-500">
                         {formatFileSize(uploadFile.file.size)}
                       </p>
-                      
+
                       {/* Progress Bar */}
                       {uploadFile.status === 'uploading' && (
                         <div className="mt-1">
                           <div className="w-full bg-gray-200 rounded-full h-1">
-                            <div 
-                              className="bg-[#714efe] h-1 rounded-full transition-all duration-300"
+                            <div
+                              className="bg-[#bea456] h-1 rounded-full transition-all duration-300"
                               style={{ width: `${uploadFile.progress}%` }}
                             />
                           </div>
@@ -305,7 +305,7 @@ export function LibraryUpload({ folders, onClose, onUpload, onCreateFolder }: Li
             <button
               onClick={simulateUpload}
               disabled={!canUpload}
-              className="px-6 py-2 bg-[#714efe] text-white rounded-lg hover:bg-[#5f3fd6] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2 bg-[#bea456] text-white rounded-lg hover:bg-[#af9442ff] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isUploading ? 'Uploading...' : 'Upload Files'}
             </button>

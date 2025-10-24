@@ -1,50 +1,51 @@
 {% extends "emails/base.html" %}
 
-{% block title %}{{ first_name|default:"Friend" }}, You'll never run out of content again{% endblock %}
+{% block title %}The Wealth Creator Content System Is Ready for You{% endblock %}
 
-{% block header_title %}{{ first_name|default:"Friend" }}, You'll never run out of content again{% endblock %}
+{% block header_title %}The Wealth Creator Content System Is Ready for You{% endblock %}
 
 {% block content %}
-<p>{{ first_name|default:"Friend" }}, Let's be real — content burnout is real.</p>
+<p>Hey {{ first_name|default:"Friend" }},</p>
 
-<p>You sit down to post, and your brain's like, "Nope. Not today."</p>
+<p>Welcome to The Wealth Creator — your pathway to creating content that connects, converts, and grows your income.</p>
 
-<p>And that becomes your biggest enemy when, like so many of us, you're using social media to earn a healthy income online.</p>
+<p>You now have instant access to <strong>"30 Pieces of Content in Minutes, Not Hours."</strong></p>
 
-<p><strong>That burnout ends now.</strong></p>
-
-<p>Your <strong>5-Minute 30-Day Content Engine</strong> is officially unlocked 🎉</p>
-
-<p>It's the exact framework I use to batch 30 days of scroll-stopping content in less time than it takes to make coffee.</p>
-
-<p>This is plug, play, and post.</p>
-
-<p>And yes… it's a gift. (Totally free... for now 😉)</p>
+<p>This tool helps you plan, write, and repurpose 30+ pieces of high-converting content in minutes — saving you hours of guesswork and burnout.</p>
 
 <div style="text-align: center; margin: 30px 0;">
     {% if digital_file_url %}
-    <a href="{{ digital_file_url }}" style="display: inline-block; background-color: #714efe; color: white !important; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 16px;">Grab it here</a>
+    <a href="{{ digital_file_url }}" style="display: inline-block; background-color: #bea456; color: white !important; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 16px;">Click to Open the Google Sheet</a>
     {% else %}
     <p><em>Download link will be provided shortly via email.</em></p>
     {% endif %}
 </div>
 
-{% if digital_file_url %}
-<p>Or use this link: <a href="{{ digital_file_url }}" style="color: #714efe;">{{ digital_file_url }}</a></p>
+<h3 style="color: #333; font-size: 20px; margin-top: 30px;">Meet ShayGPT</h3>
+
+<p>Alongside your content sheet, you've also unlocked <strong>ShayGPT</strong> — a custom-trained AI built for The Wealth Creator community.</p>
+
+<p>ShayGPT helps you generate scroll-stopping, conversion-driven content for any offer or opportunity you're promoting.</p>
+
+<p>From captions and reels to emails and headlines — your new digital co-writer has you covered.</p>
+
+<h3 style="color: #333; font-size: 20px; margin-top: 30px;">Next Step: Watch the Free Masterclass</h3>
+
+<p>Want to see how you can turn this content system into consistent, automated income?</p>
+
+{% if affiliate_link %}
+<div style="text-align: center; margin: 25px 0;">
+    <a href="{{ affiliate_link }}" style="display: inline-block; background-color: #bea456; color: white !important; padding: 14px 35px; text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 16px;">Watch my free masterclass here</a>
+</div>
 {% endif %}
 
-<p style="margin-top: 30px;"><strong>P.S.</strong> Over the next few days, I'll be dropping some exclusive goodies about how you can pair this engine with a system that turns your content into cashflow — where one sale = six ways to earn.</p>
-
-<p>Yeah, seriously.</p>
-
-<p>We teach you exactly how inside → {% if affiliate_link %}<a href="{{ affiliate_link }}" style="color: #714efe;">{{ affiliate_link }}</a>{% else %}[affiliate link coming soon]{% endif %}</p>
+<p>You'll learn how The Wealth Creator helps you build a done-for-you business system that sells — even while you're living your life.</p>
 
 {% if contact_email %}
-<p>If you have any questions, I'd love for you to reach out at <a href="mailto:{{ contact_email }}" style="color: #714efe;">{{ contact_email }}</a> — I read every message personally.</p>
+<p style="margin-top: 30px;"><strong>P.S.</strong> If you have any questions or just want to say hi, I'd love to hear from you!</p>
+<p>Click <a href="mailto:{{ contact_email }}" style="color: #bea456;">{{ contact_email }}</a> and drop me a message.</p>
 {% endif %}
 
-<p>Happy posting ✨</p>
-
-<p>{{ sender_name|default:"The Elevate Social Team" }}</p>
+<p style="margin-top: 25px;">xoxo,<br>{{ sender_name|default:"The Wealth Creator Team" }}</p>
 
 {% endblock %}

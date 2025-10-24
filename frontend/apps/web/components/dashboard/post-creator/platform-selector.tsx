@@ -93,7 +93,7 @@ export function PlatformSelector({
           </p>
           <Link
             href="/social-accounts"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-[#714efe] text-white text-sm rounded-lg hover:bg-[#5f3fd6] transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-[#bea456] text-white text-sm rounded-lg hover:bg-[#af9442ff] transition-colors"
           >
             <Plus className="w-4 h-4" />
             Connect Accounts
@@ -109,7 +109,7 @@ export function PlatformSelector({
       <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h2 className="text-sm font-semibold text-gray-900">Publish To</h2>
-          <span className="text-xs px-2 py-0.5 bg-[#714efe1a] text-[#714efe] rounded-full font-medium">
+          <span className="text-xs px-2 py-0.5 bg-[#bea4561a] text-[#bea456] rounded-full font-medium">
             {selectedConnections.length} of {totalConnections} selected
           </span>
         </div>
@@ -124,7 +124,7 @@ export function PlatformSelector({
           ) : (
             <button
               onClick={handleSelectAll}
-              className="text-xs text-[#714efe] hover:text-[#714efe] font-medium"
+              className="text-xs text-[#bea456] hover:text-[#bea456] font-medium"
             >
               Select all
             </button>
@@ -157,7 +157,7 @@ export function PlatformSelector({
                 onClick={() => handleConnectionToggle(connection.id)}
                 className={cn(
                   "w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors text-left",
-                  isSelected && "bg-[#714efe1a] hover:bg-[#714efe1a]"
+                  isSelected && "bg-[#bea4561a] hover:bg-[#bea4561a]"
                 )}
               >
                 <div className="flex items-center gap-3">
@@ -174,7 +174,7 @@ export function PlatformSelector({
                 <div className={cn(
                   "w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
                   isSelected
-                    ? "bg-[#714efe] border-brand-600"
+                    ? "bg-[#bea456] border-brand-600"
                     : "border-gray-300"
                 )}>
                   {isSelected && <Check className="w-3 h-3 text-white" />}
@@ -231,7 +231,7 @@ export function PlatformSelector({
                         onClick={() => handleConnectionToggle(connection.id)}
                         className={cn(
                           "w-full px-4 py-2.5 pl-12 flex items-center justify-between hover:bg-gray-100 transition-colors text-left border-b border-gray-100 last:border-0",
-                          isSelected && "bg-[#714efe1a] hover:bg-[#714efe1a]"
+                          isSelected && "bg-[#bea4561a] hover:bg-[#bea4561a]"
                         )}
                       >
                         <div>
@@ -245,7 +245,7 @@ export function PlatformSelector({
                         <div className={cn(
                           "w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
                           isSelected
-                            ? "bg-[#714efe] border-brand-600"
+                            ? "bg-[#bea456] border-brand-600"
                             : "border-gray-300"
                         )}>
                           {isSelected && <Check className="w-3 h-3 text-white" />}
@@ -264,7 +264,7 @@ export function PlatformSelector({
       <div className="px-4 py-3 border-t border-gray-100">
         <Link
           href="/social-accounts"
-          className="text-sm text-[#714efe] hover:text-[#714efe] font-medium"
+          className="text-sm text-[#bea456] hover:text-[#bea456] font-medium"
         >
           Manage Accounts →
         </Link>

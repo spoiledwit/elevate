@@ -22,7 +22,7 @@ export function MediaUploader({ mediaFiles, onMediaChange, selectedPlatforms, is
   useEffect(() => {
     const generatePreviews = async () => {
       const newPreviews: string[] = []
-      
+
       for (const file of mediaFiles) {
         if (file.type.startsWith('image/')) {
           const reader = new FileReader()
@@ -35,10 +35,10 @@ export function MediaUploader({ mediaFiles, onMediaChange, selectedPlatforms, is
           newPreviews.push('') // Empty string for non-image files
         }
       }
-      
+
       setPreviews(newPreviews)
     }
-    
+
     if (mediaFiles.length > 0) {
       generatePreviews()
     } else {
@@ -50,7 +50,7 @@ export function MediaUploader({ mediaFiles, onMediaChange, selectedPlatforms, is
   const getMediaLimits = () => {
     const hasInstagram = selectedPlatforms.includes('instagram')
     const hasFacebook = selectedPlatforms.includes('facebook')
-    
+
     if (hasInstagram) {
       return { maxFiles: 10, maxSize: 100, formats: 'JPG, PNG, MP4, MOV' } // 100MB for video
     }
@@ -75,7 +75,7 @@ export function MediaUploader({ mediaFiles, onMediaChange, selectedPlatforms, is
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
-    
+
     const files = Array.from(e.dataTransfer.files)
     handleFiles(files)
   }, [])
@@ -93,24 +93,24 @@ export function MediaUploader({ mediaFiles, onMediaChange, selectedPlatforms, is
       const isImage = file.type.startsWith('image/')
       const isVideo = file.type.startsWith('video/')
       const sizeInMB = file.size / (1024 * 1024)
-      
+
       if (!isImage && !isVideo) {
         console.error(`Invalid file type: ${file.type}`)
         return false
       }
-      
+
       if (sizeInMB > limits.maxSize) {
         console.error(`File too large: ${file.name}`)
         return false
       }
-      
+
       return true
     })
 
     // Add to existing files (up to limit)
     const totalFiles = [...mediaFiles, ...validFiles].slice(0, limits.maxFiles)
     onMediaChange(totalFiles)
-    
+
     // Previews are now handled by useEffect
   }
 
@@ -133,7 +133,7 @@ export function MediaUploader({ mediaFiles, onMediaChange, selectedPlatforms, is
         {onGenerateImage && (
           <button
             onClick={onGenerateImage}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-[#714efe] bg-[#714efe1a] rounded-lg hover:bg-[#714efe1a] transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-[#bea456] bg-[#bea4561a] rounded-lg hover:bg-[#bea4561a] transition-colors"
             title="Generate image with AI"
           >
             <Wand2 className="w-4 h-4" />
@@ -149,19 +149,19 @@ export function MediaUploader({ mediaFiles, onMediaChange, selectedPlatforms, is
         onDrop={handleDrop}
         className={cn(
           "relative border-2 border-dashed rounded-lg transition-all",
-          isDragging ? "border-[#714efe] bg-[#714efe1a]" : "border-gray-300",
+          isDragging ? "border-[#bea456] bg-[#bea4561a]" : "border-gray-300",
           mediaFiles.length > 0 || isLoadingMedia || isMiloGeneratingImage ? "p-4" : "p-8"
         )}
       >
         {isLoadingMedia ? (
           <div className="text-center py-8">
-            <Loader2 className="w-12 h-12 text-[#714efe] animate-spin mx-auto mb-4" />
+            <Loader2 className="w-12 h-12 text-[#bea456] animate-spin mx-auto mb-4" />
             <p className="text-gray-600">Loading image from content library...</p>
           </div>
         ) : isMiloGeneratingImage ? (
           <div className="text-center py-8">
-            <Loader2 className="w-12 h-12 text-[#714efe] animate-spin mx-auto mb-4" />
-            <p className="text-[#714efe] font-medium">Milo is generating your image...</p>
+            <Loader2 className="w-12 h-12 text-[#bea456] animate-spin mx-auto mb-4" />
+            <p className="text-[#bea456] font-medium">Milo is generating your image...</p>
             <p className="text-sm text-gray-500 mt-2">This may take up to 30 seconds</p>
           </div>
         ) : mediaFiles.length === 0 ? (
@@ -171,7 +171,7 @@ export function MediaUploader({ mediaFiles, onMediaChange, selectedPlatforms, is
               Drag and drop your media here, or
             </p>
             <label className="cursor-pointer">
-              <span className="text-[#714efe] hover:text-[#714efe] font-medium">
+              <span className="text-[#bea456] hover:text-[#bea456] font-medium">
                 browse files
               </span>
               <input
@@ -193,7 +193,7 @@ export function MediaUploader({ mediaFiles, onMediaChange, selectedPlatforms, is
               {mediaFiles.map((file, index) => {
                 const FileIcon = getFileIcon(file)
                 const isImage = file.type.startsWith('image/')
-                
+
                 return (
                   <div key={index} className="relative group">
                     <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
@@ -209,7 +209,7 @@ export function MediaUploader({ mediaFiles, onMediaChange, selectedPlatforms, is
                         </div>
                       )}
                     </div>
-                    
+
                     {/* Remove button */}
                     <button
                       onClick={() => removeFile(index)}
@@ -217,7 +217,7 @@ export function MediaUploader({ mediaFiles, onMediaChange, selectedPlatforms, is
                     >
                       <X className="w-4 h-4" />
                     </button>
-                    
+
                     {/* File info */}
                     <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent">
                       <p className="text-xs text-white truncate">
@@ -235,7 +235,7 @@ export function MediaUploader({ mediaFiles, onMediaChange, selectedPlatforms, is
             {/* Add more button */}
             {mediaFiles.length < limits.maxFiles && (
               <label className="block cursor-pointer">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-[#714efe] hover:bg-[#714efe1a] transition-all">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-[#bea456] hover:bg-[#bea4561a] transition-all">
                   <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                   <span className="text-sm text-gray-600">Add more media</span>
                 </div>
@@ -255,7 +255,7 @@ export function MediaUploader({ mediaFiles, onMediaChange, selectedPlatforms, is
         {isUploading && (
           <div className="absolute inset-0 bg-white/90 flex items-center justify-center rounded-lg">
             <div className="text-center">
-              <Loader2 className="w-8 h-8 text-[#714efe] animate-spin mx-auto mb-2" />
+              <Loader2 className="w-8 h-8 text-[#bea456] animate-spin mx-auto mb-2" />
               <p className="text-sm text-gray-600">Uploading...</p>
             </div>
           </div>

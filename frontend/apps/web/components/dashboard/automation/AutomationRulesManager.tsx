@@ -91,8 +91,8 @@ export function AutomationRulesManager({ initialRules, facebookPages }: Automati
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-[#714efe1a] rounded-xl flex items-center justify-center">
-                  <Zap className="w-7 h-7 text-[#714efe]" />
+                <div className="w-12 h-12 bg-[#bea4561a] rounded-xl flex items-center justify-center">
+                  <Zap className="w-7 h-7 text-[#bea456]" />
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">Automation Rules</h1>
@@ -106,8 +106,8 @@ export function AutomationRulesManager({ initialRules, facebookPages }: Automati
                 <button
                   onClick={() => setShowFilters(!showFilters)}
                   className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${showFilters
-                      ? 'bg-[#714efe1a] text-[#714efe]'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-[#bea4561a] text-[#bea456]'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                 >
                   <Filter className="w-4 h-4" />
@@ -125,7 +125,7 @@ export function AutomationRulesManager({ initialRules, facebookPages }: Automati
 
                 <button
                   onClick={() => setShowCreateForm(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#714efe] text-white rounded-lg hover:bg-[#5f3fd6] transition-colors font-medium"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#bea456] text-white rounded-lg hover:bg-[#af9442ff] transition-colors font-medium"
                 >
                   <Plus className="w-4 h-4" />
                   Create Rule

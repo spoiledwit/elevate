@@ -21,9 +21,8 @@ export function Navbar() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 w-full px-8 md:px-16 lg:px-24 py-4 lg:py-6 bg-transparent z-50 ${
-        scrolled ? "bg-white" : "bg-transparent"
-      }`}
+      className={`fixed top-0 left-0 right-0 w-full px-8 md:px-16 lg:px-24 py-4 lg:py-6 bg-transparent z-50 ${scrolled ? "bg-white" : "bg-transparent"
+        }`}
       style={{ boxShadow: scrolled ? "0 2px 8px 0 rgba(0,0,0,0.08)" : "none" }}
     >
       <div className="flex items-center justify-between">
@@ -47,7 +46,7 @@ export function Navbar() {
             <Link
               href="/dashboard"
               className="font-semibold text-white px-6 py-2.5 rounded-lg hover:scale-105 transition-all"
-              style={{ backgroundColor: "#714efe" }}
+              style={{ backgroundColor: "#bea456" }}
             >
               Dashboard
             </Link>
@@ -59,7 +58,7 @@ export function Navbar() {
               <Link
                 href="/get-started"
                 className="font-semibold text-white px-6 py-2.5 rounded-lg hover:scale-105 transition-all"
-                style={{ backgroundColor: "#714efe" }}
+                style={{ backgroundColor: "#bea456" }}
               >
                 Get Started
               </Link>
@@ -145,12 +144,12 @@ export function Navbar() {
                 <Link
                   href="/dashboard"
                   className="block font-semibold text-white px-6 py-2.5 rounded-lg text-center transition-colors"
-                  style={{ backgroundColor: "#714efe" }}
+                  style={{ backgroundColor: "#bea456" }}
                   onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor = "#5f3fd6")
+                    (e.currentTarget.style.backgroundColor = "#af9442ff")
                   }
                   onMouseLeave={(e) =>
-                    (e.currentTarget.style.backgroundColor = "#714efe")
+                    (e.currentTarget.style.backgroundColor = "#bea456")
                   }
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
@@ -168,12 +167,12 @@ export function Navbar() {
                   <Link
                     href="/get-started"
                     className="block font-semibold text-white px-6 py-2.5 rounded-lg text-center transition-colors"
-                    style={{ backgroundColor: "#714efe" }}
+                    style={{ backgroundColor: "#bea456" }}
                     onMouseEnter={(e) =>
-                      (e.currentTarget.style.backgroundColor = "#5f3fd6")
+                      (e.currentTarget.style.backgroundColor = "#af9442ff")
                     }
                     onMouseLeave={(e) =>
-                      (e.currentTarget.style.backgroundColor = "#714efe")
+                      (e.currentTarget.style.backgroundColor = "#bea456")
                     }
                     onClick={() => setIsMobileMenuOpen(false)}
                   >

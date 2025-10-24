@@ -133,19 +133,19 @@ export function PostComposer({ content, onContentChange, selectedPlatforms, isMi
             <h2 className={cn(
               "text-lg font-semibold transition-all duration-500",
               isMiloUpdating
-                ? "text-[#714efe] drop-shadow-sm"
+                ? "text-[#bea456] drop-shadow-sm"
                 : "text-gray-900"
             )}>
               Compose Post
               {isMiloUpdating && (
-                <span className="ml-2 inline-flex items-center gap-1 text-sm text-[#714efe] font-medium">
+                <span className="ml-2 inline-flex items-center gap-1 text-sm text-[#bea456] font-medium">
                   Milo is writing...
                 </span>
               )}
             </h2>
             <button
               onClick={() => setShowAiDialog(true)}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm text-[#714efe] bg-[#714efe1a] rounded-lg hover:bg-[#714efe1a] transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 text-sm text-[#bea456] bg-[#bea4561a] rounded-lg hover:bg-[#bea4561a] transition-colors"
             >
               <Sparkles className="w-4 h-4" />
               AI Assistant
@@ -166,7 +166,7 @@ export function PostComposer({ content, onContentChange, selectedPlatforms, isMi
               placeholder="What would you like to share today?"
               className={cn(
                 "w-full min-h-[200px] p-4 text-gray-900 rounded-lg resize-none transition-all duration-500 relative z-20",
-                "placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#714efe]",
+                "placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#bea456]",
                 isMiloUpdating
                   ? "bg-gradient-to-br from-purple-50/80 to-violet-50/80 ring-2 ring-purple-300/50 shadow-inner shadow-purple-200/50"
                   : "bg-gray-50 focus:bg-white",
@@ -176,9 +176,9 @@ export function PostComposer({ content, onContentChange, selectedPlatforms, isMi
             {isMiloUpdating && (
               <div className="absolute bottom-2 right-2 z-30">
                 <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 bg-[#714efe1a]0 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-[#bea4561a]0 rounded-full animate-bounce"></div>
                   <div className="w-2 h-2 bg-violet-500 rounded-full animate-bounce animation-delay-200"></div>
-                  <div className="w-2 h-2 bg-[#714efe1a]0 rounded-full animate-bounce animation-delay-400"></div>
+                  <div className="w-2 h-2 bg-[#bea4561a]0 rounded-full animate-bounce animation-delay-400"></div>
                 </div>
               </div>
             )}

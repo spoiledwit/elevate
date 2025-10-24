@@ -326,7 +326,7 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
                                         link.type === 'url_media' ? 'URL/Media' :
                                           link.type === 'freebie' ? 'Freebie' :
                                             link.type === 'opt_in_type' ? 'Opt-in' :
-                                            link.type}
+                                              link.type}
                                 </span>
                               )}
                               {/* Price - Hide for freebie, opt_in, and url_media */}
@@ -436,7 +436,7 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
                         className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium text-base"
                       >
                         <Plus className="w-5 h-5" />
-                        Add Your First Product
+                        Add Your First Products
                       </NextLink>
                     </div>
                   )}

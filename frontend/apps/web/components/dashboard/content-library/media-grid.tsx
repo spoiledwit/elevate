@@ -64,7 +64,7 @@ const getFileTypeColor = (type: string) => {
     case 'document':
       return 'text-orange-600 bg-orange-50 border-orange-200'
     case 'archive':
-      return 'text-[#714efe] bg-[#714efe1a] border-[#714efe33]'
+      return 'text-[#bea456] bg-[#bea4561a] border-[#bea45633]'
     default:
       return 'text-gray-600 bg-gray-50 border-gray-200'
   }
@@ -100,7 +100,7 @@ export function MediaGrid({ items, viewMode, selectedItems, onSelectionChange }:
               type="checkbox"
               checked={selectedItems.length === items.length && items.length > 0}
               onChange={selectAll}
-              className="rounded border-gray-300 text-[#714efe] focus:ring-[#714efe]"
+              className="rounded border-gray-300 text-[#bea456] focus:ring-[#bea456]"
             />
           </div>
           <div className="col-span-4">Name</div>
@@ -121,7 +121,7 @@ export function MediaGrid({ items, viewMode, selectedItems, onSelectionChange }:
                 key={item.id}
                 className={cn(
                   "grid grid-cols-12 gap-4 px-4 py-3 hover:bg-gray-50 transition-colors",
-                  isSelected && "bg-[#714efe1a]"
+                  isSelected && "bg-[#bea4561a]"
                 )}
               >
                 <div className="col-span-1 flex items-center">
@@ -129,7 +129,7 @@ export function MediaGrid({ items, viewMode, selectedItems, onSelectionChange }:
                     type="checkbox"
                     checked={isSelected}
                     onChange={() => toggleSelection(item.id)}
-                    className="rounded border-gray-300 text-[#714efe] focus:ring-[#714efe]"
+                    className="rounded border-gray-300 text-[#bea456] focus:ring-[#bea456]"
                   />
                 </div>
 
@@ -205,7 +205,7 @@ export function MediaGrid({ items, viewMode, selectedItems, onSelectionChange }:
             key={item.id}
             className={cn(
               "bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200 cursor-pointer",
-              isSelected && "ring-2 ring-brand-500 border-[#714efe]"
+              isSelected && "ring-2 ring-brand-500 border-[#bea456]"
             )}
             onMouseEnter={() => setHoveredItem(item.id)}
             onMouseLeave={() => setHoveredItem(null)}
@@ -245,7 +245,7 @@ export function MediaGrid({ items, viewMode, selectedItems, onSelectionChange }:
                 <div className={cn(
                   "w-5 h-5 rounded border-2 flex items-center justify-center",
                   isSelected
-                    ? "bg-[#714efe] border-brand-600"
+                    ? "bg-[#bea456] border-brand-600"
                     : "bg-white border-white"
                 )}>
                   {isSelected && <Check className="w-3 h-3 text-white" />}

@@ -166,7 +166,7 @@ export function CalendarManager({ initialPosts }: CalendarManagerProps) {
 
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2 px-4 py-2 bg-[#714efe] text-white rounded-lg hover:bg-[#5f3fd6] transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-[#bea456] text-white rounded-lg hover:bg-[#af9442ff] transition-colors"
               >
                 <Filter className="w-4 h-4" />
                 {showFilters ? 'Hide Filters' : 'Show Filters'}
@@ -183,7 +183,7 @@ export function CalendarManager({ initialPosts }: CalendarManagerProps) {
 
               <Link
                 href={"post-creator"}
-                className="flex items-center gap-2 px-6 py-2 text-white rounded-lg transition-colors" style={{ backgroundColor: '#714efe' }}>
+                className="flex items-center gap-2 px-6 py-2 text-white rounded-lg transition-colors" style={{ backgroundColor: '#bea456' }}>
                 <Plus className="w-4 h-4" />
                 Create Post
               </Link>
@@ -217,7 +217,7 @@ export function CalendarManager({ initialPosts }: CalendarManagerProps) {
               {loading ? (
                 <div className="flex items-center justify-center py-12">
                   <div className="text-center">
-                    <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" style={{ color: '#714efe' }} />
+                    <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" style={{ color: '#bea456' }} />
                     <p className="text-gray-600">Loading posts...</p>
                   </div>
                 </div>
@@ -233,7 +233,7 @@ export function CalendarManager({ initialPosts }: CalendarManagerProps) {
                     <p className="text-sm text-gray-500 mb-4">{error}</p>
                     <button
                       onClick={() => loadPosts()}
-                      className="px-4 py-2 text-white rounded-lg transition-colors" style={{ backgroundColor: '#714efe' }}
+                      className="px-4 py-2 text-white rounded-lg transition-colors" style={{ backgroundColor: '#bea456' }}
                     >
                       Try Again
                     </button>
@@ -251,7 +251,7 @@ export function CalendarManager({ initialPosts }: CalendarManagerProps) {
                     </p>
                     <Link
                       href="/post-creator"
-                      className="inline-flex items-center gap-2 px-6 py-2 text-white rounded-lg transition-colors" style={{ backgroundColor: '#714efe' }}
+                      className="inline-flex items-center gap-2 px-6 py-2 text-white rounded-lg transition-colors" style={{ backgroundColor: '#bea456' }}
                     >
                       <Plus className="w-4 h-4" />
                       Create Your First Post

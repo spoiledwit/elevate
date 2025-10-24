@@ -16,10 +16,10 @@ export function QuickActions() {
 
           <a
             href="/dashboard/cta-banners"
-            className="block w-full text-left px-4 py-3 rounded-lg border transition-colors" style={{ backgroundColor: '#714efe1a', borderColor: '#714efe33' }}
+            className="block w-full text-left px-4 py-3 rounded-lg border transition-colors" style={{ backgroundColor: '#bea4561a', borderColor: '#bea45633' }}
           >
-            <div className="font-medium" style={{ color: '#5f3fd6' }}>Edit CTA Banner</div>
-            <div className="text-sm" style={{ color: '#714efe' }}>Create promotional banners</div>
+            <div className="font-medium" style={{ color: '#af9442ff' }}>Edit CTA Banner</div>
+            <div className="text-sm" style={{ color: '#bea456' }}>Create promotional banners</div>
           </a>
 
           <a

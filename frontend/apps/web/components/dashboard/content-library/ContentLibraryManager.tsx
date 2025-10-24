@@ -45,9 +45,9 @@ interface ContentLibraryManagerProps {
   initialFolders: FolderItem[]
 }
 
-export function ContentLibraryManager({ 
-  initialMediaItems, 
-  initialFolders 
+export function ContentLibraryManager({
+  initialMediaItems,
+  initialFolders
 }: ContentLibraryManagerProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [selectedFolder, setSelectedFolder] = useState<string>('all')
@@ -274,7 +274,7 @@ export function ContentLibraryManager({
 
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2 px-4 py-2 bg-[#714efe] text-white rounded-lg hover:bg-[#5f3fd6] transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-[#bea456] text-white rounded-lg hover:bg-[#af9442ff] transition-colors"
               >
                 <Filter className="w-4 h-4" />
                 {showFilters ? 'Hide Filters' : 'Show Filters'}
@@ -290,7 +290,7 @@ export function ContentLibraryManager({
 
               <button
                 onClick={() => setShowUploadModal(true)}
-                className="flex items-center gap-2 px-6 py-2 bg-[#714efe] text-white rounded-lg hover:bg-[#5f3fd6] transition-colors"
+                className="flex items-center gap-2 px-6 py-2 bg-[#bea456] text-white rounded-lg hover:bg-[#af9442ff] transition-colors"
               >
                 <Upload className="w-4 h-4" />
                 Upload Media
@@ -353,7 +353,7 @@ export function ContentLibraryManager({
               {loading ? (
                 <div className="flex items-center justify-center py-12">
                   <div className="text-center">
-                    <Loader2 className="w-8 h-8 text-[#714efe] animate-spin mx-auto mb-4" />
+                    <Loader2 className="w-8 h-8 text-[#bea456] animate-spin mx-auto mb-4" />
                     <p className="text-gray-600">Loading your media library...</p>
                   </div>
                 </div>
@@ -369,7 +369,7 @@ export function ContentLibraryManager({
                     <p className="text-sm text-gray-500 mb-4">{error}</p>
                     <button
                       onClick={() => loadData()}
-                      className="px-4 py-2 bg-[#714efe] text-white rounded-lg hover:bg-[#5f3fd6] transition-colors"
+                      className="px-4 py-2 bg-[#bea456] text-white rounded-lg hover:bg-[#af9442ff] transition-colors"
                     >
                       Try Again
                     </button>
@@ -387,7 +387,7 @@ export function ContentLibraryManager({
                     </p>
                     <button
                       onClick={() => setShowUploadModal(true)}
-                      className="inline-flex items-center gap-2 px-6 py-2 bg-[#714efe] text-white rounded-lg hover:bg-[#5f3fd6] transition-colors"
+                      className="inline-flex items-center gap-2 px-6 py-2 bg-[#bea456] text-white rounded-lg hover:bg-[#af9442ff] transition-colors"
                     >
                       <Upload className="w-4 h-4" />
                       Upload Your First File
@@ -453,7 +453,7 @@ function CreateFolderModal({ onClose, onCreateFolder }: { onClose: () => void, o
               value={folderName}
               onChange={(e) => setFolderName(e.target.value)}
               placeholder="Folder name"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#714efe] focus:border-[#714efe] outline-none transition-all mb-4"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#bea456] focus:border-[#bea456] outline-none transition-all mb-4"
               autoFocus
             />
             <div className="flex items-center gap-3">
@@ -467,7 +467,7 @@ function CreateFolderModal({ onClose, onCreateFolder }: { onClose: () => void, o
               <button
                 type="submit"
                 disabled={!folderName.trim()}
-                className="flex-1 px-4 py-2 bg-[#714efe] text-white rounded-lg hover:bg-[#5f3fd6] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2 bg-[#bea456] text-white rounded-lg hover:bg-[#af9442ff] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Create Folder
               </button>

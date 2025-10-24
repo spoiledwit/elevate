@@ -106,8 +106,8 @@ export function AIAssistantDialog({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-[#714efe1a] rounded-lg">
-              <Sparkles className="w-5 h-5 text-[#714efe]" />
+            <div className="p-2 bg-[#bea4561a] rounded-lg">
+              <Sparkles className="w-5 h-5 text-[#bea456]" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-gray-900">AI Content Assistant</h2>
@@ -136,7 +136,7 @@ export function AIAssistantDialog({
                   className={cn(
                     "p-3 text-left rounded-lg border transition-all",
                     contentType === type.id
-                      ? "border-[#714efe] bg-[#714efe1a]"
+                      ? "border-[#bea456] bg-[#bea4561a]"
                       : "border-gray-200 hover:border-gray-300"
                   )}
                 >
@@ -160,7 +160,7 @@ export function AIAssistantDialog({
                   className={cn(
                     "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
                     tone === t.id
-                      ? "bg-[#714efe] text-white"
+                      ? "bg-[#bea456] text-white"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   )}
                 >
@@ -183,7 +183,7 @@ export function AIAssistantDialog({
                   ? "What improvements would you like?"
                   : "E.g., Announcing our new product launch, summer sale promotion..."
               }
-              className="w-full h-24 px-4 py-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#714efe]"
+              className="w-full h-24 px-4 py-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#bea456]"
             />
           </div>
 
@@ -245,7 +245,7 @@ export function AIAssistantDialog({
               <button
                 onClick={handleGenerate}
                 disabled={isGenerating || !prompt.trim()}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#714efe] hover:bg-[#5f3fd6] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#bea456] hover:bg-[#af9442ff] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isGenerating ? (
                   <>
@@ -270,7 +270,7 @@ export function AIAssistantDialog({
                 </button>
                 <button
                   onClick={handleInsert}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#714efe] hover:bg-[#5f3fd6] rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#bea456] hover:bg-[#af9442ff] rounded-lg transition-colors"
                 >
                   <Check className="w-4 h-4" />
                   Insert Content

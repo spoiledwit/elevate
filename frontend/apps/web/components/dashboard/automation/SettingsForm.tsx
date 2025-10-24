@@ -95,8 +95,8 @@ export function SettingsForm({ setting, facebookPages, pagesWithoutSettings, onC
         const webhookResult = await subscribePageWebhooksAction(selectedPage.page_id)
         if ('error' in webhookResult) {
           // Webhook failed but settings saved - show warning
-          setErrors({ 
-            submit: `Settings saved but webhook registration failed: ${webhookResult.error}. You may need to reconnect your Facebook page.` 
+          setErrors({
+            submit: `Settings saved but webhook registration failed: ${webhookResult.error}. You may need to reconnect your Facebook page.`
           })
           return
         }
@@ -121,7 +121,7 @@ export function SettingsForm({ setting, facebookPages, pagesWithoutSettings, onC
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
-            <Settings2 className="w-6 h-6 text-[#714efe]" />
+            <Settings2 className="w-6 h-6 text-[#bea456]" />
             <h2 className="text-xl font-semibold text-gray-900">
               {isEditing ? 'Update Settings' : 'Setup Automation'}
             </h2>
@@ -137,155 +137,70 @@ export function SettingsForm({ setting, facebookPages, pagesWithoutSettings, onC
         {/* Form */}
         <div className="flex-1 overflow-y-auto">
           <form id="settings-form" onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Page Selection */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Facebook Page *
-            </label>
-            {isEditing ? (
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="font-medium text-gray-900">{setting?.connection_name}</p>
-              </div>
-            ) : (
-              <>
-                <select
-                  value={formData.connection_id}
-                  onChange={(e) => handleInputChange('connection_id', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#714efe] focus:border-transparent"
-                >
-                  <option value="">Select a Facebook page</option>
-                  {availablePages.map((page: any) => (
-                    <option key={page.connection_id} value={page.connection_id}>
-                      {page.page_name}
-                    </option>
-                  ))}
-                </select>
-                {errors.connection_id && (
-                  <p className="text-sm text-red-600 mt-1">{errors.connection_id}</p>
-                )}
-              </>
-            )}
-          </div>
-
-          {/* Enable/Disable Toggle */}
-          <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-[#714efe1a] rounded-lg flex items-center justify-center">
-                {formData.is_enabled ? (
-                  <ToggleRight className="w-5 h-5 text-[#714efe]" />
-                ) : (
-                  <ToggleLeft className="w-5 h-5 text-gray-500" />
-                )}
-              </div>
-              <div>
-                <h4 className="font-medium text-gray-900">Auto-reply to comments</h4>
-                <p className="text-sm text-gray-600">
-                  {formData.is_enabled ? 'Automation is enabled' : 'Automation is disabled'}
-                </p>
-              </div>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.is_enabled}
-                onChange={(e) => handleInputChange('is_enabled', e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#714efe66] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#714efe]"></div>
-            </label>
-          </div>
-
-          {/* Reply Delay */}
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Clock className="w-4 h-4 text-gray-500" />
-              <label className="block text-sm font-medium text-gray-700">
-                Reply Delay (seconds)
+            {/* Page Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Facebook Page *
               </label>
+              {isEditing ? (
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="font-medium text-gray-900">{setting?.connection_name}</p>
+                </div>
+              ) : (
+                <>
+                  <select
+                    value={formData.connection_id}
+                    onChange={(e) => handleInputChange('connection_id', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#bea456] focus:border-transparent"
+                  >
+                    <option value="">Select a Facebook page</option>
+                    {availablePages.map((page: any) => (
+                      <option key={page.connection_id} value={page.connection_id}>
+                        {page.page_name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.connection_id && (
+                    <p className="text-sm text-red-600 mt-1">{errors.connection_id}</p>
+                  )}
+                </>
+              )}
             </div>
-            <div className="flex items-center gap-4">
-              <input
-                type="range"
-                min="0"
-                max="60"
-                value={formData.reply_delay_seconds}
-                onChange={(e) => handleInputChange('reply_delay_seconds', parseInt(e.target.value))}
-                className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-              />
-              <div className="flex items-center gap-1 min-w-[60px]">
-                <input
-                  type="number"
-                  min="0"
-                  max="300"
-                  value={formData.reply_delay_seconds}
-                  onChange={(e) => handleInputChange('reply_delay_seconds', e.target.value)}
-                  className="w-14 px-2 py-1 border border-gray-300 rounded text-sm text-center focus:ring-2 focus:ring-[#714efe] focus:border-transparent"
-                />
-                <span className="text-sm text-gray-500">s</span>
-              </div>
-            </div>
-            {errors.reply_delay_seconds && (
-              <p className="text-sm text-red-600 mt-1">{errors.reply_delay_seconds}</p>
-            )}
-            <p className="text-xs text-gray-500 mt-1">
-              Wait this long before sending automatic replies (0 = instant)
-            </p>
-          </div>
 
-          {/* Default Reply */}
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <MessageSquare className="w-4 h-4 text-gray-500" />
-              <label className="block text-sm font-medium text-gray-700">
-                Default Reply Message (Comments)
-              </label>
-            </div>
-            <textarea
-              value={formData.default_reply}
-              onChange={(e) => handleInputChange('default_reply', e.target.value)}
-              placeholder="Optional: Message to send when no automation rules match..."
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#714efe] focus:border-transparent resize-none"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              This message is sent when a comment doesn't match any automation rules
-            </p>
-          </div>
-
-          {/* DM Automation Section */}
-          <div className="border-t border-gray-200 pt-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Direct Message Automation</h3>
-            
-            {/* Enable DM Automation Toggle - Disabled */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg mb-4 opacity-60">
+            {/* Enable/Disable Toggle */}
+            <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <ToggleLeft className="w-5 h-5 text-gray-500" />
+                <div className="w-8 h-8 bg-[#bea4561a] rounded-lg flex items-center justify-center">
+                  {formData.is_enabled ? (
+                    <ToggleRight className="w-5 h-5 text-[#bea456]" />
+                  ) : (
+                    <ToggleLeft className="w-5 h-5 text-gray-500" />
+                  )}
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-900">Auto-reply to DMs</h4>
+                  <h4 className="font-medium text-gray-900">Auto-reply to comments</h4>
                   <p className="text-sm text-gray-600">
-                    Coming soon - requires Facebook app review
+                    {formData.is_enabled ? 'Automation is enabled' : 'Automation is disabled'}
                   </p>
                 </div>
               </div>
-              <label className="relative inline-flex items-center cursor-not-allowed">
+              <label className="relative inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={false}
-                  disabled={true}
+                  checked={formData.is_enabled}
+                  onChange={(e) => handleInputChange('is_enabled', e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 rounded-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#bea45666] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#bea456]"></div>
               </label>
             </div>
 
-            {/* DM Reply Delay - Disabled */}
-            <div className="mb-4 opacity-60">
+            {/* Reply Delay */}
+            <div>
               <div className="flex items-center gap-2 mb-2">
                 <Clock className="w-4 h-4 text-gray-500" />
                 <label className="block text-sm font-medium text-gray-700">
-                  DM Reply Delay (seconds)
+                  Reply Delay (seconds)
                 </label>
               </div>
               <div className="flex items-center gap-4">
@@ -293,54 +208,139 @@ export function SettingsForm({ setting, facebookPages, pagesWithoutSettings, onC
                   type="range"
                   min="0"
                   max="60"
-                  value={10}
-                  disabled={true}
-                  className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-not-allowed slider"
+                  value={formData.reply_delay_seconds}
+                  onChange={(e) => handleInputChange('reply_delay_seconds', parseInt(e.target.value))}
+                  className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                 />
                 <div className="flex items-center gap-1 min-w-[60px]">
                   <input
                     type="number"
                     min="0"
                     max="300"
-                    value={10}
-                    disabled={true}
-                    className="w-14 px-2 py-1 border border-gray-300 rounded text-sm text-center bg-gray-100 cursor-not-allowed"
+                    value={formData.reply_delay_seconds}
+                    onChange={(e) => handleInputChange('reply_delay_seconds', e.target.value)}
+                    className="w-14 px-2 py-1 border border-gray-300 rounded text-sm text-center focus:ring-2 focus:ring-[#bea456] focus:border-transparent"
                   />
                   <span className="text-sm text-gray-500">s</span>
                 </div>
               </div>
+              {errors.reply_delay_seconds && (
+                <p className="text-sm text-red-600 mt-1">{errors.reply_delay_seconds}</p>
+              )}
               <p className="text-xs text-gray-500 mt-1">
-                Available after Facebook app review
+                Wait this long before sending automatic replies (0 = instant)
               </p>
             </div>
 
-            {/* DM Default Reply - Disabled */}
-            <div className="opacity-60">
+            {/* Default Reply */}
+            <div>
               <div className="flex items-center gap-2 mb-2">
                 <MessageSquare className="w-4 h-4 text-gray-500" />
                 <label className="block text-sm font-medium text-gray-700">
-                  Default Reply Message (DMs)
+                  Default Reply Message (Comments)
                 </label>
               </div>
               <textarea
-                value=""
-                disabled={true}
-                placeholder="Available after Facebook app review..."
+                value={formData.default_reply}
+                onChange={(e) => handleInputChange('default_reply', e.target.value)}
+                placeholder="Optional: Message to send when no automation rules match..."
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed resize-none"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#bea456] focus:border-transparent resize-none"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Available after Facebook app review
+                This message is sent when a comment doesn't match any automation rules
               </p>
             </div>
-          </div>
 
-          {/* Submit Error */}
-          {errors.submit && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-600">{errors.submit}</p>
+            {/* DM Automation Section */}
+            <div className="border-t border-gray-200 pt-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Direct Message Automation</h3>
+
+              {/* Enable DM Automation Toggle - Disabled */}
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg mb-4 opacity-60">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <ToggleLeft className="w-5 h-5 text-gray-500" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-900">Auto-reply to DMs</h4>
+                    <p className="text-sm text-gray-600">
+                      Coming soon - requires Facebook app review
+                    </p>
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-not-allowed">
+                  <input
+                    type="checkbox"
+                    checked={false}
+                    disabled={true}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 rounded-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                </label>
+              </div>
+
+              {/* DM Reply Delay - Disabled */}
+              <div className="mb-4 opacity-60">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="w-4 h-4 text-gray-500" />
+                  <label className="block text-sm font-medium text-gray-700">
+                    DM Reply Delay (seconds)
+                  </label>
+                </div>
+                <div className="flex items-center gap-4">
+                  <input
+                    type="range"
+                    min="0"
+                    max="60"
+                    value={10}
+                    disabled={true}
+                    className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-not-allowed slider"
+                  />
+                  <div className="flex items-center gap-1 min-w-[60px]">
+                    <input
+                      type="number"
+                      min="0"
+                      max="300"
+                      value={10}
+                      disabled={true}
+                      className="w-14 px-2 py-1 border border-gray-300 rounded text-sm text-center bg-gray-100 cursor-not-allowed"
+                    />
+                    <span className="text-sm text-gray-500">s</span>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Available after Facebook app review
+                </p>
+              </div>
+
+              {/* DM Default Reply - Disabled */}
+              <div className="opacity-60">
+                <div className="flex items-center gap-2 mb-2">
+                  <MessageSquare className="w-4 h-4 text-gray-500" />
+                  <label className="block text-sm font-medium text-gray-700">
+                    Default Reply Message (DMs)
+                  </label>
+                </div>
+                <textarea
+                  value=""
+                  disabled={true}
+                  placeholder="Available after Facebook app review..."
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed resize-none"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Available after Facebook app review
+                </p>
+              </div>
             </div>
-          )}
+
+            {/* Submit Error */}
+            {errors.submit && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-600">{errors.submit}</p>
+              </div>
+            )}
 
           </form>
         </div>
@@ -358,7 +358,7 @@ export function SettingsForm({ setting, facebookPages, pagesWithoutSettings, onC
             type="submit"
             form="settings-form"
             disabled={loading}
-            className="px-4 py-2 bg-[#714efe] text-white rounded-lg hover:bg-[#5f3fd6] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-4 py-2 bg-[#bea456] text-white rounded-lg hover:bg-[#af9442ff] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {loading ? (
               <>

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Community - Elevate Social'
+  title: 'Community - The Wealth Creator'
 }
 
 export default function CommunityPage() {
@@ -11,17 +11,17 @@ export default function CommunityPage() {
         <div className="max-w-7xl mx-auto">
           {/* Page Header */}
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Elevate Community</h1>
-            <p className="text-gray-600 mt-2">Connect with other members of the High Ticket Purpose community</p>
+            <h1 className="text-3xl font-bold text-gray-900">The Wealth Creator Community</h1>
+            <p className="text-gray-600 mt-2">Connect with other members of The Wealth Creator community</p>
           </div>
 
           {/* Community Iframe */}
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">
             <div className="relative" style={{ height: '800px' }}>
               <iframe
-                src="https://highticketpurpose.app.clientclub.net/communities/groups/high-ticket-purpose/home"
+                src="https://community.thewealthcreator.co"
                 className="w-full h-full border-0"
-                title="Elevate Community"
+                title="The Wealth Creator Community"
               />
             </div>
           </div>

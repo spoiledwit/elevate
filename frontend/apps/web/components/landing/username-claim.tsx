@@ -128,7 +128,7 @@ export function UsernameClaim({ onSubmit, buttonText = "Claim your username", in
               className={`${variant === 'large' ? 'h-6 sm:h-8' : 'h-6'} flex-shrink-0`}
             />
             <span className={`font-medium ${variant === 'large' ? 'text-sm sm:text-lg hidden xs:block' : 'text-sm'} flex-shrink-0 text-gray-700`}>elevate.social</span>
-            <span className={`font-medium ${variant === 'large' ? 'text-sm sm:text-lg' : 'text-sm'} flex-shrink-0`} style={{ color: '#714efe' }}>/</span>
+            <span className={`font-medium ${variant === 'large' ? 'text-sm sm:text-lg' : 'text-sm'} flex-shrink-0`} style={{ color: '#bea456' }}>/</span>
             <input
               type="text"
               placeholder="username"
@@ -136,7 +136,7 @@ export function UsernameClaim({ onSubmit, buttonText = "Claim your username", in
               onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
               onKeyDown={handleKeyDown}
               className={`min-w-0 flex-1 outline-none ${variant === 'large' ? 'text-sm sm:text-lg' : 'text-sm'} font-medium`}
-              style={{ color: '#714efe' }}
+              style={{ color: '#bea456' }}
               maxLength={30}
             />
             {layout === 'col' && (
@@ -159,14 +159,14 @@ export function UsernameClaim({ onSubmit, buttonText = "Claim your username", in
             ? 'cursor-pointer'
             : 'cursor-not-allowed'
             }`}
-          style={{ backgroundColor: '#714efe' }}
+          style={{ backgroundColor: '#bea456' }}
           onMouseEnter={(e) => {
             if (isAvailable && username.length >= 3) {
-              e.currentTarget.style.backgroundColor = '#5f3fd6'
+              e.currentTarget.style.backgroundColor = '#af9442ff'
             }
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#714efe'
+            e.currentTarget.style.backgroundColor = '#bea456'
           }}
         >
           <span className="block sm:hidden">Claim</span>

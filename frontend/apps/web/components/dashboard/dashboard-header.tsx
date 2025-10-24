@@ -10,7 +10,7 @@ export function DashboardHeader() {
     <div className="sticky top-0 z-40 bg-gray-50 border-b border-gray-200 px-6 py-4">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-sm" style={{background: 'linear-gradient(135deg, #714efe 0%, #5f3fd6 100%)'}}>
+          <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-sm" style={{ background: 'linear-gradient(135deg, #bea456 0%, #af9442ff 100%)' }}>
             <span className="text-lg font-semibold text-white">
               {session?.user?.username?.[0]?.toUpperCase() || 'U'}
             </span>

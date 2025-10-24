@@ -27,31 +27,31 @@ interface PostListProps {
 }
 
 const statusConfig = {
-  published: { 
-    icon: CheckCircle, 
-    color: 'text-green-600', 
-    bg: 'bg-green-50', 
+  published: {
+    icon: CheckCircle,
+    color: 'text-green-600',
+    bg: 'bg-green-50',
     border: 'border-green-200',
     label: 'Published'
   },
-  scheduled: { 
-    icon: Clock, 
-    color: 'text-blue-600', 
-    bg: 'bg-blue-50', 
+  scheduled: {
+    icon: Clock,
+    color: 'text-blue-600',
+    bg: 'bg-blue-50',
     border: 'border-blue-200',
     label: 'Scheduled'
   },
-  draft: { 
-    icon: FileText, 
-    color: 'text-gray-600', 
-    bg: 'bg-gray-50', 
+  draft: {
+    icon: FileText,
+    color: 'text-gray-600',
+    bg: 'bg-gray-50',
     border: 'border-gray-200',
     label: 'Draft'
   },
-  failed: { 
-    icon: AlertCircle, 
-    color: 'text-red-600', 
-    bg: 'bg-red-50', 
+  failed: {
+    icon: AlertCircle,
+    color: 'text-red-600',
+    bg: 'bg-red-50',
     border: 'border-red-200',
     label: 'Failed'
   }
@@ -72,7 +72,7 @@ export function PostList({ posts }: PostListProps) {
   // Sort posts
   const sortedPosts = [...posts].sort((a, b) => {
     let comparison = 0
-    
+
     switch (sortBy) {
       case 'date':
         const dateA = a.scheduledFor || a.publishedAt || new Date(0)
@@ -86,7 +86,7 @@ export function PostList({ posts }: PostListProps) {
         comparison = a.author.localeCompare(b.author)
         break
     }
-    
+
     return sortOrder === 'desc' ? -comparison : comparison
   })
 
@@ -114,7 +114,7 @@ export function PostList({ posts }: PostListProps) {
                   "px-2 py-1 text-sm rounded transition-colors",
                   sortBy !== 'date' && "text-gray-600 hover:bg-gray-100"
                 )}
-                style={sortBy === 'date' ? {backgroundColor: '#714efe1a', color: '#714efe'} : {}}
+                style={sortBy === 'date' ? { backgroundColor: '#bea4561a', color: '#bea456' } : {}}
               >
                 Date {sortBy === 'date' && (sortOrder === 'desc' ? '↓' : '↑')}
               </button>
@@ -124,7 +124,7 @@ export function PostList({ posts }: PostListProps) {
                   "px-2 py-1 text-sm rounded transition-colors",
                   sortBy !== 'status' && "text-gray-600 hover:bg-gray-100"
                 )}
-                style={sortBy === 'status' ? {backgroundColor: '#714efe1a', color: '#714efe'} : {}}
+                style={sortBy === 'status' ? { backgroundColor: '#bea4561a', color: '#bea456' } : {}}
               >
                 Status {sortBy === 'status' && (sortOrder === 'desc' ? '↓' : '↑')}
               </button>
@@ -134,7 +134,7 @@ export function PostList({ posts }: PostListProps) {
                   "px-2 py-1 text-sm rounded transition-colors",
                   sortBy !== 'author' && "text-gray-600 hover:bg-gray-100"
                 )}
-                style={sortBy === 'author' ? {backgroundColor: '#714efe1a', color: '#714efe'} : {}}
+                style={sortBy === 'author' ? { backgroundColor: '#bea4561a', color: '#bea456' } : {}}
               >
                 Author {sortBy === 'author' && (sortOrder === 'desc' ? '↓' : '↑')}
               </button>
@@ -188,8 +188,8 @@ export function PostList({ posts }: PostListProps) {
                           const PlatformIcon = platform.icon
                           return (
                             <span key={platformId} title={platform.name}>
-                              <PlatformIcon 
-                                className={cn("w-4 h-4", platform.color)} 
+                              <PlatformIcon
+                                className={cn("w-4 h-4", platform.color)}
                               />
                             </span>
                           )

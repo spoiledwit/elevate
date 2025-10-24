@@ -133,7 +133,7 @@ export function RuleForm({ rule, facebookPages, onClose, onSuccess }: RuleFormPr
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
-            <Zap className="w-6 h-6 text-[#714efe]" />
+            <Zap className="w-6 h-6 text-[#bea456]" />
             <h2 className="text-xl font-semibold text-gray-900">
               {isEditing ? 'Edit Automation Rule' : 'Create Automation Rule'}
             </h2>
@@ -159,7 +159,7 @@ export function RuleForm({ rule, facebookPages, onClose, onSuccess }: RuleFormPr
                 value={formData.rule_name}
                 onChange={(e) => handleInputChange('rule_name', e.target.value)}
                 placeholder="e.g., Thank you responses"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#714efe] focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#bea456] focus:border-transparent"
               />
               {errors.rule_name && (
                 <p className="text-sm text-red-600 mt-1">{errors.rule_name}</p>
@@ -175,7 +175,7 @@ export function RuleForm({ rule, facebookPages, onClose, onSuccess }: RuleFormPr
                 <select
                   value={formData.connection_id}
                   onChange={(e) => handleInputChange('connection_id', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#714efe] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#bea456] focus:border-transparent"
                 >
                   <option value="">Select a Facebook page</option>
                   {pages.map((page: any) => (
@@ -206,7 +206,7 @@ export function RuleForm({ rule, facebookPages, onClose, onSuccess }: RuleFormPr
                       value={keyword}
                       onChange={(e) => handleKeywordChange(index, e.target.value)}
                       placeholder="e.g., thank you, thanks, awesome"
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#714efe] focus:border-transparent"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#bea456] focus:border-transparent"
                     />
                     {formData.keywords.length > 1 && (
                       <button
@@ -222,7 +222,7 @@ export function RuleForm({ rule, facebookPages, onClose, onSuccess }: RuleFormPr
                 <button
                   type="button"
                   onClick={addKeyword}
-                  className="inline-flex items-center gap-2 px-3 py-2 text-[#714efe] hover:bg-purple-50 rounded-lg transition-colors text-sm font-medium"
+                  className="inline-flex items-center gap-2 px-3 py-2 text-[#bea456] hover:bg-purple-50 rounded-lg transition-colors text-sm font-medium"
                 >
                   <Plus className="w-4 h-4" />
                   Add Keyword
@@ -249,7 +249,7 @@ export function RuleForm({ rule, facebookPages, onClose, onSuccess }: RuleFormPr
                 onChange={(e) => handleInputChange('reply_template', e.target.value)}
                 placeholder="e.g., Thank you so much for your kind words! 🙏 We really appreciate your support!"
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#714efe] focus:border-transparent resize-none"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#bea456] focus:border-transparent resize-none"
               />
               {errors.reply_template && (
                 <p className="text-sm text-red-600 mt-1">{errors.reply_template}</p>
@@ -273,7 +273,7 @@ export function RuleForm({ rule, facebookPages, onClose, onSuccess }: RuleFormPr
                 onChange={(e) => handleInputChange('priority', e.target.value)}
                 min="0"
                 max="100"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#714efe] focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#bea456] focus:border-transparent"
               />
               <p className="text-xs text-gray-500 mt-1">
                 Higher priority rules (larger numbers) are checked first. Default is 0.
@@ -295,7 +295,7 @@ export function RuleForm({ rule, facebookPages, onClose, onSuccess }: RuleFormPr
                   onChange={(e) => handleInputChange('is_active', e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#714efe66] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#714efe]"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#bea45666] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#bea456]"></div>
               </label>
             </div>
 
@@ -319,7 +319,7 @@ export function RuleForm({ rule, facebookPages, onClose, onSuccess }: RuleFormPr
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-[#714efe] text-white rounded-lg hover:bg-[#5f3fd6] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-4 py-2 bg-[#bea456] text-white rounded-lg hover:bg-[#af9442ff] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {loading ? (
                 <>

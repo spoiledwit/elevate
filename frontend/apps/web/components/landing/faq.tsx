@@ -67,17 +67,15 @@ export function FAQ() {
                   {faq.question}
                 </span>
                 <ChevronDown
-                  className={`w-4 h-4 sm:w-5 sm:h-5 text-gray-500 transition-all duration-300 ease-in-out flex-shrink-0 ${
-                    openIndex === index ? 'rotate-180' : ''
-                  }`}
-                  style={openIndex === index ? { color: '#714efe' } : {}}
+                  className={`w-4 h-4 sm:w-5 sm:h-5 text-gray-500 transition-all duration-300 ease-in-out flex-shrink-0 ${openIndex === index ? 'rotate-180' : ''
+                    }`}
+                  style={openIndex === index ? { color: '#bea456' } : {}}
                 />
               </div>
-              
+
               <div
-                className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                  openIndex === index ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-                }`}
+                className={`transition-all duration-300 ease-in-out overflow-hidden ${openIndex === index ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                  }`}
               >
                 <div className="px-4 sm:px-6 pb-4 sm:pb-6 border-t border-gray-200">
                   <div className="pt-3 sm:pt-4 transform transition-transform duration-300 ease-in-out">

@@ -298,7 +298,7 @@ export function PostCreatorManager({ initialPlatforms }: PostCreatorManagerProps
               <button
                 onClick={handleMainAction}
                 disabled={!content || selectedConnections.length === 0 || isSubmitting || (isScheduled && !scheduledDate)}
-                className="px-6 py-2 bg-[#714efe] text-white rounded-lg hover:bg-[#5f3fd6] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 bg-[#bea456] text-white rounded-lg hover:bg-[#af9442ff] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
                   <div className="flex items-center gap-2">

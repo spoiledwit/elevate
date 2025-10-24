@@ -46,7 +46,7 @@ export function ForgotPasswordForm() {
                         type="text"
                         placeholder="username or email"
                         className="w-full px-3 h-11 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none text-sm"
-                        onFocus={(e) => e.target.style.boxShadow = `0 0 0 2px #714efe66`}
+                        onFocus={(e) => e.target.style.boxShadow = `0 0 0 2px #bea45666`}
                         onBlur={(e) => e.target.style.boxShadow = ''}
                     />
                     {formState.errors.username && (
@@ -58,9 +58,9 @@ export function ForgotPasswordForm() {
                     type="submit"
                     disabled={isSubmitting}
                     className="w-full text-white font-medium h-11 rounded-lg text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{backgroundColor: '#714efe'}}
-                    onMouseEnter={(e) => !isSubmitting && (e.currentTarget.style.backgroundColor = '#5f3fd6')}
-                    onMouseLeave={(e) => !isSubmitting && (e.currentTarget.style.backgroundColor = '#714efe')}
+                    style={{ backgroundColor: '#bea456' }}
+                    onMouseEnter={(e) => !isSubmitting && (e.currentTarget.style.backgroundColor = '#af9442ff')}
+                    onMouseLeave={(e) => !isSubmitting && (e.currentTarget.style.backgroundColor = '#bea456')}
                 >
                     {isSubmitting ? 'Sending...' : 'Send reset link'}
                 </button>

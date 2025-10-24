@@ -2,22 +2,22 @@
 
 export function ConnectPromoBanner() {
   return (
-    <div className="rounded-lg p-6" style={{ background: 'linear-gradient(135deg, #714efe1a 0%, #714efe33 100%)' }}>
+    <div className="rounded-lg p-6" style={{ background: 'linear-gradient(135deg, #bea4561a 0%, #bea45633 100%)' }}>
       <div className="flex items-center justify-between">
         <div className="flex-1">
-          <h3 className="text-lg font-semibold mb-2" style={{ color: '#5f3fd6' }}>
+          <h3 className="text-lg font-semibold mb-2" style={{ color: '#af9442ff' }}>
             Join our creator network
           </h3>
-          <p className="text-sm mb-4 max-w-md" style={{ color: '#714efe' }}>
+          <p className="text-sm mb-4 max-w-md" style={{ color: '#bea456' }}>
             Get access to our premium creator network and earn up to 30% commission on referrals.
           </p>
-          <button className="text-white px-6 py-2 rounded-lg font-medium transition-colors" style={{ backgroundColor: '#714efe' }}>
+          <button className="text-white px-6 py-2 rounded-lg font-medium transition-colors" style={{ backgroundColor: '#bea456' }}>
             Learn more
           </button>
         </div>
 
         <div className="hidden md:flex items-center">
-          <div className="w-24 h-24 rounded-full flex items-center justify-center" style={{ backgroundColor: '#714efe66' }}>
+          <div className="w-24 h-24 rounded-full flex items-center justify-center" style={{ backgroundColor: '#bea45666' }}>
             <NetworkIcon className="w-12 h-12 text-brand-500" />
           </div>
         </div>

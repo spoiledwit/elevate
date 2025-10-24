@@ -6,12 +6,25 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     environment:
       POSTGRES_PASSWORD: "BN123456"
       POSTGRES_DB: "elevate"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+  redis:
+    image: redis:7-alpine
+    expose:
+      - "6379"
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 2s
       timeout: 2s
       retries: 10
@@ -29,6 +42,8 @@ services:
       - .env.backend
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
   web:
     command: bash -c "pnpm install -r && pnpm --filter web dev"
@@ -49,3 +64,4 @@ services:
 
 volumes:
   postgres_data:
+  redis_data:

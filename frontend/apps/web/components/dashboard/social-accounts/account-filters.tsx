@@ -57,7 +57,7 @@ export function AccountFilters({
         {hasActiveFilters && (
           <button
             onClick={clearAllFilters}
-            className="text-sm font-medium" style={{ color: '#714efe' }}
+            className="text-sm font-medium" style={{ color: '#bea456' }}
           >
             Clear all
           </button>
@@ -88,12 +88,12 @@ export function AccountFilters({
                   "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors border",
                   !isSelected && "text-gray-600 hover:bg-gray-50 border-transparent hover:border-gray-200"
                 )}
-                style={isSelected ? { backgroundColor: '#714efe1a', color: '#714efe', borderColor: '#714efe33' } : {}}
+                style={isSelected ? { backgroundColor: '#bea4561a', color: '#bea456', borderColor: '#bea45633' } : {}}
               >
-                <Icon className={cn("w-4 h-4", !isSelected && status.color)} style={isSelected ? { color: '#714efe' } : {}} />
+                <Icon className={cn("w-4 h-4", !isSelected && status.color)} style={isSelected ? { color: '#bea456' } : {}} />
                 <span className="flex-1 text-left">{status.name}</span>
                 {isSelected && (
-                  <CheckCircle className="w-4 h-4" style={{color: '#714efe'}} />
+                  <CheckCircle className="w-4 h-4" style={{ color: '#bea456' }} />
                 )}
               </button>
             )
@@ -117,12 +117,12 @@ export function AccountFilters({
                   "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors border",
                   !isSelected && "text-gray-600 hover:bg-gray-50 border-transparent hover:border-gray-200"
                 )}
-                style={isSelected ? {backgroundColor: '#714efe1a', color: '#714efe', borderColor: '#714efe33'} : {}}
+                style={isSelected ? { backgroundColor: '#bea4561a', color: '#bea456', borderColor: '#bea45633' } : {}}
               >
-                <Icon className={cn("w-4 h-4", !isSelected && platform.color)} style={isSelected ? {color: '#714efe'} : {}} />
+                <Icon className={cn("w-4 h-4", !isSelected && platform.color)} style={isSelected ? { color: '#bea456' } : {}} />
                 <span className="flex-1 text-left">{platform.name}</span>
                 {isSelected && (
-                  <CheckCircle className="w-4 h-4" style={{color: '#714efe'}} />
+                  <CheckCircle className="w-4 h-4" style={{ color: '#bea456' }} />
                 )}
               </button>
             )

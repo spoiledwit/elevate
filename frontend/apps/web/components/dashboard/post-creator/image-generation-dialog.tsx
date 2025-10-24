@@ -117,8 +117,8 @@ export function ImageGenerationDialog({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-[#714efe1a] rounded-lg">
-              <Wand2 className="w-5 h-5 text-[#714efe]" />
+            <div className="p-2 bg-[#bea4561a] rounded-lg">
+              <Wand2 className="w-5 h-5 text-[#bea456]" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-gray-900">AI Image Generator</h2>
@@ -147,7 +147,7 @@ export function ImageGenerationDialog({
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   placeholder="E.g., A beautifully set dining table with traditional Eid Al Adha dishes. The table is adorned with candles, flowers, and a centerpiece that represents the festival. The room is filled with warm, festive lighting"
-                  className="w-full h-32 px-4 py-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#714efe]"
+                  className="w-full h-32 px-4 py-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#bea456]"
                   disabled={isGenerating}
                 />
               </div>
@@ -166,7 +166,7 @@ export function ImageGenerationDialog({
                       className={cn(
                         "p-3 text-left rounded-lg border transition-all",
                         style === s.id
-                          ? "border-[#714efe] bg-[#714efe1a]"
+                          ? "border-[#bea456] bg-[#bea4561a]"
                           : "border-gray-200 hover:border-gray-300",
                         isGenerating && "opacity-50 cursor-not-allowed"
                       )}
@@ -192,7 +192,7 @@ export function ImageGenerationDialog({
                       className={cn(
                         "w-full p-2 text-left rounded-lg border transition-all",
                         size === s.value
-                          ? "border-[#714efe] bg-[#714efe1a]"
+                          ? "border-[#bea456] bg-[#bea4561a]"
                           : "border-gray-200 hover:border-gray-300",
                         isGenerating && "opacity-50 cursor-not-allowed"
                       )}
@@ -216,7 +216,7 @@ export function ImageGenerationDialog({
                     className={cn(
                       "flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                       quality === 'standard'
-                        ? "bg-[#714efe] text-white"
+                        ? "bg-[#bea456] text-white"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200",
                       isGenerating && "opacity-50 cursor-not-allowed"
                     )}
@@ -229,7 +229,7 @@ export function ImageGenerationDialog({
                     className={cn(
                       "flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                       quality === 'hd'
-                        ? "bg-[#714efe] text-white"
+                        ? "bg-[#bea456] text-white"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200",
                       isGenerating && "opacity-50 cursor-not-allowed"
                     )}
@@ -252,7 +252,7 @@ export function ImageGenerationDialog({
               <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
                 {isGenerating ? (
                   <div className="text-center">
-                    <Loader2 className="w-12 h-12 text-[#714efe] animate-spin mx-auto mb-4" />
+                    <Loader2 className="w-12 h-12 text-[#bea456] animate-spin mx-auto mb-4" />
                     <p className="text-gray-600">Generating your image...</p>
                     <p className="text-xs text-gray-500 mt-2">This may take up to 30 seconds</p>
                   </div>
@@ -276,7 +276,7 @@ export function ImageGenerationDialog({
                   <div className="flex gap-3">
                     <button
                       onClick={handleInsert}
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#714efe] hover:bg-[#5f3fd6] rounded-lg transition-colors"
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#bea456] hover:bg-[#af9442ff] rounded-lg transition-colors"
                     >
                       <ImageIcon className="w-4 h-4" />
                       Use This Image
@@ -314,7 +314,7 @@ export function ImageGenerationDialog({
             <button
               onClick={handleGenerate}
               disabled={isGenerating || !prompt.trim()}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#714efe] hover:bg-[#5f3fd6] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#bea456] hover:bg-[#af9442ff] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isGenerating ? (
                 <>
@@ -338,7 +338,7 @@ export function ImageGenerationDialog({
               </button>
               <button
                 onClick={handleInsert}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#714efe] hover:bg-[#5f3fd6] rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#bea456] hover:bg-[#af9442ff] rounded-lg transition-colors"
               >
                 <ImageIcon className="w-4 h-4" />
                 Add to Post

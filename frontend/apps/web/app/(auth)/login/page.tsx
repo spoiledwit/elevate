@@ -1,5 +1,5 @@
 import { LoginForm } from "@/components/forms/login-form";
-import loginImage from "@/assets/auth/auth.gif";
+import loginImage from "@/assets/auth/auth.svg";
 import logo from "@/assets/logo.png";
 import type { Metadata } from "next";
 import { Suspense } from "react";
@@ -35,7 +35,7 @@ export default function Login() {
                   <div className="h-11 bg-gray-200 rounded"></div>
                   <div
                     className="h-11 rounded"
-                    style={{ backgroundColor: "#714efe33" }}
+                    style={{ backgroundColor: "#bea45633" }}
                   ></div>
                 </div>
               </div>

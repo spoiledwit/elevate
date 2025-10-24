@@ -87,7 +87,7 @@ export function MultiStepRegisterForm({ onSubmitHandler }: MultiStepRegisterForm
 
   const handleStepOne = async (username: string) => {
     setFormData(prev => ({ ...prev, username }))
-    
+
     if (isOAuthUser) {
       // For OAuth users, skip email/password step and directly register
       setCurrentStep(3)
@@ -121,8 +121,8 @@ export function MultiStepRegisterForm({ onSubmitHandler }: MultiStepRegisterForm
         }
 
         // For OAuth users, pass Google user info if available
-        const googleUserInfo = session?.user?.email && isOAuthUser 
-          ? (session as any)?.googleUserInfo 
+        const googleUserInfo = session?.user?.email && isOAuthUser
+          ? (session as any)?.googleUserInfo
           : undefined
 
         const result = await onSubmitHandler(registrationData, googleUserInfo)
@@ -135,7 +135,7 @@ export function MultiStepRegisterForm({ onSubmitHandler }: MultiStepRegisterForm
               password: result.credentials.password,
               redirect: false
             })
-            
+
             if (signInResult?.ok) {
               setIsLoading(false)
               router.push('/dashboard')
@@ -277,7 +277,7 @@ export function MultiStepRegisterForm({ onSubmitHandler }: MultiStepRegisterForm
       // OAuth users only have 1 step (username selection)
       return (
         <div className="flex items-center justify-center mb-6 sm:mb-8">
-          <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-8 rounded-full font-semibold text-sm text-white" style={{backgroundColor: '#714efe'}}>
+          <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-8 rounded-full font-semibold text-sm text-white" style={{ backgroundColor: '#bea456' }}>
             1
           </div>
         </div>
@@ -302,22 +302,22 @@ export function MultiStepRegisterForm({ onSubmitHandler }: MultiStepRegisterForm
                       ? 'cursor-not-allowed'
                       : ''
                   }`}
-                style={currentStep >= step ? {backgroundColor: '#714efe'} : {}}
+                style={currentStep >= step ? { backgroundColor: '#bea456' } : {}}
                 onMouseEnter={(e) => {
                   if (step < currentStep) {
-                    e.currentTarget.style.backgroundColor = '#5f3fd6'
+                    e.currentTarget.style.backgroundColor = '#af9442ff'
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (step < currentStep) {
-                    e.currentTarget.style.backgroundColor = '#714efe'
+                    e.currentTarget.style.backgroundColor = '#bea456'
                   }
                 }}
               >
                 {step}
               </button>
               {step < 2 && (
-                <div className={`w-16 sm:w-24 h-1 rounded-full ${currentStep > step ? '' : 'bg-gray-200'}`} style={currentStep > step ? {backgroundColor: '#714efe'} : {}}></div>
+                <div className={`w-16 sm:w-24 h-1 rounded-full ${currentStep > step ? '' : 'bg-gray-200'}`} style={currentStep > step ? { backgroundColor: '#bea456' } : {}}></div>
               )}
             </div>
           ))}
@@ -341,7 +341,7 @@ export function MultiStepRegisterForm({ onSubmitHandler }: MultiStepRegisterForm
           ) : (
             <>
               Already have an account?{' '}
-              <a href="/login" className="font-semibold hover:underline" style={{color: '#714efe'}}>
+              <a href="/login" className="font-semibold hover:underline" style={{ color: '#bea456' }}>
                 Login
               </a>
             </>
@@ -406,7 +406,7 @@ export function MultiStepRegisterForm({ onSubmitHandler }: MultiStepRegisterForm
                 type="email"
                 placeholder="Enter your email address"
                 className="w-full px-3 h-11 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none text-sm"
-                onFocus={(e) => e.target.style.boxShadow = `0 0 0 2px #714efe66`}
+                onFocus={(e) => e.target.style.boxShadow = `0 0 0 2px #bea45666`}
                 onBlur={(e) => e.target.style.boxShadow = ''}
               />
               {stepTwoForm.formState.errors.email && (
@@ -422,7 +422,7 @@ export function MultiStepRegisterForm({ onSubmitHandler }: MultiStepRegisterForm
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Enter your password"
                   className="w-full px-3 h-11 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none text-sm"
-                  onFocus={(e) => e.target.style.boxShadow = `0 0 0 2px #714efe66`}
+                  onFocus={(e) => e.target.style.boxShadow = `0 0 0 2px #bea45666`}
                   onBlur={(e) => e.target.style.boxShadow = ''}
                 />
                 <button
@@ -453,15 +453,15 @@ export function MultiStepRegisterForm({ onSubmitHandler }: MultiStepRegisterForm
             type="submit"
             disabled={isLoading}
             className="w-full text-white font-medium h-11 rounded-lg text-sm flex items-center justify-center transition-colors"
-            style={{backgroundColor: isLoading ? '#714efe80' : '#714efe'}}
+            style={{ backgroundColor: isLoading ? '#bea45680' : '#bea456' }}
             onMouseEnter={(e) => {
               if (!isLoading) {
-                e.currentTarget.style.backgroundColor = '#5f3fd6'
+                e.currentTarget.style.backgroundColor = '#af9442ff'
               }
             }}
             onMouseLeave={(e) => {
               if (!isLoading) {
-                e.currentTarget.style.backgroundColor = '#714efe'
+                e.currentTarget.style.backgroundColor = '#bea456'
               }
             }}
           >
@@ -500,11 +500,11 @@ export function MultiStepRegisterForm({ onSubmitHandler }: MultiStepRegisterForm
         </p>
 
         <div className="w-full bg-gray-200 rounded-full h-2 mb-8">
-          <div className="h-2 rounded-full animate-pulse" style={{ width: '70%', backgroundColor: '#714efe' }}></div>
+          <div className="h-2 rounded-full animate-pulse" style={{ width: '70%', backgroundColor: '#bea456' }}></div>
         </div>
 
         {isLoading && (
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto" style={{borderBottomColor: '#714efe'}}></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto" style={{ borderBottomColor: '#bea456' }}></div>
         )}
       </div>
     )

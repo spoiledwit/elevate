@@ -43,7 +43,7 @@ export function HowItWorks() {
           {steps.map((step) => (
             <div key={step.id} className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-400">
               <div className="mb-4 sm:mb-6">
-                <span className="font-semibold text-base sm:text-lg" style={{color: '#714efe'}}>
+                <span className="font-semibold text-base sm:text-lg" style={{ color: '#bea456' }}>
                   {step.stepNumber}
                 </span>
                 <h3 className="text-lg sm:text-xl font-bold text-black mt-2 mb-3 sm:mb-4">

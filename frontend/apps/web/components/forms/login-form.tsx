@@ -54,8 +54,8 @@ export function LoginForm() {
               type="text"
               placeholder="Enter your username or email"
               className="w-full px-3 h-11 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none text-sm"
-              style={{'--focus-ring-color': '#714efe'} as any}
-              onFocus={(e) => e.target.style.boxShadow = `0 0 0 2px #714efe66`}
+              style={{ '--focus-ring-color': '#bea456' } as any}
+              onFocus={(e) => e.target.style.boxShadow = `0 0 0 2px #bea45666`}
               onBlur={(e) => e.target.style.boxShadow = ''}
             />
             {formState.errors.username && (
@@ -71,8 +71,8 @@ export function LoginForm() {
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Enter your password"
                 className="w-full px-3 h-11 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none text-sm"
-                style={{'--focus-ring-color': '#714efe'} as any}
-                onFocus={(e) => e.target.style.boxShadow = `0 0 0 2px #714efe66`}
+                style={{ '--focus-ring-color': '#bea456' } as any}
+                onFocus={(e) => e.target.style.boxShadow = `0 0 0 2px #bea45666`}
                 onBlur={(e) => e.target.style.boxShadow = ''}
               />
               <button
@@ -97,7 +97,7 @@ export function LoginForm() {
             )}
 
             <div className="flex justify-end mt-2">
-              <a href="/forgot-password" className="text-sm font-medium hover:underline" style={{color: '#714efe'}}>Forgot password?</a>
+              <a href="/forgot-password" className="text-sm font-medium hover:underline" style={{ color: '#bea456' }}>Forgot password?</a>
             </div>
           </div>
         </div>
@@ -105,9 +105,9 @@ export function LoginForm() {
         <button
           type="submit"
           className="w-full text-white font-medium h-11 rounded-lg text-sm transition-colors"
-          style={{backgroundColor: '#714efe'}}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#5f3fd6'}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#714efe'}
+          style={{ backgroundColor: '#bea456' }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#af9442ff'}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#bea456'}
         >
           Sign in
         </button>
@@ -128,7 +128,7 @@ export function LoginForm() {
 
       <p className="text-sm text-gray-600 text-center mt-6">
         Don't have an account?{' '}
-        <a href="/get-started" className="font-semibold hover:underline" style={{color: '#714efe'}}>
+        <a href="/get-started" className="font-semibold hover:underline" style={{ color: '#bea456' }}>
           Sign up
         </a>
       </p>

@@ -1,8 +1,8 @@
 'use client'
 
-import { 
-  Zap, 
-  CheckCircle, 
+import {
+  Zap,
+  CheckCircle,
   XCircle,
   TrendingUp,
   Target
@@ -15,15 +15,15 @@ interface RulesStatsProps {
   rules: any[]
 }
 
-export function RulesStats({ 
-  totalRules, 
-  activeRules, 
+export function RulesStats({
+  totalRules,
+  activeRules,
   inactiveRules,
-  rules 
+  rules
 }: RulesStatsProps) {
   // Calculate total triggers across all rules
   const totalTriggers = rules.reduce((sum, rule) => sum + (rule.times_triggered || 0), 0)
-  
+
   // Calculate average triggers per rule
   const avgTriggers = totalRules > 0 ? (totalTriggers / totalRules) : 0
 
@@ -31,8 +31,8 @@ export function RulesStats({
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
       <div className="bg-white border border-gray-200 rounded-lg p-6">
         <div className="flex items-center gap-3 mb-2">
-          <div className="w-8 h-8 bg-[#714efe1a] rounded-lg flex items-center justify-center">
-            <Zap className="w-4 h-4 text-[#714efe]" />
+          <div className="w-8 h-8 bg-[#bea4561a] rounded-lg flex items-center justify-center">
+            <Zap className="w-4 h-4 text-[#bea456]" />
           </div>
           <h3 className="text-sm font-medium text-gray-700">Total Rules</h3>
         </div>

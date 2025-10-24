@@ -18,7 +18,7 @@ export function LibrarySearch({ searchQuery, onSearchChange }: LibrarySearchProp
         value={searchQuery}
         onChange={(e) => onSearchChange(e.target.value)}
         placeholder="Search files, tags, or folders..."
-        className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#714efe] focus:border-[#714efe] outline-none transition-all"
+        className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#bea456] focus:border-[#bea456] outline-none transition-all"
       />
       {searchQuery && (
         <button

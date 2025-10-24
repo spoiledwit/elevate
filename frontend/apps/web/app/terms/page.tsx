@@ -12,7 +12,7 @@ export default function TermsPage() {
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 py-6">
-          <Link href="/" className="text-2xl font-bold text-[#714efe] hover:text-[#5f3fd6] transition-colors">
+          <Link href="/" className="text-2xl font-bold text-[#bea456] hover:text-[#af9442ff] transition-colors">
             Elevate.Social
           </Link>
         </div>
@@ -86,7 +86,7 @@ export default function TermsPage() {
               <h2 className="text-2xl font-bold text-gray-900 mb-4">7. Contact</h2>
               <p className="text-gray-700">
                 Questions about these Terms can be sent to:{' '}
-                <a href="mailto:support@elevate.social" className="text-[#714efe] hover:text-[#5f3fd6] underline">
+                <a href="mailto:support@elevate.social" className="text-[#bea456] hover:text-[#af9442ff] underline">
                   support@elevate.social
                 </a>
               </p>

@@ -120,11 +120,10 @@ export function RulesList({ rules, loading, onRefresh }: RulesListProps) {
             className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
           >
             {/* Status Icon */}
-            <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-              rule.is_active 
-                ? 'bg-green-100' 
+            <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${rule.is_active
+                ? 'bg-green-100'
                 : 'bg-gray-100'
-            }`}>
+              }`}>
               {rule.is_active ? (
                 <CheckCircle className="w-5 h-5 text-green-600" />
               ) : (
@@ -141,11 +140,10 @@ export function RulesList({ rules, loading, onRefresh }: RulesListProps) {
                 </h4>
                 <span className="text-gray-400">•</span>
                 <span className="text-sm text-gray-600">{rule.connection_name}</span>
-                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                  rule.is_active
+                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${rule.is_active
                     ? 'bg-green-100 text-green-800'
                     : 'bg-gray-100 text-gray-800'
-                }`}>
+                  }`}>
                   {rule.is_active ? 'Active' : 'Inactive'}
                 </span>
               </div>
@@ -157,7 +155,7 @@ export function RulesList({ rules, loading, onRefresh }: RulesListProps) {
                   {(rule.keywords || []).slice(0, 3).map((keyword: string, index: number) => (
                     <span
                       key={index}
-                      className="inline-block px-2 py-0.5 rounded text-xs font-medium" style={{backgroundColor: '#714efe1a', color: '#714efe'}}
+                      className="inline-block px-2 py-0.5 rounded text-xs font-medium" style={{ backgroundColor: '#bea4561a', color: '#bea456' }}
                     >
                       {keyword}
                     </span>
@@ -200,11 +198,10 @@ export function RulesList({ rules, loading, onRefresh }: RulesListProps) {
               <button
                 onClick={() => handleToggle(rule.id)}
                 disabled={processingId === rule.id}
-                className={`p-2 rounded-lg transition-colors ${
-                  rule.is_active
+                className={`p-2 rounded-lg transition-colors ${rule.is_active
                     ? 'hover:bg-red-100 text-red-600'
                     : 'hover:bg-green-100 text-green-600'
-                } disabled:opacity-50`}
+                  } disabled:opacity-50`}
                 title={rule.is_active ? 'Deactivate rule' : 'Activate rule'}
               >
                 {rule.is_active ? (

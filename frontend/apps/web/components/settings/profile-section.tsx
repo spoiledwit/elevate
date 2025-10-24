@@ -185,7 +185,7 @@ export function ProfileSection({
                 className="h-6 flex-shrink-0"
               />
               <span className="font-medium text-sm flex-shrink-0 text-gray-700">elevate.social</span>
-              <span className="font-medium text-sm flex-shrink-0" style={{ color: '#714efe' }}>/</span>
+              <span className="font-medium text-sm flex-shrink-0" style={{ color: '#bea456' }}>/</span>
               <input
                 {...register('username')}
                 type="text"
@@ -196,7 +196,7 @@ export function ProfileSection({
                   setUsername(value)
                 }}
                 className="min-w-0 flex-1 outline-none text-sm font-medium"
-                style={{ color: '#714efe' }}
+                style={{ color: '#bea456' }}
                 maxLength={30}
               />
             </div>

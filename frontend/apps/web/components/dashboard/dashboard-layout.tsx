@@ -216,6 +216,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         return { itemId: 'settings', sectionId: 'account' }
       case '/community':
         return { itemId: 'community', sectionId: 'community' }
+      case '/prompt-library':
+        return { itemId: 'prompt-library', sectionId: 'prompt-library' }
       default:
         return { itemId: 'dashboard', sectionId: 'overview' }
     }
@@ -400,6 +402,21 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 >
                   <Users className="w-5 h-5 text-gray-500" />
                   <span>Community</span>
+                </button>
+
+                {/* Prompt Library - Standalone clickable item */}
+                <button
+                  onClick={() => {
+                    setActiveItem('prompt-library')
+                    router.push('/prompt-library')
+                  }}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors ${activeItem === 'prompt-library'
+                    ? 'text-gray-900 bg-gray-50'
+                    : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                >
+                  <FolderOpen className="w-5 h-5 text-gray-500" />
+                  <span>Prompt Library</span>
                 </button>
               </>
             )}

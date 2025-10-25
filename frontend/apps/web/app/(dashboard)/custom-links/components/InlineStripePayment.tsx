@@ -158,8 +158,14 @@ export function InlineStripePayment({
   const [stripePromise, setStripePromise] = useState<Promise<any> | null>(null)
 
   useEffect(() => {
+    console.log('InlineStripePayment - publishableKey:', publishableKey)
+    console.log('InlineStripePayment - clientSecret:', clientSecret ? 'present' : 'missing')
+
     if (publishableKey) {
+      console.log('Loading Stripe with publishableKey...')
       setStripePromise(loadStripe(publishableKey))
+    } else {
+      console.error('No publishableKey provided!')
     }
   }, [publishableKey])
 

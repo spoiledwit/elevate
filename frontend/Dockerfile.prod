@@ -28,7 +28,12 @@ COPY --from=deps /app ./
 # Copy source code
 COPY . .
 
+# Set build-time environment variables with defaults
+ARG API_URL=https://admin.kycertechnologies.com
+ARG NEXT_PUBLIC_URL=https://kycertechnologies.com
+ARG NEXTAUTH_URL=https://kycertechnologies.com
 ARG NEXTAUTH_SECRET=adnsakdnsakdnsakndjsandjasndjksndnasdas
+ARG NEXT_PUBLIC_BACKEND_URL=https://admin.kycertechnologies.com
 
 ENV API_URL=${API_URL}
 ENV NEXT_PUBLIC_API_URL=${API_URL}

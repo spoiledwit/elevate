@@ -2096,11 +2096,26 @@ class StripeConnectAccountSerializer(serializers.ModelSerializer):
 class CreateConnectAccountSerializer(serializers.Serializer):
     """Serializer for creating a new Connect account"""
     email = serializers.EmailField(required=False, help_text="Email for the Stripe account")
-    
+    country = serializers.CharField(
+        required=False,
+        max_length=2,
+        help_text="ISO 3166-1 alpha-2 country code (e.g., 'US', 'CA', 'GB'). Defaults to 'US' if not provided."
+    )
+
     def validate_email(self, value):
         """Validate email if provided"""
         if value and not '@' in value:
             raise serializers.ValidationError("Invalid email format")
+        return value
+
+    def validate_country(self, value):
+        """Validate country code format"""
+        if value:
+            # Convert to uppercase for consistency
+            value = value.upper()
+            # Basic validation - must be 2 characters
+            if len(value) != 2:
+                raise serializers.ValidationError("Country code must be a 2-character ISO 3166-1 alpha-2 code")
         return value
 
 

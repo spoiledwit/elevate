@@ -86,7 +86,8 @@ class StripeConnectAccountView(APIView):
             try:
                 connect_account = stripe_connect_service.create_express_account(
                     user=request.user,
-                    email=serializer.validated_data.get('email')
+                    email=serializer.validated_data.get('email'),
+                    country=serializer.validated_data.get('country')
                 )
                 response_serializer = StripeConnectAccountSerializer(connect_account)
                 return Response(response_serializer.data, status=status.HTTP_201_CREATED)

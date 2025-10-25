@@ -12,12 +12,57 @@ import {
 
 type ConnectStatus = 'not_connected' | 'pending' | 'connected' | 'restricted'
 
+// Stripe-supported countries for Connect (as of 2025)
+const STRIPE_COUNTRIES = [
+  { code: 'US', name: 'United States' },
+  { code: 'CA', name: 'Canada' },
+  { code: 'GB', name: 'United Kingdom' },
+  { code: 'AU', name: 'Australia' },
+  { code: 'NZ', name: 'New Zealand' },
+  { code: 'AT', name: 'Austria' },
+  { code: 'BE', name: 'Belgium' },
+  { code: 'BR', name: 'Brazil' },
+  { code: 'BG', name: 'Bulgaria' },
+  { code: 'HR', name: 'Croatia' },
+  { code: 'CY', name: 'Cyprus' },
+  { code: 'CZ', name: 'Czech Republic' },
+  { code: 'DK', name: 'Denmark' },
+  { code: 'EE', name: 'Estonia' },
+  { code: 'FI', name: 'Finland' },
+  { code: 'FR', name: 'France' },
+  { code: 'DE', name: 'Germany' },
+  { code: 'GR', name: 'Greece' },
+  { code: 'HK', name: 'Hong Kong' },
+  { code: 'HU', name: 'Hungary' },
+  { code: 'IE', name: 'Ireland' },
+  { code: 'IT', name: 'Italy' },
+  { code: 'JP', name: 'Japan' },
+  { code: 'LV', name: 'Latvia' },
+  { code: 'LT', name: 'Lithuania' },
+  { code: 'LU', name: 'Luxembourg' },
+  { code: 'MT', name: 'Malta' },
+  { code: 'MX', name: 'Mexico' },
+  { code: 'NL', name: 'Netherlands' },
+  { code: 'NO', name: 'Norway' },
+  { code: 'PL', name: 'Poland' },
+  { code: 'PT', name: 'Portugal' },
+  { code: 'RO', name: 'Romania' },
+  { code: 'SG', name: 'Singapore' },
+  { code: 'SK', name: 'Slovakia' },
+  { code: 'SI', name: 'Slovenia' },
+  { code: 'ES', name: 'Spain' },
+  { code: 'SE', name: 'Sweden' },
+  { code: 'CH', name: 'Switzerland' },
+  { code: 'TH', name: 'Thailand' },
+]
+
 export function StripeConnectSection() {
   const [isLoading, setIsLoading] = useState(false)
   const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [connectStatus, setConnectStatus] = useState<ConnectStatus>('not_connected')
   const [accountData, setAccountData] = useState<StripeConnectAccount | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [selectedCountry, setSelectedCountry] = useState<string>('US')
 
   // Load account data on component mount and handle URL parameters
   useEffect(() => {
@@ -91,7 +136,9 @@ export function StripeConnectSection() {
     try {
       // First create the account if it doesn't exist
       if (connectStatus === 'not_connected') {
-        const createResult = await createStripeConnectAccountAction()
+        const createResult = await createStripeConnectAccountAction({
+          country: selectedCountry
+        })
 
         if (createResult && 'error' in createResult) {
           setError(createResult.error)
@@ -269,6 +316,27 @@ export function StripeConnectSection() {
               <li>Funds are transferred to your account (minus platform fee)</li>
               <li>You get access to detailed transaction reports</li>
             </ul>
+          </div>
+
+          <div>
+            <label htmlFor="country-select" className="block text-sm font-medium text-gray-900 mb-2">
+              Select Your Country
+            </label>
+            <select
+              id="country-select"
+              value={selectedCountry}
+              onChange={(e) => setSelectedCountry(e.target.value)}
+              className="block w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500 text-sm"
+            >
+              {STRIPE_COUNTRIES.map((country) => (
+                <option key={country.code} value={country.code}>
+                  {country.name}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-gray-500">
+              Note: Country cannot be changed after account creation
+            </p>
           </div>
 
           <div className="flex space-x-3">

@@ -28,17 +28,26 @@ def init_stripe():
 class StripeConnectService:
     """Service class for handling Stripe Connect operations"""
 
-    def create_express_account(self, user: User, email: Optional[str] = None) -> StripeConnectAccount:
+    def create_express_account(self, user: User, email: Optional[str] = None, country: Optional[str] = None) -> StripeConnectAccount:
         """
         Create a new Stripe Express account for a user.
+
+        Args:
+            user: The user creating the Connect account
+            email: Email for the Connect account (defaults to user's email)
+            country: ISO 3166-1 alpha-2 country code (e.g., 'US', 'CA', 'GB')
+                    Defaults to 'US' if not provided
         """
         init_stripe()
 
         try:
+            # Use provided country or default to US
+            account_country = country or 'US'
+
             # Create Stripe Express account
             account = stripe.Account.create(
                 type='express',
-                country='US',  # You can make this dynamic based on user location
+                country=account_country,
                 email=email or user.email,
                 capabilities={
                     'card_payments': {'requested': True},

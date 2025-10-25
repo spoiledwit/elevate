@@ -218,6 +218,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         return { itemId: 'community', sectionId: 'community' }
       case '/prompt-library':
         return { itemId: 'prompt-library', sectionId: 'prompt-library' }
+      case '/faq':
+        return { itemId: 'faq', sectionId: 'faq' }
       default:
         return { itemId: 'dashboard', sectionId: 'overview' }
     }
@@ -425,16 +427,19 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   </button>
 
                   {/* FAQ */}
-                  <a
-                    href="https://thewealthcreator.co/faq"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
+                  <button
+                    onClick={() => {
+                      setActiveItem('faq')
+                      router.push('/faq')
+                    }}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors ${activeItem === 'faq'
+                      ? 'text-gray-900 bg-gray-50'
+                      : 'text-gray-700 hover:bg-gray-50'
+                      }`}
                   >
                     <HelpCircle className="w-5 h-5 text-gray-500" />
                     <span>FAQ</span>
-                    <ExternalLink className="w-3 h-3 text-gray-400 ml-auto" />
-                  </a>
+                  </button>
                 </div>
               </>
             )}

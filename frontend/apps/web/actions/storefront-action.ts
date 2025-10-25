@@ -1017,6 +1017,75 @@ export async function createOrderPaymentIntentAction(linkId: string, data: Order
   }
 }
 
+/**
+ * Initialize PaymentIntent without creating an order
+ * Call this on page load to show payment fields immediately
+ */
+export async function initializePaymentAction(linkId: string) {
+  try {
+    const apiClient = await getApiClient()
+
+    const response = await apiClient.storefront.storefrontLinksInitializePaymentCreate(linkId)
+
+    return {
+      success: true,
+      data: {
+        //@ts-ignore
+        ...response,
+        client_secret: (response as any).client_secret,
+        payment_intent_id: (response as any).payment_intent_id,
+        amount: (response as any).amount,
+        currency: (response as any).currency,
+        is_free: (response as any).is_free,
+        message: (response as any).message
+      }
+    }
+  } catch (error) {
+    console.error('Failed to initialize payment:', error)
+    if (error instanceof ApiError) {
+      return { success: false, error: error.body?.error || 'Failed to initialize payment' }
+    }
+    return { success: false, error: 'Failed to initialize payment' }
+  }
+}
+
+/**
+ * Finalize order by linking it to an existing PaymentIntent
+ * Call this after user fills form but before confirming payment
+ */
+export async function finalizeOrderAction(
+  linkId: string,
+  paymentIntentId: string,
+  data: OrderCreateData
+) {
+  try {
+    const apiClient = await getApiClient()
+
+    const response = await apiClient.storefront.storefrontLinksFinalizeOrderCreate(linkId, {
+      //@ts-ignore
+      payment_intent_id: paymentIntentId,
+      ...data
+    })
+
+    return {
+      success: true,
+      data: {
+        //@ts-ignore
+        ...response,
+        order: (response as any).order,
+        payment_intent_id: (response as any).payment_intent_id,
+        message: (response as any).message
+      }
+    }
+  } catch (error) {
+    console.error('Failed to finalize order:', error)
+    if (error instanceof ApiError) {
+      return { success: false, error: error.body?.error || 'Failed to finalize order' }
+    }
+    return { success: false, error: 'Failed to finalize order' }
+  }
+}
+
 // =============================================================================
 // HELPER FUNCTIONS
 // =============================================================================

@@ -16,22 +16,27 @@ interface InlineStripePaymentProps {
   currency: string
   onSuccess: () => void
   onError: (error: string) => void
+  disabled?: boolean // Disable payment until form is validated
+  onBeforePayment?: () => Promise<boolean> // Called before payment to finalize order
 }
 
 /**
  * Payment Form Component
  * This sits inside the Elements provider and handles the payment submission
  */
-function PaymentForm({ onSuccess, onError }: { onSuccess: () => void; onError: (error: string) => void }) {
+function PaymentForm({ onSuccess, onError, disabled = false, onBeforePayment }: { onSuccess: () => void; onError: (error: string) => void; disabled?: boolean; onBeforePayment?: () => Promise<boolean> }) {
   const stripe = useStripe()
   const elements = useElements()
   const [isProcessing, setIsProcessing] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
+  console.log('PaymentForm disabled state:', disabled)
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
 
-    if (!stripe || !elements) {
+    if (!stripe || !elements || disabled) {
+      // Don't process if disabled (form not filled yet)
       return
     }
 
@@ -39,6 +44,20 @@ function PaymentForm({ onSuccess, onError }: { onSuccess: () => void; onError: (
     setErrorMessage(null)
 
     try {
+      // First, finalize the order (create Order and PaymentTransaction)
+      if (onBeforePayment) {
+        console.log('Finalizing order before payment...')
+        const shouldProceed = await onBeforePayment()
+        if (!shouldProceed) {
+          setErrorMessage('Failed to create order')
+          onError('Failed to create order')
+          setIsProcessing(false)
+          return
+        }
+        console.log('Order finalized, proceeding with payment...')
+      }
+
+      // Now confirm the payment with Stripe
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
@@ -65,7 +84,17 @@ function PaymentForm({ onSuccess, onError }: { onSuccess: () => void; onError: (
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Payment Element with tabs layout */}
-      <div className="stripe-payment-element">
+      <div
+        className="stripe-payment-element relative"
+        style={{
+          pointerEvents: disabled ? 'none' : 'auto',
+          opacity: disabled ? 0.6 : 1,
+          userSelect: disabled ? 'none' : 'auto'
+        }}
+      >
+        {disabled && (
+          <div className="absolute inset-0 z-10 cursor-not-allowed" />
+        )}
         <PaymentElement
           options={{
             layout: {
@@ -99,10 +128,14 @@ function PaymentForm({ onSuccess, onError }: { onSuccess: () => void; onError: (
       {/* Submit button */}
       <button
         type="submit"
-        disabled={!stripe || isProcessing}
-        className="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        disabled={!stripe || isProcessing || disabled}
+        className={`w-full font-semibold py-3 px-6 rounded-lg transition-colors ${
+          disabled
+            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            : 'bg-brand-600 hover:bg-brand-700 text-white cursor-pointer'
+        } ${isProcessing ? 'opacity-75' : ''}`}
       >
-        {isProcessing ? 'Processing...' : 'Pay Now'}
+        {disabled ? 'Fill form above to continue' : (isProcessing ? 'Processing...' : 'Pay Now')}
       </button>
     </form>
   )
@@ -118,7 +151,9 @@ export function InlineStripePayment({
   amount,
   currency,
   onSuccess,
-  onError
+  onError,
+  disabled = false,
+  onBeforePayment
 }: InlineStripePaymentProps) {
   const [stripePromise, setStripePromise] = useState<Promise<any> | null>(null)
 
@@ -166,7 +201,7 @@ export function InlineStripePayment({
 
       {/* Stripe Elements Provider */}
       <Elements stripe={stripePromise} options={options}>
-        <PaymentForm onSuccess={onSuccess} onError={onError} />
+        <PaymentForm onSuccess={onSuccess} onError={onError} disabled={disabled} onBeforePayment={onBeforePayment} />
       </Elements>
 
       {/* Powered by Stripe badge */}

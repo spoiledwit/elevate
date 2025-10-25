@@ -445,6 +445,62 @@ export class StorefrontService {
         });
     }
     /**
+     * Create Order and link it to an existing PaymentIntent.
+     * Called after user fills form but before confirming payment.
+     *
+     * Required data:
+     * - payment_intent_id: The existing PaymentIntent ID
+     * - customer_name, customer_email, form_responses: Order data
+     * @param id
+     * @param formData
+     * @returns CustomLink
+     * @throws ApiError
+     */
+    public storefrontLinksFinalizeOrderCreate(
+        id: string,
+        formData?: CustomLink,
+    ): CancelablePromise<CustomLink> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/api/storefront/links/{id}/finalize-order/',
+            path: {
+                'id': id,
+            },
+            formData: formData,
+            mediaType: 'multipart/form-data',
+        });
+    }
+    /**
+     * Initialize a PaymentIntent WITHOUT creating an Order.
+     * This allows showing payment fields immediately on page load.
+     * Returns the client_secret for the PaymentElement.
+     *
+     * Flow:
+     * 1. Frontend calls this on page load → gets client_secret
+     * 2. Shows payment element immediately
+     * 3. User fills form + card
+     * 4. Frontend calls finalize-order → creates Order with form data
+     * 5. Frontend confirms payment with Stripe
+     * @param id
+     * @param formData
+     * @returns CustomLink
+     * @throws ApiError
+     */
+    public storefrontLinksInitializePaymentCreate(
+        id: string,
+        formData?: CustomLink,
+    ): CancelablePromise<CustomLink> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/api/storefront/links/{id}/initialize-payment/',
+            path: {
+                'id': id,
+            },
+            formData: formData,
+            mediaType: 'multipart/form-data',
+        });
+    }
+    /**
      * Get form responses for a collect info link
      * Get form responses for a custom link with collect info fields (owner only).
      * @param id

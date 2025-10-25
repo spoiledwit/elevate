@@ -1560,7 +1560,7 @@ class ConnectWebhookEvent(models.Model):
     """
     stripe_event_id = models.CharField(_("Stripe event ID"), max_length=255, unique=True)
     event_type = models.CharField(_("event type"), max_length=100)
-    account_id = models.CharField(_("account ID"), max_length=255, blank=True, help_text="Connected account ID if applicable")
+    account_id = models.CharField(_("account ID"), max_length=255, blank=True, null=True, help_text="Connected account ID if applicable")
     
     # Related models
     connect_account = models.ForeignKey(

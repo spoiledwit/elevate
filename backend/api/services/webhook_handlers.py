@@ -554,6 +554,8 @@ def handle_connect_webhook_event(event: stripe.Event) -> Dict[str, Any]:
         "checkout.session.completed": handle_connect_checkout_session_completed,
         "payment_intent.succeeded": handle_connect_payment_succeeded,
         "payment_intent.payment_failed": handle_connect_payment_failed,
+        "payment.created": handle_payment_created,
+        "charge.succeeded": handle_payment_created,  # Alternative event name
         "transfer.created": handle_transfer_created,
         "transfer.updated": handle_transfer_updated,
         "payout.created": handle_payout_created,
@@ -591,16 +593,19 @@ def _log_connect_event(event: stripe.Event, processed: bool = True, error_messag
         from ..models import ConnectWebhookEvent, StripeConnectAccount, PaymentTransaction
 
         # Extract account ID if present
-        account_id = ""
+        account_id = None
         connect_account = None
         payment_transaction = None
 
         # Try to get account ID from event data
         event_data = event.data.object
-        if hasattr(event_data, 'account'):
+        if hasattr(event_data, 'account') and event_data.account:
             account_id = event_data.account
-        elif hasattr(event_data, 'destination'):
+        elif hasattr(event_data, 'destination') and event_data.destination:
             account_id = event_data.destination
+        elif hasattr(event_data, 'source') and hasattr(event_data.source, 'id'):
+            # For payment.created events, account is in source.id
+            account_id = event_data.source.id
         elif hasattr(event_data, 'metadata') and event_data.metadata.get('connect_account_id'):
             account_id = event_data.metadata.get('connect_account_id')
 
@@ -737,7 +742,7 @@ def handle_connect_payment_failed(event: stripe.Event) -> Dict[str, Any]:
     Handle failed payments for Connect transactions.
     """
     from ..models import PaymentTransaction
-    
+
     payment_intent = event.data.object
     logger.info(f"Connect payment {payment_intent.id} failed")
 
@@ -756,6 +761,70 @@ def handle_connect_payment_failed(event: stripe.Event) -> Dict[str, Any]:
     except PaymentTransaction.DoesNotExist:
         logger.error(f"PaymentTransaction not found for payment intent {payment_intent.id}")
         return {"status": "error", "error": "Transaction not found"}
+
+
+def handle_payment_created(event: stripe.Event) -> Dict[str, Any]:
+    """
+    Handle payment.created or charge.succeeded events.
+    This happens when a charge is created from a PaymentIntent.
+    """
+    from ..models import PaymentTransaction
+    from django.utils import timezone
+    import stripe
+
+    charge = event.data.object
+    logger.info(f"Payment/Charge {charge.id} created/succeeded")
+    logger.info(f"Charge payment_intent: {charge.get('payment_intent')}")
+    logger.info(f"Charge source_transfer: {charge.get('source_transfer')}")
+    logger.info(f"Charge metadata: {charge.get('metadata')}")
+
+    try:
+        # Try to find the transaction by payment_intent if available
+        payment_intent_id = charge.get('payment_intent')
+
+        # If no payment_intent in charge, try to retrieve it from Stripe
+        if not payment_intent_id and charge.get('source_transfer'):
+            # This is a destination charge from a source transfer
+            # Try to find the original PaymentIntent via the transfer
+            try:
+                transfer = stripe.Transfer.retrieve(charge.source_transfer)
+                if transfer.get('source_transaction'):
+                    # Get the original charge that has the PaymentIntent
+                    original_charge = stripe.Charge.retrieve(transfer.source_transaction)
+                    payment_intent_id = original_charge.get('payment_intent')
+                    logger.info(f"Found payment_intent {payment_intent_id} from source transfer")
+            except Exception as e:
+                logger.warning(f"Could not retrieve payment_intent from transfer: {e}")
+
+        if payment_intent_id:
+            # Find transaction by payment_intent_id
+            try:
+                transaction = PaymentTransaction.objects.get(payment_intent_id=payment_intent_id)
+
+                # Update transaction status
+                transaction.status = 'succeeded'
+                transaction.charge_id = charge.id
+                transaction.paid_at = timezone.now()
+                transaction.save()
+
+                # Update order status
+                transaction.order.status = 'completed'
+                transaction.order.save()
+
+                logger.info(f"Updated transaction {transaction.id} to succeeded via charge {charge.id}")
+                logger.info(f"Updated order {transaction.order.order_id} to completed")
+
+                return {"status": "success", "transaction_id": transaction.id}
+            except PaymentTransaction.DoesNotExist:
+                logger.error(f"PaymentTransaction not found for payment_intent {payment_intent_id}")
+                return {"status": "error", "error": "Transaction not found"}
+        else:
+            logger.warning(f"Charge {charge.id} has no payment_intent, cannot update transaction")
+            return {"status": "warning", "message": "No payment_intent found"}
+
+    except Exception as e:
+        logger.error(f"Error handling payment.created event {charge.id}: {e}")
+        return {"status": "error", "error": str(e)}
 
 
 def handle_transfer_created(event: stripe.Event) -> Dict[str, Any]:

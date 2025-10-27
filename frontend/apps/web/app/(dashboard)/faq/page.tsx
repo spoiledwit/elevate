@@ -22,6 +22,7 @@ export default function FAQPage() {
                 src="https://thewealthcreator.co/faq-es"
                 className="w-full h-full border-0"
                 title="The Wealth Creator FAQ"
+                sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
               />
             </div>
           </div>

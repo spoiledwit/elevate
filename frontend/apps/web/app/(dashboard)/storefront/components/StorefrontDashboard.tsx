@@ -68,11 +68,11 @@ export function StorefrontDashboard({
                     rel="noopener noreferrer"
                     className="text-brand-600 hover:text-purple-700 transition-colors font-medium text-base"
                   >
-                    elevate.social/{session?.user?.username}
+                    twc.elevate.social
                   </a>
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(`https://elevate.social/${session?.user?.username}`)
+                      navigator.clipboard.writeText(`https://twc.elevate.social`)
                       toast.custom(
                         (t) => (
                           <div

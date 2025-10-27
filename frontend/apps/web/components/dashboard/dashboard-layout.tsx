@@ -90,28 +90,28 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         { id: 'leads', label: 'Leads', icon: Users },
       ]
     },
-    {
-      id: 'content',
-      title: 'Content & Social AI',
-      icon: Calendar,
-      items: [
-        { id: 'calendar', label: 'Content Calendar', icon: Calendar },
-        { id: 'post-creator', label: 'Post Creator', icon: PlusCircle },
-        { id: 'content-library', label: 'Content Library', icon: FolderOpen },
-        { id: 'social-accounts', label: 'Social Accounts', icon: Share2 },
-      ]
-    },
-    {
-      id: 'automation',
-      title: 'Automation',
-      icon: Zap,
-      items: [
-        { id: 'comments', label: 'Comments', icon: MessageSquare },
-        { id: 'automation-rules', label: 'Automation Rules', icon: Zap },
-        { id: 'automation-settings', label: 'Automation Settings', icon: Settings2 },
-        { id: 'reply-analytics', label: 'Reply Analytics', icon: BarChart3 },
-      ]
-    },
+    // {
+    //   id: 'content',
+    //   title: 'Content & Social AI',
+    //   icon: Calendar,
+    //   items: [
+    //     { id: 'calendar', label: 'Content Calendar', icon: Calendar },
+    //     { id: 'post-creator', label: 'Post Creator', icon: PlusCircle },
+    //     { id: 'content-library', label: 'Content Library', icon: FolderOpen },
+    //     { id: 'social-accounts', label: 'Social Accounts', icon: Share2 },
+    //   ]
+    // },
+    // {
+    //   id: 'automation',
+    //   title: 'Automation',
+    //   icon: Zap,
+    //   items: [
+    //     { id: 'comments', label: 'Comments', icon: MessageSquare },
+    //     { id: 'automation-rules', label: 'Automation Rules', icon: Zap },
+    //     { id: 'automation-settings', label: 'Automation Settings', icon: Settings2 },
+    //     { id: 'reply-analytics', label: 'Reply Analytics', icon: BarChart3 },
+    //   ]
+    // },
     {
       id: 'business',
       title: 'Business',

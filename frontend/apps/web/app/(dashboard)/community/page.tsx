@@ -19,9 +19,10 @@ export default function CommunityPage() {
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">
             <div className="relative" style={{ height: '800px' }}>
               <iframe
-                src="https://community.thewealthcreator.co"
+                src="https://community.thewealthcreator.co/communities/groups/the-wealth-creator/home"
                 className="w-full h-full border-0"
                 title="The Wealth Creator Community"
+                sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
               />
             </div>
           </div>

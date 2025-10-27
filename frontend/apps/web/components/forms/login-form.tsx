@@ -4,9 +4,10 @@ import { loginFormSchema } from '@/lib/validation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { signIn } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import type { z } from 'zod'
+import { toast } from 'sonner'
 import { GoogleSignInButton } from './google-signin-button'
 
 type LoginFormSchema = z.infer<typeof loginFormSchema>
@@ -14,6 +15,15 @@ type LoginFormSchema = z.infer<typeof loginFormSchema>
 export function LoginForm() {
   const search = useSearchParams()
   const [showPassword, setShowPassword] = useState(false)
+
+  // Show toast for OAuth errors
+  useEffect(() => {
+    if (search.has('error') && search.get('error') === 'OAuthAccountNotLinked') {
+      toast.error('Registration is currently disabled', {
+        description: 'New sign ups are not available at this time. Please contact support if you need access.',
+      })
+    }
+  }, [search])
 
 
   const { register, handleSubmit, formState } = useForm<LoginFormSchema>({
@@ -125,13 +135,6 @@ export function LoginForm() {
 
       {/* Google Sign-In Button */}
       <GoogleSignInButton callbackUrl="/dashboard" />
-
-      <p className="text-sm text-gray-600 text-center mt-6">
-        Don't have an account?{' '}
-        <a href="/get-started" className="font-semibold hover:underline" style={{color: '#714efe'}}>
-          Sign up
-        </a>
-      </p>
 
       <p className="text-xs text-gray-500 mt-6 text-center">
         By signing in, you agree to our{' '}

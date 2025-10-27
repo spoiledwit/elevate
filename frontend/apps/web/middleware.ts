@@ -15,15 +15,8 @@ export default withAuth(
         return NextResponse.redirect(url)
       }
 
-      // Check for OAuth users needing registration
-      if (token.access === 'REQUIRES_REGISTRATION') {
-        const url = new URL('/get-started', req.url)
-        url.searchParams.set('oauth', 'true')
-        return NextResponse.redirect(url)
-      }
-
       // For regular users with valid tokens, verify they exist in database
-      if (token.access && token.access !== 'REQUIRES_REGISTRATION') {
+      if (token.access) {
         try {
           const verifyResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/auth/verify-user/`, {
             method: 'GET',

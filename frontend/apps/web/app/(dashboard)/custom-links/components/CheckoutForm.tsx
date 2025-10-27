@@ -530,18 +530,18 @@ export function CheckoutForm({
                   </div>
                 )}
 
-                {/* Purchase Button - Hide only after order is finalized */}
-                {/* {!isOrderFinalized && (
-                <div className="pt-6">
-                  <button
-                    onClick={handleBuyNow}
-                    className="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-4 px-6 rounded-lg transition-colors disabled:opacity-50 text-lg"
-                    disabled={!isActive || isSubmitting}
-                  >
-                    {isSubmitting ? 'Processing...' : (checkoutCtaButtonText || 'Buy Now')}
-                  </button>
-                </div>
-              )} */}
+                {/* Purchase Button - Never show for paid products (price > 0) */}
+                {parseFloat(effectivePrice) === 0 && (
+                  <div className="pt-6">
+                    <button
+                      onClick={handleBuyNow}
+                      className="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-4 px-6 rounded-lg transition-colors disabled:opacity-50 text-lg"
+                      disabled={!isActive || isSubmitting}
+                    >
+                      {isSubmitting ? 'Processing...' : (checkoutCtaButtonText || 'Buy Now')}
+                    </button>
+                  </div>
+                )}
 
                 {/* Inline Stripe Payment Element */}
                 {showPaymentElement && stripeClientSecret && (
@@ -802,18 +802,18 @@ export function CheckoutForm({
               </div>
             )}
 
-            {/* Purchase Button - Hide only after order is finalized */}
-            {/* {!isOrderFinalized && (
-            <div className="pt-4">
-              <button
-                onClick={handleBuyNow}
-                className="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50"
-                disabled={!isActive || isSubmitting}
-              >
-                {isSubmitting ? 'Processing...' : (checkoutCtaButtonText || 'Buy Now')}
-              </button>
-            </div>
-          )} */}
+            {/* Purchase Button - Never show for paid products (price > 0) */}
+            {parseFloat(effectivePrice) === 0 && (
+              <div className="pt-4">
+                <button
+                  onClick={handleBuyNow}
+                  className="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50"
+                  disabled={!isActive || isSubmitting}
+                >
+                  {isSubmitting ? 'Processing...' : (checkoutCtaButtonText || 'Buy Now')}
+                </button>
+              </div>
+            )}
 
             {/* Inline Stripe Payment Element */}
             {showPaymentElement && stripeClientSecret && (

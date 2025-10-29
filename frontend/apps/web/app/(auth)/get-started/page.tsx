@@ -9,6 +9,8 @@ export const metadata: Metadata = {
   title: "Get Started - Elevate Social",
 };
 
+//here is the new feature
+
 export default function GetStarted() {
   return (
     <div className="h-screen flex flex-col overflow-hidden">

@@ -126,12 +126,12 @@ export function LoginForm() {
       {/* Google Sign-In Button */}
       <GoogleSignInButton callbackUrl="/dashboard" />
 
-      <p className="text-sm text-gray-600 text-center mt-6">
+      {/* <p className="text-sm text-gray-600 text-center mt-6">
         Don't have an account?{' '}
         <a href="/get-started" className="font-semibold hover:underline" style={{ color: '#bea456' }}>
           Sign up
         </a>
-      </p>
+      </p> */}
 
       <p className="text-xs text-gray-500 mt-6 text-center">
         By signing in, you agree to our{' '}

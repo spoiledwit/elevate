@@ -30,12 +30,15 @@ def google_oauth_login(request):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Verify the Google token
+        # Verify the Google token with clock skew tolerance
         try:
+            # Add 10 seconds of clock skew tolerance to handle timing differences
+            request_obj = requests.Request()
             idinfo = id_token.verify_oauth2_token(
-                google_token, 
-                requests.Request(), 
-                settings.GOOGLE_OAUTH2_CLIENT_ID
+                google_token,
+                request_obj,
+                settings.GOOGLE_OAUTH2_CLIENT_ID,
+                clock_skew_in_seconds=10
             )
         except ValueError as e:
             logger.error(f"Google token verification failed: {str(e)}")

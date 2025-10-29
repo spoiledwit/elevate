@@ -184,7 +184,7 @@ export function ProfileSection({
                 alt="elevate.social"
                 className="h-6 flex-shrink-0"
               />
-              <span className="font-medium text-sm flex-shrink-0 text-gray-700">elevate.social</span>
+              <span className="font-medium text-sm flex-shrink-0 text-gray-700">twc.elevate.social</span>
               <span className="font-medium text-sm flex-shrink-0" style={{ color: '#bea456' }}>/</span>
               <input
                 {...register('username')}
@@ -208,7 +208,7 @@ export function ProfileSection({
             <p className="text-red-500 text-sm mt-1">{formState.errors.username.message}</p>
           )}
           <p className="text-xs text-gray-500">
-            Your profile will be accessible at elevate.social/{username || 'username'}
+            Your profile will be accessible at twc.elevate.social/{username || 'username'}
           </p>
         </div>
 

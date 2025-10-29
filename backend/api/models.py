@@ -1840,6 +1840,137 @@ class EmailDraft(models.Model):
 
 
 # ============================================================================
+# CANVA INTEGRATION MODELS
+# ============================================================================
+
+class CanvaConnection(models.Model):
+    """
+    Stores user's OAuth connection to Canva.
+    Manages access tokens and refresh tokens for Canva API access.
+    """
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='canva_connection')
+
+    # OAuth tokens
+    access_token = models.TextField(_("access token"), help_text="Canva OAuth access token")
+    refresh_token = models.TextField(_("refresh token"), help_text="Canva OAuth refresh token")
+    token_type = models.CharField(_("token type"), max_length=50, default="Bearer")
+
+    # Token metadata
+    expires_at = models.DateTimeField(_("expires at"), null=True, blank=True)
+    scope = models.TextField(_("granted scope"), blank=True, help_text="OAuth scopes granted")
+
+    # Canva user information
+    canva_user_id = models.CharField(_("Canva user ID"), max_length=255, blank=True)
+    canva_team_id = models.CharField(_("Canva team ID"), max_length=255, blank=True)
+    canva_display_name = models.CharField(_("Canva display name"), max_length=255, blank=True)
+
+    # Connection status
+    is_active = models.BooleanField(_("is active"), default=True)
+    last_used_at = models.DateTimeField(_("last used at"), null=True, blank=True)
+    last_error = models.TextField(_("last error"), blank=True)
+
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    modified_at = models.DateTimeField(_("modified at"), auto_now=True)
+
+    class Meta:
+        db_table = "canva_connections"
+        verbose_name = _("Canva Connection")
+        verbose_name_plural = _("Canva Connections")
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username} - Canva"
+
+    @property
+    def needs_refresh(self):
+        """Check if access token needs refresh"""
+        if not self.expires_at:
+            return False
+        return timezone.now() >= self.expires_at
+
+    def update_tokens(self, access_token, refresh_token=None, expires_in=None):
+        """Update OAuth tokens and expiry"""
+        self.access_token = access_token
+        if refresh_token:
+            self.refresh_token = refresh_token
+        if expires_in:
+            self.expires_at = timezone.now() + timezone.timedelta(seconds=expires_in)
+        self.last_used_at = timezone.now()
+        self.save(update_fields=['access_token', 'refresh_token', 'expires_at', 'last_used_at', 'modified_at'])
+
+
+class CanvaDesign(models.Model):
+    """
+    Tracks designs created by users in Canva.
+    Stores design metadata and export information.
+    """
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('editing', 'Editing'),
+        ('completed', 'Completed'),
+        ('exported', 'Exported'),
+        ('failed', 'Failed'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='canva_designs')
+    connection = models.ForeignKey(CanvaConnection, on_delete=models.CASCADE, related_name='designs')
+
+    # Canva design details
+    design_id = models.CharField(_("design ID"), max_length=255, unique=True, help_text="Canva design ID")
+    design_type = models.CharField(_("design type"), max_length=100, default='doc', help_text="Type of design (e.g., doc, Presentation)")
+    title = models.CharField(_("title"), max_length=255, blank=True)
+
+    # URLs
+    edit_url = models.URLField(_("edit URL"), max_length=1000, blank=True, help_text="URL to edit design in Canva")
+    thumbnail_url = models.URLField(_("thumbnail URL"), max_length=1000, blank=True, help_text="Design thumbnail")
+
+    # Export details
+    export_url = models.URLField(_("export URL"), max_length=1000, blank=True, null=True, help_text="URL to download exported design")
+    export_format = models.CharField(_("export format"), max_length=50, default='png', help_text="Export format (png, jpg, pdf)")
+    exported_at = models.DateTimeField(_("exported at"), null=True, blank=True)
+
+    # Status
+    status = models.CharField(_("status"), max_length=20, choices=STATUS_CHOICES, default='draft')
+
+    # Metadata
+    metadata = models.JSONField(_("metadata"), default=dict, blank=True, help_text="Additional design metadata")
+
+    # Usage tracking
+    opened_count = models.PositiveIntegerField(_("opened count"), default=0, help_text="Number of times design was opened")
+    last_opened_at = models.DateTimeField(_("last opened at"), null=True, blank=True)
+
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    modified_at = models.DateTimeField(_("modified at"), auto_now=True)
+
+    class Meta:
+        db_table = "canva_designs"
+        verbose_name = _("Canva Design")
+        verbose_name_plural = _("Canva Designs")
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['design_id']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.title or self.design_id}"
+
+    def mark_as_exported(self, export_url, export_format='png'):
+        """Mark design as exported with export details"""
+        self.export_url = export_url
+        self.export_format = export_format
+        self.exported_at = timezone.now()
+        self.status = 'exported'
+        self.save(update_fields=['export_url', 'export_format', 'exported_at', 'status', 'modified_at'])
+
+    def increment_opened_count(self):
+        """Increment the opened count"""
+        self.opened_count += 1
+        self.last_opened_at = timezone.now()
+        self.save(update_fields=['opened_count', 'last_opened_at', 'modified_at'])
+
+
+# ============================================================================
 
 @receiver(post_save, sender=CustomLinkTemplate)
 def auto_sync_template_on_save(sender, instance, created, **kwargs):

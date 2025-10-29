@@ -5,9 +5,11 @@ import { ProfileSection } from './profile-section'
 import { PasswordSection } from './password-section'
 import { DeleteAccountSection } from './delete-account-section'
 import { StripeConnectSection } from './stripe-connect-section'
-import { useState } from 'react'
+import { CanvaIntegrationSection } from './canva-integration-section'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 
-type ActiveTab = 'profile' | 'password' | 'payments' | 'danger'
+type ActiveTab = 'profile' | 'password' | 'payments' | 'canva' | 'danger'
 
 export function SettingsPage({
   currentUser,
@@ -20,7 +22,16 @@ export function SettingsPage({
   changePasswordAction: any
   deleteAccountAction: any
 }) {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('profile')
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get('tab') as ActiveTab | null
+  const [activeTab, setActiveTab] = useState<ActiveTab>(tabParam || 'profile')
+
+  // Update active tab if URL param changes
+  useEffect(() => {
+    if (tabParam && ['profile', 'password', 'payments', 'canva', 'danger'].includes(tabParam)) {
+      setActiveTab(tabParam)
+    }
+  }, [tabParam])
 
   return (
     <div className="container mx-auto p-6 max-w-4xl">
@@ -61,6 +72,15 @@ export function SettingsPage({
                 }`}
             >
               Payments
+            </button>
+            <button
+              onClick={() => setActiveTab('canva')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'canva'
+                ? 'border-purple-500 text-purple-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+            >
+              Canva
             </button>
             <button
               onClick={() => setActiveTab('danger')}
@@ -112,6 +132,18 @@ export function SettingsPage({
                 </p>
               </div>
               <StripeConnectSection />
+            </div>
+          )}
+
+          {activeTab === 'canva' && (
+            <div>
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold text-purple-600">Canva Integration</h2>
+                <p className="text-gray-600 mt-1">
+                  Connect your Canva account to create stunning designs directly from Elevate.
+                </p>
+              </div>
+              <CanvaIntegrationSection />
             </div>
           )}
 

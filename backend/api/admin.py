@@ -19,7 +19,7 @@ from .models import (
     SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, PaymentEvent, Plan, PlanFeature, StripeCustomer,
     Folder, Media, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply, AIConfiguration, MiloPrompt,
     StripeConnectAccount, PaymentTransaction, ConnectWebhookEvent, FreebieFollowupEmail, ScheduledFollowupEmail, OptinFollowupEmail, ScheduledOptinEmail,
-    EmailAccount, EmailMessage, EmailAttachment, EmailDraft
+    EmailAccount, EmailMessage, EmailAttachment, EmailDraft, CanvaConnection, CanvaDesign
 )
 from tinymce.widgets import TinyMCE
 from django import forms
@@ -1996,3 +1996,105 @@ class EmailDraftAdmin(ModelAdmin, ImportExportModelAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('account')
+
+
+
+# ============================================================================
+# CANVA INTEGRATION ADMIN
+# ============================================================================
+
+@admin.register(CanvaConnection)
+class CanvaConnectionAdmin(ModelAdmin, ImportExportModelAdmin):
+    """Admin interface for Canva connections"""
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    list_display = ["user_username", "canva_display_name", "is_active", "last_used_at", "created_at"]
+    list_filter = ["is_active", "created_at", "last_used_at"]
+    search_fields = ["user__username", "user__email", "canva_user_id", "canva_display_name"]
+    readonly_fields = ["created_at", "modified_at", "last_used_at", "needs_refresh"]
+    date_hierarchy = "created_at"
+
+    fieldsets = (
+        ("User Information", {
+            "fields": ("user",)
+        }),
+        ("Canva Details", {
+            "fields": ("canva_user_id", "canva_team_id", "canva_display_name")
+        }),
+        ("OAuth Tokens", {
+            "fields": ("access_token", "refresh_token", "token_type", "expires_at", "scope"),
+            "classes": ("collapse",)
+        }),
+        ("Connection Status", {
+            "fields": ("is_active", "last_used_at", "last_error", "needs_refresh")
+        }),
+        ("Timestamps", {
+            "fields": ("created_at", "modified_at"),
+            "classes": ("collapse",)
+        }),
+    )
+
+    def user_username(self, obj):
+        """Display username"""
+        return obj.user.username
+    user_username.short_description = "Username"
+    user_username.admin_order_field = "user__username"
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("user")
+
+
+@admin.register(CanvaDesign)
+class CanvaDesignAdmin(ModelAdmin, ImportExportModelAdmin):
+    """Admin interface for Canva designs"""
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    list_display = ["design_id_short", "user_username", "design_type", "status", "opened_count", "exported_at", "created_at"]
+    list_filter = ["status", "design_type", "created_at", "exported_at"]
+    search_fields = ["design_id", "title", "user__username", "user__email"]
+    readonly_fields = ["created_at", "modified_at", "exported_at", "opened_count", "last_opened_at"]
+    date_hierarchy = "created_at"
+
+    fieldsets = (
+        ("User & Connection", {
+            "fields": ("user", "connection")
+        }),
+        ("Design Details", {
+            "fields": ("design_id", "design_type", "title", "status")
+        }),
+        ("URLs", {
+            "fields": ("edit_url", "thumbnail_url")
+        }),
+        ("Export Information", {
+            "fields": ("export_url", "export_format", "exported_at")
+        }),
+        ("Usage Tracking", {
+            "fields": ("opened_count", "last_opened_at")
+        }),
+        ("Metadata", {
+            "fields": ("metadata",),
+            "classes": ("collapse",)
+        }),
+        ("Timestamps", {
+            "fields": ("created_at", "modified_at"),
+            "classes": ("collapse",)
+        }),
+    )
+
+    def design_id_short(self, obj):
+        """Display shortened design ID"""
+        if len(obj.design_id) > 20:
+            return f"{obj.design_id[:20]}..."
+        return obj.design_id
+    design_id_short.short_description = "Design ID"
+    design_id_short.admin_order_field = "design_id"
+
+    def user_username(self, obj):
+        """Display username"""
+        return obj.user.username
+    user_username.short_description = "Username"
+    user_username.admin_order_field = "user__username"
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("user", "connection")
+

@@ -10,6 +10,7 @@ import { AuthService } from './services/AuthService';
 import { AutomationRulesService } from './services/AutomationRulesService';
 import { AutomationSettingsService } from './services/AutomationSettingsService';
 import { AutomationStatsService } from './services/AutomationStatsService';
+import { CanvaService } from './services/CanvaService';
 import { CommentRepliesService } from './services/CommentRepliesService';
 import { CommentsService } from './services/CommentsService';
 import { DirectMessagesService } from './services/DirectMessagesService';
@@ -40,6 +41,7 @@ export class ApiClient {
     public readonly automationRules: AutomationRulesService;
     public readonly automationSettings: AutomationSettingsService;
     public readonly automationStats: AutomationStatsService;
+    public readonly canva: CanvaService;
     public readonly commentReplies: CommentRepliesService;
     public readonly comments: CommentsService;
     public readonly directMessages: DirectMessagesService;
@@ -81,6 +83,7 @@ export class ApiClient {
         this.automationRules = new AutomationRulesService(this.request);
         this.automationSettings = new AutomationSettingsService(this.request);
         this.automationStats = new AutomationStatsService(this.request);
+        this.canva = new CanvaService(this.request);
         this.commentReplies = new CommentRepliesService(this.request);
         this.comments = new CommentsService(this.request);
         this.directMessages = new DirectMessagesService(this.request);

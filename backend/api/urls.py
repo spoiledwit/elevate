@@ -141,6 +141,15 @@ from .apis.email import (
     EmailDraftListView,
     EmailDraftDetailView,
 )
+from .apis.canva import (
+    CanvaAuthUrlView,
+    CanvaOAuthCallbackView,
+    CanvaCreateDesignView,
+    CanvaExportDesignView,
+    CanvaConnectionStatusView,
+    CanvaDesignListView,
+    CanvaDesignDetailView,
+)
 
 router = routers.DefaultRouter()
 router.register("users", UserViewSet, basename="api-users")
@@ -325,6 +334,15 @@ urlpatterns = [
     path("api/email/sync/", EmailSyncView.as_view(), name="email_sync"),
     path("api/email/drafts/", EmailDraftListView.as_view(), name="email_drafts_list"),
     path("api/email/drafts/<int:draft_id>/", EmailDraftDetailView.as_view(), name="email_draft_detail"),
+
+    # Canva Integration URLs
+    path("api/canva/auth/", CanvaAuthUrlView.as_view(), name="canva_auth_url"),
+    path("api/canva/callback/", CanvaOAuthCallbackView.as_view(), name="canva_oauth_callback"),
+    path("api/canva/create-design/", CanvaCreateDesignView.as_view(), name="canva_create_design"),
+    path("api/canva/export/", CanvaExportDesignView.as_view(), name="canva_export_design"),
+    path("api/canva/status/", CanvaConnectionStatusView.as_view(), name="canva_connection_status"),
+    path("api/canva/designs/", CanvaDesignListView.as_view(), name="canva_designs_list"),
+    path("api/canva/designs/<str:design_id>/", CanvaDesignDetailView.as_view(), name="canva_design_detail"),
 
     path("admin/", admin.site.urls),
     

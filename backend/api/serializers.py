@@ -7,7 +7,7 @@ from rest_framework import exceptions, serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.db.models import Q
 
-from .models import UserProfile, UserSocialLinks, UserPermissions, SocialIcon, CustomLink, CollectInfoField, CollectInfoResponse, CTABanner, SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, Plan, PlanFeature, Subscription, Folder, Media, ProfileView, LinkClick, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply, Order, StripeConnectAccount, PaymentTransaction, ConnectWebhookEvent, MiloPrompt, EmailAccount, EmailMessage, EmailAttachment, EmailDraft
+from .models import UserProfile, UserSocialLinks, UserPermissions, SocialIcon, CustomLink, CollectInfoField, CollectInfoResponse, CTABanner, SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, Plan, PlanFeature, Subscription, Folder, Media, ProfileView, LinkClick, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply, Order, StripeConnectAccount, PaymentTransaction, ConnectWebhookEvent, MiloPrompt, EmailAccount, EmailMessage, EmailAttachment, EmailDraft, CanvaConnection, CanvaDesign
 
 # Backwards compatibility aliases
 CommentAutomationRule = AutomationRule
@@ -2435,3 +2435,103 @@ class EmailMarkReadSerializer(serializers.Serializer):
     """Serializer for marking email as read"""
     message_id = serializers.CharField(required=True)
     is_read = serializers.BooleanField(required=True)
+
+
+# Canva Integration Serializers
+class CanvaAuthUrlSerializer(serializers.Serializer):
+    """Serializer for Canva OAuth authorization URL"""
+    auth_url = serializers.URLField()
+
+
+class CanvaCallbackSerializer(serializers.Serializer):
+    """Serializer for Canva OAuth callback"""
+    code = serializers.CharField(required=True)
+    state = serializers.CharField(required=True)
+    user_id = serializers.IntegerField(required=True)
+
+
+class CanvaCallbackResponseSerializer(serializers.Serializer):
+    """Serializer for Canva OAuth callback response"""
+    success = serializers.BooleanField()
+    message = serializers.CharField()
+
+
+class CanvaCreateDesignSerializer(serializers.Serializer):
+    """Serializer for creating a Canva design"""
+    design_type = serializers.CharField(required=False, default='square_post')
+    width = serializers.IntegerField(required=False, min_value=40, max_value=8000)
+    height = serializers.IntegerField(required=False, min_value=40, max_value=8000)
+
+
+class CanvaDesignResponseSerializer(serializers.Serializer):
+    """Serializer for Canva design creation response"""
+    design_id = serializers.CharField()
+    edit_url = serializers.URLField()
+    message = serializers.CharField()
+
+
+class CanvaExportSerializer(serializers.Serializer):
+    """Serializer for exporting a Canva design"""
+    design_id = serializers.CharField(required=False)
+
+
+class CanvaExportResponseSerializer(serializers.Serializer):
+    """Serializer for Canva design export response"""
+    export_url = serializers.URLField()
+    design_id = serializers.CharField()
+    message = serializers.CharField()
+
+
+class CanvaConnectionStatusSerializer(serializers.Serializer):
+    """Serializer for Canva connection status"""
+    connected = serializers.BooleanField()
+
+
+# Enhanced Canva Model Serializers
+class CanvaConnectionSerializer(serializers.ModelSerializer):
+    """Serializer for CanvaConnection model"""
+    user_username = serializers.CharField(source='user.username', read_only=True)
+    needs_refresh = serializers.ReadOnlyField()
+
+    class Meta:
+        model = CanvaConnection
+        fields = [
+            'id', 'user', 'user_username', 'canva_user_id', 'canva_team_id',
+            'canva_display_name', 'is_active', 'last_used_at', 'needs_refresh',
+            'created_at', 'modified_at'
+        ]
+        read_only_fields = [
+            'id', 'user', 'canva_user_id', 'canva_team_id', 'canva_display_name',
+            'last_used_at', 'created_at', 'modified_at'
+        ]
+
+
+class CanvaDesignSerializer(serializers.ModelSerializer):
+    """Serializer for CanvaDesign model"""
+    user_username = serializers.CharField(source='user.username', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+
+    class Meta:
+        model = CanvaDesign
+        fields = [
+            'id', 'user', 'user_username', 'connection', 'design_id', 'design_type',
+            'title', 'edit_url', 'thumbnail_url', 'export_url', 'export_format',
+            'exported_at', 'status', 'status_display', 'metadata', 'opened_count',
+            'last_opened_at', 'created_at', 'modified_at'
+        ]
+        read_only_fields = [
+            'id', 'user', 'connection', 'design_id', 'opened_count',
+            'last_opened_at', 'exported_at', 'created_at', 'modified_at'
+        ]
+
+
+class CanvaDesignListSerializer(serializers.ModelSerializer):
+    """Simplified serializer for listing Canva designs"""
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+
+    class Meta:
+        model = CanvaDesign
+        fields = [
+            'id', 'design_id', 'design_type', 'title', 'thumbnail_url', 'edit_url',
+            'status', 'status_display', 'opened_count', 'created_at'
+        ]

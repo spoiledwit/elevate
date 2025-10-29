@@ -418,6 +418,10 @@ SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'
 SOCIALACCOUNT_LOGIN_ON_GET = True
 
+CANVA_CLIENT_ID = environ.get("CANVA_CLIENT_ID", "")
+CANVA_CLIENT_SECRET = environ.get("CANVA_CLIENT_SECRET", "")
+CANVA_REDIRECT_URI = environ.get("CANVA_REDIRECT_URI", "http://localhost:3000/canva/callback")
+
 # Google OAuth Configuration
 GOOGLE_OAUTH2_CLIENT_ID = environ.get("GOOGLE_OAUTH2_CLIENT_ID", "")
 GOOGLE_OAUTH2_CLIENT_SECRET = environ.get("GOOGLE_OAUTH2_CLIENT_SECRET", "")
@@ -748,6 +752,22 @@ UNFOLD = {
                         "title": _("Email Drafts"),
                         "icon": "drafts",
                         "link": reverse_lazy("admin:api_emaildraft_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("Canva Integration"),
+                "separator": True,
+                "items": [
+                    {
+                        "title": _("Canva Connections"),
+                        "icon": "link",
+                        "link": reverse_lazy("admin:api_canvaconnection_changelist"),
+                    },
+                    {
+                        "title": _("Canva Designs"),
+                        "icon": "design_services",
+                        "link": reverse_lazy("admin:api_canvadesign_changelist"),
                     },
                 ],
             },

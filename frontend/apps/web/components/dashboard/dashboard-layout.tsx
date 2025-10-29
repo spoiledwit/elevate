@@ -28,7 +28,8 @@ import {
   ChevronDown,
   Users,
   ExternalLink,
-  Mail
+  Mail,
+  GraduationCap
 } from 'lucide-react'
 import logo from '@/assets/logo.png'
 
@@ -218,6 +219,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         return { itemId: 'community', sectionId: 'community' }
       case '/prompt-library':
         return { itemId: 'prompt-library', sectionId: 'prompt-library' }
+      case '/training':
+        return { itemId: 'training', sectionId: 'training' }
       default:
         return { itemId: 'dashboard', sectionId: 'overview' }
     }
@@ -420,6 +423,21 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 >
                   <FolderOpen className="w-5 h-5 text-gray-500" />
                   <span>Prompt Library</span>
+                </button>
+
+                {/* Elevate Training - Standalone clickable item */}
+                <button
+                  onClick={() => {
+                    setActiveItem('training')
+                    router.push('/training')
+                  }}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors ${activeItem === 'training'
+                    ? 'text-gray-900 bg-gray-50'
+                    : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                >
+                  <GraduationCap className="w-5 h-5 text-gray-500" />
+                  <span>Elevate Training</span>
                 </button>
               </>
             )}

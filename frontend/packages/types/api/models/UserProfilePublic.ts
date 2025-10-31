@@ -15,6 +15,14 @@ export type UserProfilePublic = {
      * Affiliate/purchase link for funnel injection
      */
     affiliate_link?: string;
+    /**
+     * Creator's referral or promotional code
+     */
+    creators_code?: string;
+    /**
+     * Nurture email content or template
+     */
+    nurture_email?: string;
     readonly social_icons: Array<SocialIcon>;
     readonly custom_links: Array<CustomLink>;
     readonly cta_banner: CTABanner;

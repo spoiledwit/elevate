@@ -417,7 +417,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = UserProfile
         fields = [
             'id', 'slug', 'display_name', 'bio', 'profile_image',
-            'embedded_video', 'affiliate_link', 'contact_email', 'is_active', 'social_icons', 'custom_links', 'cta_banner'
+            'embedded_video', 'affiliate_link', 'creators_code', 'nurture_email', 'contact_email', 'is_active', 'social_icons', 'custom_links', 'cta_banner'
         ]
 
     def get_profile_image(self, obj):
@@ -437,7 +437,7 @@ class UserProfilePublicSerializer(serializers.ModelSerializer):
         model = UserProfile
         fields = [
             'slug', 'display_name', 'bio', 'profile_image',
-            'embedded_video', 'affiliate_link', 'social_icons', 'custom_links', 'cta_banner'
+            'embedded_video', 'affiliate_link', 'creators_code', 'nurture_email', 'social_icons', 'custom_links', 'cta_banner'
         ]
 
     def get_profile_image(self, obj):

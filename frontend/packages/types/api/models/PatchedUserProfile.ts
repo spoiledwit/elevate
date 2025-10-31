@@ -17,6 +17,14 @@ export type PatchedUserProfile = {
      */
     affiliate_link?: string;
     /**
+     * Creator's referral or promotional code
+     */
+    creators_code?: string;
+    /**
+     * Nurture email content or template
+     */
+    nurture_email?: string;
+    /**
      * Contact email displayed on storefront
      */
     contact_email?: string;

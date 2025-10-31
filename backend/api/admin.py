@@ -64,6 +64,9 @@ class UserProfileAdmin(ModelAdmin, ImportExportModelAdmin):
         ('Profile Content', {
             'fields': ('bio', 'profile_image', 'embedded_video')
         }),
+        ('Business Information', {
+            'fields': ('affiliate_link', 'creators_code', 'nurture_email', 'contact_email')
+        }),
         ('Analytics', {
             'fields': ('view_count',)
         }),

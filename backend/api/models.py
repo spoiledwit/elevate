@@ -30,6 +30,8 @@ class UserProfile(models.Model):
     profile_image = CloudinaryField('profile_image', blank=True, null=True)
     embedded_video = models.URLField(_("embedded video"), blank=True)
     affiliate_link = models.TextField(_("affiliate link"), blank=True, help_text="Affiliate/purchase link for funnel injection")
+    creators_code = models.TextField(_("creators code"), blank=True, help_text="Creator's referral or promotional code")
+    nurture_email = models.TextField(_("nurture email"), blank=True, help_text="Nurture email content or template")
     contact_email = models.EmailField(_("contact email"), blank=True, help_text="Contact email displayed on storefront")
     is_active = models.BooleanField(_("is active"), default=True)
     view_count = models.PositiveIntegerField(_("view count"), default=0)

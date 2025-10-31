@@ -62,6 +62,7 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
     display_name: profile?.display_name || '',
     bio: profile?.bio || '',
     affiliate_link: profile?.affiliate_link || '',
+    creators_code: profile?.creators_code || '',
     contact_email: profile?.contact_email || '',
     embedded_video: profile?.embedded_video || '',
     is_active: profile?.is_active ?? true,
@@ -371,10 +372,10 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
           </div>
         </div>
 
-        {/* Affiliate Link Section */}
+        {/* TWC Section */}
         <div>
           <label className="block text-sm font-semibold text-gray-900 mb-2">
-            Affiliate Link
+            TWC
           </label>
           <div className="relative">
             <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -382,16 +383,33 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
               type="text"
               value={formData.affiliate_link}
               onChange={(e) => handleInputChange('affiliate_link', e.target.value)}
-              placeholder="https://your-affiliate-link.com"
+              placeholder="Paste your TWC affiliate link here."
               className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all duration-300 ease-in-out"
             />
           </div>
         </div>
 
-        {/* Contact Email Section */}
+        {/* The Creators Code Section */}
         <div>
           <label className="block text-sm font-semibold text-gray-900 mb-2">
-            Contact Email
+            The Creators Code
+          </label>
+          <div className="relative">
+            <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              value={formData.creators_code}
+              onChange={(e) => handleInputChange('creators_code', e.target.value)}
+              placeholder="Paste your Creators Code here."
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all duration-300 ease-in-out"
+            />
+          </div>
+        </div>
+
+        {/* Nurture Contact Email Section */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-900 mb-2">
+            Nurture Contact Email
           </label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -399,7 +417,7 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
               type="email"
               value={formData.contact_email}
               onChange={(e) => handleInputChange('contact_email', e.target.value)}
-              placeholder="contact@youremail.com"
+              placeholder="Add the email you want in the signiture of your freebie and nurture emails"
               className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all duration-300 ease-in-out"
             />
           </div>

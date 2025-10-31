@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { handleCanvaCallbackAction } from '@/actions/canva-action'
 
-export default function CanvaCallbackPage() {
+function CanvaCallbackContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing')
@@ -162,5 +162,24 @@ export default function CanvaCallbackPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function CanvaCallbackPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-gray-900 mx-auto mb-4"></div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Loading...
+            </h2>
+          </div>
+        </div>
+      </div>
+    }>
+      <CanvaCallbackContent />
+    </Suspense>
   )
 }

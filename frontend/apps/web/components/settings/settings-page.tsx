@@ -6,12 +6,12 @@ import { PasswordSection } from './password-section'
 import { DeleteAccountSection } from './delete-account-section'
 import { StripeConnectSection } from './stripe-connect-section'
 import { CanvaIntegrationSection } from './canva-integration-section'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 
 type ActiveTab = 'profile' | 'password' | 'payments' | 'canva' | 'danger'
 
-export function SettingsPage({
+function SettingsContent({
   currentUser,
   profileAction,
   changePasswordAction,
@@ -162,5 +162,37 @@ export function SettingsPage({
         </div>
       </div>
     </div>
+  )
+}
+
+export function SettingsPage({
+  currentUser,
+  profileAction,
+  changePasswordAction,
+  deleteAccountAction
+}: {
+  currentUser: Promise<UserCurrent>
+  profileAction: any
+  changePasswordAction: any
+  deleteAccountAction: any
+}) {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto p-6 max-w-4xl">
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold">Settings</h1>
+            <p className="text-gray-600">Loading settings...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <SettingsContent
+        currentUser={currentUser}
+        profileAction={profileAction}
+        changePasswordAction={changePasswordAction}
+        deleteAccountAction={deleteAccountAction}
+      />
+    </Suspense>
   )
 }

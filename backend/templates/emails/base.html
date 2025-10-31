@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,42 +15,55 @@
             padding: 0;
             background-color: #f8f9fa;
         }
+
         .container {
             background-color: #ffffff;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             overflow: hidden;
         }
+
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 40px 30px;
+            padding: 0;
             text-align: center;
             color: white;
         }
+
+        .header-image {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
         .logo {
             max-width: 120px;
             height: auto;
             margin-bottom: 10px;
         }
+
         .header h1 {
             margin: 0;
             font-size: 28px;
             font-weight: 300;
         }
+
         .content {
             padding: 40px 30px;
         }
+
         .content h2 {
             color: #333;
             font-size: 24px;
             margin-bottom: 20px;
             font-weight: 600;
         }
+
         .content p {
             margin-bottom: 20px;
             font-size: 16px;
             line-height: 1.8;
         }
+
         .button {
             display: inline-block;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -60,6 +74,7 @@
             font-weight: 600;
             margin: 20px 0;
         }
+
         .info-box {
             background-color: #f8f9fa;
             border: 1px solid #e9ecef;
@@ -67,11 +82,13 @@
             padding: 20px;
             margin: 20px 0;
         }
+
         .info-box h3 {
             margin-top: 0;
             color: #495057;
             font-size: 18px;
         }
+
         .download-section {
             background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
             border-radius: 8px;
@@ -79,6 +96,7 @@
             margin: 25px 0;
             text-align: center;
         }
+
         .download-button {
             background: linear-gradient(135deg, #1976d2 0%, #7b1fa2 100%);
             color: white !important;
@@ -90,6 +108,7 @@
             display: inline-block;
             margin: 15px 0;
         }
+
         .icon-svg {
             width: 20px;
             height: 20px;
@@ -97,6 +116,7 @@
             margin-right: 8px;
             vertical-align: middle;
         }
+
         .footer {
             background-color: #f8f9fa;
             padding: 30px;
@@ -105,29 +125,35 @@
             font-size: 14px;
             border-top: 1px solid #e9ecef;
         }
+
         .footer a {
             color: #667eea;
             text-decoration: none;
         }
+
         .course-modules {
             background-color: #fff3e0;
             border-left: 4px solid #ff9800;
             padding: 20px;
             margin: 20px 0;
         }
+
         .course-modules ul {
             margin: 10px 0;
             padding-left: 20px;
         }
+
         .course-modules li {
             margin-bottom: 8px;
         }
+
         .custom-fields {
             background-color: #e8f5e8;
             border-radius: 6px;
             padding: 20px;
             margin: 20px 0;
         }
+
         .field-row {
             display: flex;
             justify-content: space-between;
@@ -136,24 +162,28 @@
             padding: 8px 0;
             border-bottom: 1px solid #c8e6c9;
         }
+
         .field-row:last-child {
             border-bottom: none;
             margin-bottom: 0;
         }
+
         .field-label {
             font-weight: 600;
             color: #2e7d32;
         }
+
         .field-value {
             color: #388e3c;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
-            <img src="https://res.cloudinary.com/dsntusqam/image/upload/v1759393750/logo.90a5911d-removebg-preview_w0kmgc.png" alt="Elevate Social" class="logo">
-            <h1>{% block header_title %}Elevate Social{% endblock %}</h1>
+            <img src="https://res.cloudinary.com/dsntusqam/image/upload/v1761909019/WhatsApp_Image_2025-10-29_at_10.30.01_PM_bijixw.jpg"
+                alt="{% block header_title %}Elevate Social{% endblock %}" class="header-image">
         </div>
 
         <div class="content">
@@ -161,13 +191,9 @@
         </div>
 
         <div class="footer">
-            <p>Thank you for choosing Elevate Social!</p>
-            <p>
-                Need help? Contact us at <a href="mailto:{{ support_email }}">{{ support_email }}</a><br>
-                Visit your dashboard: <a href="{{ frontend_url }}">{{ frontend_url }}</a>
-            </p>
             <p>© 2025 Elevate Social. All rights reserved.</p>
         </div>
     </div>
 </body>
+
 </html>

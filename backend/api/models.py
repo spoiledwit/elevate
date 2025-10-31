@@ -1681,7 +1681,13 @@ class OptinFollowupEmail(models.Model):
     """
     Email templates for opt-in follow-up sequence.
     """
-    step_number = models.IntegerField(_("step number"), unique=True, help_text="Email sequence number (1-20)")
+    PROGRAM_CHOICES = [
+        ('TWC', 'The Wealth Creator'),
+        ('TCC', 'The Creators Code'),
+    ]
+
+    program = models.CharField(_("program"), max_length=3, choices=PROGRAM_CHOICES, default='TCC', help_text="Which program this email sequence is for")
+    step_number = models.IntegerField(_("step number"), help_text="Email sequence number (1-20)")
     delay_days = models.IntegerField(_("delay days"), help_text="Days after opt-in to send email")
     send_time = models.TimeField(_("send time"), default="10:00", help_text="Time of day to send email (e.g., 10:00 AM)")
     subject = models.CharField(_("subject"), max_length=255)
@@ -1694,10 +1700,11 @@ class OptinFollowupEmail(models.Model):
         db_table = "optin_followup_emails"
         verbose_name = _("Opt-in Follow-up Email")
         verbose_name_plural = _("Opt-in Follow-up Emails")
-        ordering = ['step_number']
+        ordering = ['program', 'step_number']
+        unique_together = [['program', 'step_number']]
 
     def __str__(self):
-        return f"Email {self.step_number} - Day {self.delay_days}: {self.subject}"
+        return f"{self.program} - Email {self.step_number} - Day {self.delay_days}: {self.subject}"
 
 
 class ScheduledOptinEmail(models.Model):

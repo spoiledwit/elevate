@@ -697,6 +697,16 @@ def schedule_optin_email_sequence(order_id):
             logger.info(f"Skipping email sequence for non-opt-in order {order.order_id}")
             return
 
+        # Get the selected program from additional_info
+        additional_info = order.custom_link.additional_info or {}
+        optin_program = additional_info.get('optin_program', 'TCC')  # Default to TCC if not specified
+
+        if not optin_program or optin_program not in ['TWC', 'TCC']:
+            logger.warning(f"Invalid or missing optin_program for order {order.order_id}. Defaulting to TCC.")
+            optin_program = 'TCC'
+
+        logger.info(f"Scheduling {optin_program} email sequence for order {order.order_id}")
+
         # Check if this email is already enrolled in any active sequence from ANY community leader
         customer_email = order.customer_email
         existing_optin_sequences = ScheduledOptinEmail.objects.filter(
@@ -713,8 +723,11 @@ def schedule_optin_email_sequence(order_id):
             logger.info(f"Email {customer_email} is already enrolled in an active nurturing sequence. Skipping for order {order.order_id}")
             return {'success': False, 'reason': 'already_enrolled', 'message': 'Customer is already in an active email sequence'}
 
-        # Get all active email templates
-        email_templates = OptinFollowupEmail.objects.filter(is_active=True).order_by('step_number')
+        # Get all active email templates for the selected program
+        email_templates = OptinFollowupEmail.objects.filter(
+            program=optin_program,
+            is_active=True
+        ).order_by('step_number')
 
         scheduled_count = 0
         for template in email_templates:

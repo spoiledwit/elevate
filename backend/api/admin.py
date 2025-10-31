@@ -1524,14 +1524,14 @@ class OptinFollowupEmailAdmin(ModelAdmin, ImportExportModelAdmin):
     """
     Admin interface for opt-in follow-up email templates.
     """
-    list_display = ['step_number', 'delay_days', 'send_time', 'subject', 'is_active', 'modified_at']
-    list_filter = ['is_active', 'delay_days']
+    list_display = ['program', 'step_number', 'delay_days', 'send_time', 'subject', 'is_active', 'modified_at']
+    list_filter = ['program', 'is_active', 'delay_days']
     search_fields = ['subject', 'body']
-    ordering = ['step_number']
+    ordering = ['program', 'step_number']
 
     fieldsets = (
         ('Email Configuration', {
-            'fields': ('step_number', 'delay_days', 'send_time', 'is_active')
+            'fields': ('program', 'step_number', 'delay_days', 'send_time', 'is_active')
         }),
         ('Email Content', {
             'fields': ('subject', 'body'),

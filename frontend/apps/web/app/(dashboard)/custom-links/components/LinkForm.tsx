@@ -89,6 +89,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
   const [courseDuration, setCourseDuration] = useState('')
   const [mediaUrl, setMediaUrl] = useState('')
   const [buttonText, setButtonText] = useState('View Content')
+  const [optinProgram, setOptinProgram] = useState<'TWC' | 'TCC' | ''>('')
 
   // Collect info fields state - prefilled with name and email
   const [collectInfoFields, setCollectInfoFields] = useState<{
@@ -211,6 +212,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         } else if (productType === 'opt_in') {
           setDigitalFileUrl(additionalInfo.digital_file_url || '')
           setDownloadInstructions(additionalInfo.download_instructions || '')
+          setOptinProgram(additionalInfo.optin_program || '')
         } else if (productType === 'url-media') {
           setMediaUrl(additionalInfo.destination_url || '')
           setButtonText(additionalInfo.button_text || 'View Content')
@@ -660,7 +662,8 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       } else if (selectedType === 'opt_in') {
         additionalInfo = {
           digital_file_url: finalDigitalFileUrl,
-          download_instructions: downloadInstructions
+          download_instructions: downloadInstructions,
+          optin_program: optinProgram
         }
       } else if (selectedType === 'url-media') {
         additionalInfo = {
@@ -806,7 +809,8 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       } else if (selectedType === 'opt_in') {
         additionalInfo = {
           digital_file_url: finalDigitalFileUrl,
-          download_instructions: downloadInstructions
+          download_instructions: downloadInstructions,
+          optin_program: optinProgram
         }
       } else if (selectedType === 'url-media') {
         additionalInfo = {
@@ -1814,6 +1818,68 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                     {downloadInstructions.length}/300 characters
                   </p>
                 </div>
+
+                {/* Opt-in Program Selection - Only for opt_in */}
+                {selectedType === 'opt_in' && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      Select Program <span className="text-red-500">*</span>
+                    </label>
+                    <p className="text-xs text-gray-600 mb-3">
+                      Choose which program this opt-in is for
+                    </p>
+                    <div className="space-y-3">
+                      <button
+                        type="button"
+                        onClick={() => setOptinProgram('TWC')}
+                        className={`w-full flex items-center gap-3 p-4 border-2 rounded-lg transition-all duration-200 ${
+                          optinProgram === 'TWC'
+                            ? 'border-green-500 bg-green-50'
+                            : 'border-gray-300 hover:border-gray-400'
+                        }`}
+                      >
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          optinProgram === 'TWC' ? 'border-green-500' : 'border-gray-300'
+                        }`}>
+                          {optinProgram === 'TWC' && (
+                            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                          )}
+                        </div>
+                        <div className="flex-1 text-left">
+                          <p className="font-semibold text-gray-900">TWC</p>
+                          <p className="text-sm text-gray-600">The Wealth Creator</p>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setOptinProgram('TCC')}
+                        className={`w-full flex items-center gap-3 p-4 border-2 rounded-lg transition-all duration-200 ${
+                          optinProgram === 'TCC'
+                            ? 'border-green-500 bg-green-50'
+                            : 'border-gray-300 hover:border-gray-400'
+                        }`}
+                      >
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          optinProgram === 'TCC' ? 'border-green-500' : 'border-gray-300'
+                        }`}>
+                          {optinProgram === 'TCC' && (
+                            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                          )}
+                        </div>
+                        <div className="flex-1 text-left">
+                          <p className="font-semibold text-gray-900">TCC</p>
+                          <p className="text-sm text-gray-600">The Creators Code</p>
+                        </div>
+                      </button>
+                    </div>
+                    {!optinProgram && (
+                      <p className="mt-2 text-xs text-red-600">
+                        Please select a program to continue
+                      </p>
+                    )}
+                  </div>
+                )}
               </>
             )}
 
@@ -1876,6 +1942,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
               disabled={
                 isSubmitting ||
                 (selectedType === 'digital' && !digitalFileUrl && !digitalFile) ||
+                (selectedType === 'opt_in' && (!digitalFileUrl && !digitalFile || !optinProgram)) ||
                 (selectedType === 'freebie' && !digitalFileUrl && !digitalFile) ||
                 (selectedType === 'url-media' && !mediaUrl)
               }

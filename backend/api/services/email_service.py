@@ -284,6 +284,13 @@ def send_optin_email(order: Order) -> bool:
     # Extract first name from customer name or order email
     first_name = order.customer_name.split()[0] if order.customer_name else ""
 
+    # Determine which affiliate link to use based on program selection
+    optin_program = additional_info.get('optin_program', 'TCC')
+    if optin_program == 'TWC':
+        affiliate_link = seller_profile.affiliate_link or ''
+    else:  # TCC or default
+        affiliate_link = seller_profile.creators_code or ''
+
     context = {
         'customer_name': order.customer_name,
         'first_name': first_name,
@@ -295,7 +302,7 @@ def send_optin_email(order: Order) -> bool:
         'download_instructions': additional_info.get('download_instructions'),
         'form_responses': order.get_formatted_responses(),
         'sender_name': seller_profile.display_name or seller_user.get_full_name() or seller_user.username,
-        'affiliate_link': seller_profile.affiliate_link or '',
+        'affiliate_link': affiliate_link,
         'contact_email': seller_profile.contact_email or '',
     }
 
@@ -452,18 +459,24 @@ def send_optin_followup_email(scheduled_email) -> bool:
     # Extract first name from customer name
     first_name = order.customer_name.split()[0] if order.customer_name else ""
 
+    # Determine which affiliate link to use based on program in template
+    if template.program == 'TWC':
+        affiliate_link = seller_profile.affiliate_link or ''
+    else:  # TCC
+        affiliate_link = seller_profile.creators_code or ''
+
     # Replace template variables in subject
     email_subject = template.subject
     email_subject = email_subject.replace('{{ first_name }}', first_name)
     email_subject = email_subject.replace('{{ sender_name }}', seller_profile.display_name or seller_user.get_full_name() or seller_user.username)
-    email_subject = email_subject.replace('{{ affiliate_link }}', seller_profile.affiliate_link or '')
+    email_subject = email_subject.replace('{{ affiliate_link }}', affiliate_link)
     email_subject = email_subject.replace('{{ personal_email }}', seller_profile.contact_email or '')
 
     # Replace template variables in body
     email_body = template.body
     email_body = email_body.replace('{{ first_name }}', first_name)
     email_body = email_body.replace('{{ sender_name }}', seller_profile.display_name or seller_user.get_full_name() or seller_user.username)
-    email_body = email_body.replace('{{ affiliate_link }}', seller_profile.affiliate_link or '')
+    email_body = email_body.replace('{{ affiliate_link }}', affiliate_link)
     email_body = email_body.replace('{{ personal_email }}', seller_profile.contact_email or '')
 
     # Convert line breaks to HTML
@@ -474,6 +487,7 @@ def send_optin_followup_email(scheduled_email) -> bool:
         'first_name': first_name,
         'email_body': email_body,
         'sender_name': seller_profile.display_name or seller_user.get_full_name() or seller_user.username,
+        'contact_email': seller_profile.contact_email or '',
     }
 
     return send_email(
@@ -519,6 +533,7 @@ def send_freebie_followup_email(scheduled_email) -> bool:
         'first_name': first_name,
         'email_body': email_body,
         'sender_name': seller_profile.display_name or seller_user.get_full_name() or seller_user.username,
+        'contact_email': seller_profile.contact_email or '',
     }
 
     return send_email(

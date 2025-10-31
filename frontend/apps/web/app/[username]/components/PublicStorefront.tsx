@@ -51,11 +51,24 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
   }
 
   const handleOrderSuccess = () => {
-    // For opt-in products, redirect to affiliate link if available
-    if (selectedProduct?.type === 'opt_in' && profile?.affiliate_link) {
-      // Open affiliate link immediately (confetti already showed for 5 seconds)
-      window.open(profile.affiliate_link, '_blank')
-      // Also navigate back to products list
+    // For opt-in products, redirect to affiliate link based on program
+    if (selectedProduct?.type === 'opt_in') {
+      const optinProgram = selectedProduct?.additional_info?.optin_program || 'TCC'
+      let affiliateLink = ''
+
+      if (optinProgram === 'TWC') {
+        affiliateLink = profile?.affiliate_link || ''
+      } else {
+        // TCC or default
+        affiliateLink = profile?.creators_code || ''
+      }
+
+      if (affiliateLink) {
+        // Open affiliate link immediately (confetti already showed for 5 seconds)
+        window.open(affiliateLink, '_blank')
+      }
+
+      // Navigate back to products list
       setSelectedProduct(null)
     } else {
       // For other products, just navigate back to products list

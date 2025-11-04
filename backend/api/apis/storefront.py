@@ -4,6 +4,7 @@ from django.db import transaction
 from django.db import models
 from django.db.models import F
 from django.utils import timezone
+from django.conf import settings
 from datetime import datetime, timedelta
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import status, viewsets
@@ -1314,6 +1315,227 @@ class CustomLinkViewSet(viewsets.ModelViewSet):
                 "error": f"Order created but payment setup failed: {str(e)}",
                 "message": "Order created but payment processing is currently unavailable"
             }, status=status.HTTP_201_CREATED)
+
+    @action(["post"], detail=True, url_path="initialize-payment", permission_classes=[AllowAny])
+    def initialize_payment(self, request, pk=None):
+        """
+        Initialize a PaymentIntent WITHOUT creating an Order.
+        This allows showing payment fields immediately on page load.
+        Returns the client_secret for the PaymentElement.
+
+        Flow:
+        1. Frontend calls this on page load → gets client_secret
+        2. Shows payment element immediately
+        3. User fills form + card
+        4. Frontend calls finalize-order → creates Order with form data
+        5. Frontend confirms payment with Stripe
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+
+        logger.info(f"Initializing PaymentIntent for link ID: {pk}")
+
+        link = get_object_or_404(CustomLink, pk=pk, is_active=True)
+        logger.info(f"Found link: {link.title}, type: {link.type}, price: {link.checkout_price}")
+
+        # Check if this is a free product
+        is_free_product = not link.checkout_price or link.checkout_price <= 0
+
+        if is_free_product:
+            logger.info("Free product - no PaymentIntent needed")
+            return Response({
+                "success": True,
+                "is_free": True,
+                "message": "No payment required for free products"
+            }, status=status.HTTP_200_OK)
+
+        # Get the seller's Connect account
+        try:
+            from ..services.stripe_connect_service import StripeConnectService
+
+            seller_user = link.user_profile.user
+            logger.info(f"Seller user: {seller_user.username}")
+
+            connect_account = getattr(seller_user, 'connect_account', None)
+
+            if not connect_account:
+                logger.error("No Stripe Connect account found for seller")
+                return Response({
+                    "error": "Seller has not connected their Stripe account"
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            if not connect_account.charges_enabled:
+                logger.error("Stripe account not ready for charges")
+                return Response({
+                    "error": "Seller's Stripe account is not yet ready to accept payments"
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Calculate effective price
+            effective_price = link.checkout_price
+            if (link.checkout_discounted_price and
+                link.checkout_discounted_price > 0 and
+                link.checkout_discounted_price < link.checkout_price):
+                effective_price = link.checkout_discounted_price
+
+            price_cents = int(effective_price * 100)
+
+            # Calculate platform fee
+            platform_fee_cents = connect_account.calculate_platform_fee(price_cents)
+
+            # Create PaymentIntent WITHOUT order
+            import stripe
+            stripe.api_key = settings.STRIPE_SECRET_KEY
+
+            payment_intent = stripe.PaymentIntent.create(
+                amount=price_cents,
+                currency=connect_account.default_currency,
+                automatic_payment_methods={
+                    'enabled': True,
+                    'allow_redirects': 'always'
+                },
+                application_fee_amount=platform_fee_cents,
+                transfer_data={
+                    'destination': connect_account.stripe_account_id,
+                },
+                metadata={
+                    'custom_link_id': str(link.id),
+                    'seller_user_id': str(seller_user.id),
+                    'platform_fee': str(platform_fee_cents),
+                }
+            )
+
+            logger.info(f"PaymentIntent created: {payment_intent.id}")
+
+            return Response({
+                "success": True,
+                "client_secret": payment_intent.client_secret,
+                "payment_intent_id": payment_intent.id,
+                "amount": effective_price,
+                "currency": connect_account.default_currency,
+                "message": "Payment initialized successfully"
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.error(f"Failed to initialize PaymentIntent: {str(e)}", exc_info=True)
+            return Response({
+                "error": "Failed to initialize payment",
+                "details": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(["post"], detail=True, url_path="finalize-order", permission_classes=[AllowAny])
+    def finalize_order(self, request, pk=None):
+        """
+        Create Order and link it to an existing PaymentIntent.
+        Called after user fills form but before confirming payment.
+
+        Required data:
+        - payment_intent_id: The existing PaymentIntent ID
+        - customer_name, customer_email, form_responses: Order data
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+
+        logger.info(f"Finalizing order for link ID: {pk}")
+        logger.info(f"Request data: {request.data}")
+
+        link = get_object_or_404(CustomLink, pk=pk, is_active=True)
+        payment_intent_id = request.data.get('payment_intent_id')
+
+        if not payment_intent_id:
+            return Response({
+                "error": "payment_intent_id is required"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Rate limiting check
+        client_ip = get_client_ip(request)
+        if is_rate_limited(f"{client_ip}:{link.id}", 'order_create', limit=20, window=300):
+            return Response(
+                {"detail": "Rate limit exceeded"},
+                status=status.HTTP_429_TOO_MANY_REQUESTS
+            )
+
+        # Prepare order data
+        order_data = request.data.copy()
+        order_data['custom_link'] = link.id
+        # Remove payment_intent_id from order data
+        order_data.pop('payment_intent_id', None)
+
+        # Create serializer
+        serializer = OrderSerializer(
+            data=order_data,
+            context={'request': request, 'custom_link': link}
+        )
+
+        try:
+            serializer.is_valid(raise_exception=True)
+            order = serializer.save()
+            logger.info(f"Created order: {order.order_id}")
+        except Exception as e:
+            logger.error(f"Failed to create order: {e}", exc_info=True)
+            return Response({
+                "error": "Failed to create order",
+                "details": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Update PaymentIntent with order details
+        try:
+            import stripe
+            from ..services.stripe_connect_service import StripeConnectService
+
+            stripe.api_key = settings.STRIPE_SECRET_KEY
+            seller_user = link.user_profile.user
+            connect_account = seller_user.connect_account
+
+            # Update PaymentIntent metadata
+            # Note: receipt_email cannot be updated after creation, but we store customer info in metadata
+            stripe.PaymentIntent.modify(
+                payment_intent_id,
+                metadata={
+                    'order_id': order.order_id,
+                    'customer_email': order.customer_email or '',
+                    'customer_name': order.customer_name or '',
+                }
+            )
+
+            # Create PaymentTransaction record
+            from ..models import PaymentTransaction
+
+            payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+            price_cents = payment_intent.amount
+            platform_fee_cents = payment_intent.application_fee_amount or 0
+            seller_amount_cents = price_cents - platform_fee_cents
+
+            PaymentTransaction.objects.create(
+                order=order,
+                seller_account=connect_account,
+                payment_intent_id=payment_intent_id,
+                total_amount=price_cents,
+                platform_fee=platform_fee_cents,
+                seller_amount=seller_amount_cents,
+                currency=payment_intent.currency,
+                customer_email=order.customer_email or '',
+                status='pending',
+                metadata={
+                    'order_id': order.order_id,
+                    'custom_link_id': str(link.id),
+                }
+            )
+
+            logger.info(f"Order {order.order_id} linked to PaymentIntent {payment_intent_id}")
+
+            return Response({
+                "success": True,
+                "order": OrderSerializer(order).data,
+                "payment_intent_id": payment_intent_id,
+                "message": "Order created and linked to payment"
+            }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            logger.error(f"Failed to link order to PaymentIntent: {str(e)}", exc_info=True)
+            return Response({
+                "error": "Order created but failed to link to payment",
+                "details": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class SocialIconViewSet(viewsets.ModelViewSet):

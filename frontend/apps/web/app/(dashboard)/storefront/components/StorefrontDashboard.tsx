@@ -66,19 +66,19 @@ export function StorefrontDashboard({
                     href={`/${session?.user?.username}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-brand-600 hover:text-purple-700 transition-colors font-medium text-base"
+                    className="text-brand-600 hover:text-brand-700 transition-colors font-medium text-base"
                   >
-                    twc.elevate.social
+                    twc.elevate.social/{session?.user?.username}
                   </a>
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(`https://twc.elevate.social`)
+                      navigator.clipboard.writeText(`https://twc.elevate.social/${session?.user?.username}`)
                       toast.custom(
                         (t) => (
                           <div
                             className="text-white px-6 py-4 rounded-2xl shadow-lg flex items-center justify-between min-w-80"
                             style={{
-                              backgroundColor: '#7c3aed',
+                              backgroundColor: '#bf8300ff',
                               border: 'none',
                               boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'
                             }}
@@ -109,7 +109,7 @@ export function StorefrontDashboard({
                         }
                       )
                     }}
-                    className="p-1.5 text-brand-600 hover:text-purple-700 transition-colors"
+                    className="p-1.5 text-brand-600 hover:text-brand-700 transition-colors"
                     title="Copy link"
                   >
                     <Copy className="w-4 h-4" />

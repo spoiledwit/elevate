@@ -14,8 +14,10 @@ export default async function InboxPage() {
     getEmailMessagesAction({ page: 1, pageSize: 50 })
   ])
 
-
-  const accounts = 'error' in accountsResult ? null : accountsResult
+  // Filter out inactive accounts
+  const accounts = 'error' in accountsResult
+    ? null
+    : accountsResult.filter(account => account.is_active)
   const messages = 'error' in messagesResult ? null : messagesResult
 
   return (

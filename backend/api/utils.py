@@ -196,3 +196,163 @@ def sanitize_referrer(referrer: str) -> str:
         return referrer[:500]
 
 
+# Email Validation Utilities
+from email_validator import validate_email as ev_validate, EmailNotValidError, caching_resolver
+from disposable_email_checker.validators import validate_disposable_email as check_disposable
+from django.core.exceptions import ValidationError
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Create a cached DNS resolver for better performance
+_dns_resolver = caching_resolver(timeout=10)
+
+
+class EmailValidationError(Exception):
+    """Custom exception for email validation failures"""
+    pass
+
+
+def validate_email_address(
+    email: str,
+    check_dns: bool = True,
+    check_disposable: bool = True,
+    raise_exception: bool = True
+) -> tuple[bool, str, str]:
+    """
+    Comprehensive email validation with syntax, DNS, and disposable checks.
+
+    Args:
+        email: Email address to validate
+        check_dns: Whether to check DNS/MX records (adds network latency)
+        check_disposable: Whether to check for disposable email providers
+        raise_exception: Whether to raise exception on validation failure
+
+    Returns:
+        tuple: (is_valid, normalized_email, error_message)
+
+    Raises:
+        EmailValidationError: If raise_exception=True and validation fails
+
+    Examples:
+        # For user registration (strict validation)
+        is_valid, email, error = validate_email_address(
+            'user@example.com',
+            check_dns=True,
+            check_disposable=True
+        )
+
+        # For order emails (lenient validation)
+        is_valid, email, error = validate_email_address(
+            'customer@example.com',
+            check_dns=False,
+            check_disposable=False
+        )
+
+        # Before sending email (syntax only)
+        is_valid, email, error = validate_email_address(
+            'recipient@example.com',
+            check_dns=False,
+            check_disposable=False,
+            raise_exception=False
+        )
+    """
+    if not email:
+        error_msg = "Email address is required"
+        if raise_exception:
+            raise EmailValidationError(error_msg)
+        return (False, email if email else "", error_msg)
+
+    # Strip whitespace
+    email = email.strip()
+
+    # Step 1: Syntax validation (always required)
+    try:
+        emailinfo = ev_validate(
+            email,
+            check_deliverability=check_dns,
+            dns_resolver=_dns_resolver if check_dns else None
+        )
+        normalized_email = emailinfo.normalized
+    except EmailNotValidError as e:
+        error_msg = str(e)
+        logger.warning(f"Email validation failed for {email}: {error_msg}")
+        if raise_exception:
+            raise EmailValidationError(error_msg)
+        return (False, email, error_msg)
+
+    # Step 2: Disposable email check (optional)
+    if check_disposable:
+        try:
+            check_disposable(normalized_email)
+        except ValidationError as e:
+            error_msg = f"Disposable email addresses are not allowed: {str(e)}"
+            logger.warning(f"Disposable email detected: {normalized_email}")
+            if raise_exception:
+                raise EmailValidationError(error_msg)
+            return (False, normalized_email, error_msg)
+
+    return (True, normalized_email, "")
+
+
+def validate_email_with_cache(
+    email: str,
+    check_dns: bool = True,
+    check_disposable: bool = True,
+    cache_ttl: int = 3600
+) -> tuple[bool, str, str]:
+    """
+    Validate email with caching to improve performance for repeated validations.
+    Useful for bulk operations or high-traffic scenarios.
+
+    Args:
+        email: Email address to validate
+        check_dns: Whether to check DNS/MX records
+        check_disposable: Whether to check for disposable email providers
+        cache_ttl: Cache time-to-live in seconds (default: 1 hour)
+
+    Returns:
+        tuple: (is_valid, normalized_email, error_message)
+    """
+    # Create cache key based on validation parameters
+    cache_key = f"email_validation:{email}:{check_dns}:{check_disposable}"
+
+    # Check cache first
+    cached_result = cache.get(cache_key)
+    if cached_result is not None:
+        return cached_result
+
+    # Perform validation
+    result = validate_email_address(
+        email,
+        check_dns=check_dns,
+        check_disposable=check_disposable,
+        raise_exception=False
+    )
+
+    # Cache the result
+    cache.set(cache_key, result, cache_ttl)
+
+    return result
+
+
+def is_valid_email(email: str, check_dns: bool = False) -> bool:
+    """
+    Simple boolean check for email validity.
+
+    Args:
+        email: Email address to validate
+        check_dns: Whether to check DNS/MX records
+
+    Returns:
+        bool: True if valid, False otherwise
+    """
+    is_valid, _, _ = validate_email_address(
+        email,
+        check_dns=check_dns,
+        check_disposable=False,
+        raise_exception=False
+    )
+    return is_valid
+
+

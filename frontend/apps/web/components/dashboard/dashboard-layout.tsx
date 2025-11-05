@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { useSession } from 'next-auth/react'
+import { useSession, signOut } from 'next-auth/react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useOnboarding } from '@/hooks/useOnboarding'
 import { OnboardingTrigger } from './onboarding-trigger'
@@ -30,7 +30,8 @@ import {
   ExternalLink,
   Mail,
   Palette,
-  GraduationCap
+  GraduationCap,
+  LogOut
 } from 'lucide-react'
 import logo from '@/assets/logo.png'
 
@@ -492,12 +493,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
 
         {/* Bottom section - User profile */}
-        <div
-          onClick={() => {
-            router.push('/settings')
-          }}
-          className="flex-shrink-0 p-4 border-t border-gray-200">
-          <div data-tour="user-profile" className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+        <div className="flex-shrink-0 p-4 border-t border-gray-200">
+          <div
+            onClick={() => {
+              router.push('/settings')
+            }}
+            data-tour="user-profile"
+            className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+          >
             <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #bea456 0%, #af9442ff 100%)' }}>
               <span className="text-sm font-semibold text-white">
                 {session?.user?.username?.[0]?.toUpperCase() || 'U'}
@@ -507,10 +510,18 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <p className="text-sm font-medium text-gray-900 truncate">
                 @{session?.user?.username || 'username'}
               </p>
-
             </div>
             <ChevronRight className="w-4 h-4 text-gray-400" />
           </div>
+
+          {/* Sign Out Button */}
+          <button
+            onClick={() => signOut({ callbackUrl: '/login' })}
+            className="w-full flex items-center gap-3 px-3 py-2.5 mt-2 text-sm font-semibold text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+          >
+            <LogOut className="w-5 h-5" />
+            <span>Sign Out</span>
+          </button>
         </div>
       </div>
 

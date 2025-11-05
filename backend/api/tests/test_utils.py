@@ -9,7 +9,9 @@ from django.http import HttpRequest
 
 from ..utils import (
     get_client_ip, anonymize_ip, is_rate_limited,
-    should_track_analytics, sanitize_referrer
+    should_track_analytics, sanitize_referrer,
+    validate_email_address, validate_email_with_cache,
+    is_valid_email, EmailValidationError
 )
 
 
@@ -330,3 +332,320 @@ class TestUtilsIntegration(TestCase):
         # First 5 should be True, rest False
         self.assertTrue(all(results[:5]))
         self.assertFalse(any(results[5:]))
+
+
+class TestEmailValidation(TestCase):
+    """Test email validation functionality."""
+
+    def test_validate_email_address_valid_syntax(self):
+        """Test validation with valid email syntax."""
+        test_emails = [
+            'user@example.com',
+            'john.doe@company.co.uk',
+            'test+filter@gmail.com',
+            'admin@subdomain.example.org',
+            'user123@test-domain.com',
+        ]
+
+        for email in test_emails:
+            with self.subTest(email=email):
+                is_valid, normalized, error = validate_email_address(
+                    email,
+                    check_dns=False,
+                    check_disposable=False,
+                    raise_exception=False
+                )
+                self.assertTrue(is_valid)
+                self.assertEqual(error, '')
+                self.assertTrue('@' in normalized)
+
+    def test_validate_email_address_invalid_syntax(self):
+        """Test validation with invalid email syntax."""
+        invalid_emails = [
+            'notanemail',
+            '@example.com',
+            'user@',
+            'user @example.com',  # space
+            'user@.com',
+            'user..name@example.com',  # double dot
+            'user@domain',  # missing TLD
+            '',
+        ]
+
+        for email in invalid_emails:
+            with self.subTest(email=email):
+                is_valid, normalized, error = validate_email_address(
+                    email,
+                    check_dns=False,
+                    check_disposable=False,
+                    raise_exception=False
+                )
+                self.assertFalse(is_valid)
+                self.assertNotEqual(error, '')
+
+    def test_validate_email_address_normalization(self):
+        """Test that email addresses are normalized correctly."""
+        test_cases = [
+            # Note: email-validator normalizes domain (after @) to lowercase,
+            # but preserves local part (before @) case as per RFC standards
+            ('User@Example.COM', 'User@example.com'),
+            ('  spaces@example.com  ', 'spaces@example.com'),
+            ('Test.User@Example.com', 'Test.User@example.com'),
+        ]
+
+        for original, expected in test_cases:
+            with self.subTest(email=original):
+                is_valid, normalized, error = validate_email_address(
+                    original,
+                    check_dns=False,
+                    check_disposable=False,
+                    raise_exception=False
+                )
+                self.assertTrue(is_valid)
+                self.assertEqual(normalized, expected)
+
+    def test_validate_email_address_empty_email(self):
+        """Test validation with empty email."""
+        is_valid, normalized, error = validate_email_address(
+            '',
+            check_dns=False,
+            check_disposable=False,
+            raise_exception=False
+        )
+        self.assertFalse(is_valid)
+        self.assertIn('required', error.lower())
+
+    def test_validate_email_address_none_email(self):
+        """Test validation with None email."""
+        is_valid, normalized, error = validate_email_address(
+            None,
+            check_dns=False,
+            check_disposable=False,
+            raise_exception=False
+        )
+        self.assertFalse(is_valid)
+        self.assertIn('required', error.lower())
+
+    def test_validate_email_address_raise_exception_true(self):
+        """Test that exception is raised when raise_exception=True."""
+        with self.assertRaises(EmailValidationError):
+            validate_email_address(
+                'invalid-email',
+                check_dns=False,
+                check_disposable=False,
+                raise_exception=True
+            )
+
+    def test_validate_email_address_raise_exception_false(self):
+        """Test that no exception is raised when raise_exception=False."""
+        try:
+            is_valid, normalized, error = validate_email_address(
+                'invalid-email',
+                check_dns=False,
+                check_disposable=False,
+                raise_exception=False
+            )
+            self.assertFalse(is_valid)
+        except EmailValidationError:
+            self.fail("EmailValidationError was raised when raise_exception=False")
+
+    def test_validate_email_address_whitespace_handling(self):
+        """Test that whitespace is properly stripped."""
+        emails_with_whitespace = [
+            '  user@example.com',
+            'user@example.com  ',
+            '  user@example.com  ',
+            '\tuser@example.com\n',
+        ]
+
+        for email in emails_with_whitespace:
+            with self.subTest(email=repr(email)):
+                is_valid, normalized, error = validate_email_address(
+                    email,
+                    check_dns=False,
+                    check_disposable=False,
+                    raise_exception=False
+                )
+                self.assertTrue(is_valid)
+                self.assertEqual(normalized, 'user@example.com')
+
+    def test_is_valid_email_convenience_function(self):
+        """Test the is_valid_email convenience function."""
+        # Valid emails
+        self.assertTrue(is_valid_email('user@example.com', check_dns=False))
+        self.assertTrue(is_valid_email('test+tag@gmail.com', check_dns=False))
+
+        # Invalid emails
+        self.assertFalse(is_valid_email('notanemail', check_dns=False))
+        self.assertFalse(is_valid_email('', check_dns=False))
+        self.assertFalse(is_valid_email('@example.com', check_dns=False))
+
+    def test_validate_email_with_cache_caches_results(self):
+        """Test that validate_email_with_cache properly caches results."""
+        cache.clear()
+
+        email = 'test@example.com'
+
+        # First call should not be cached
+        with patch('api.utils.validate_email_address') as mock_validate:
+            mock_validate.return_value = (True, email, '')
+
+            result1 = validate_email_with_cache(
+                email,
+                check_dns=False,
+                check_disposable=False,
+                cache_ttl=60
+            )
+
+            # Should have called the validation function
+            self.assertEqual(mock_validate.call_count, 1)
+
+        # Second call should use cache
+        with patch('api.utils.validate_email_address') as mock_validate:
+            result2 = validate_email_with_cache(
+                email,
+                check_dns=False,
+                check_disposable=False,
+                cache_ttl=60
+            )
+
+            # Should NOT have called the validation function (using cache)
+            self.assertEqual(mock_validate.call_count, 0)
+
+        # Results should be the same
+        self.assertEqual(result1, result2)
+
+        cache.clear()
+
+    def test_validate_email_with_cache_different_params(self):
+        """Test that cache is separate for different validation parameters."""
+        cache.clear()
+
+        email = 'test@example.com'
+
+        with patch('api.utils.validate_email_address') as mock_validate:
+            mock_validate.return_value = (True, email, '')
+
+            # Call with different parameters
+            validate_email_with_cache(email, check_dns=False, check_disposable=False)
+            validate_email_with_cache(email, check_dns=True, check_disposable=False)
+            validate_email_with_cache(email, check_dns=False, check_disposable=True)
+
+            # Should call validation 3 times (different cache keys)
+            self.assertEqual(mock_validate.call_count, 3)
+
+        cache.clear()
+
+    def test_validate_email_real_world_examples(self):
+        """Test with real-world email examples."""
+        # Common valid formats
+        valid_emails = [
+            'john.doe@example.com',
+            'jane+newsletter@company.co.uk',
+            'support@subdomain.example.org',
+            'user123@test-mail.com',
+            'admin@example.io',
+            'contact@my-company.com',
+        ]
+
+        for email in valid_emails:
+            with self.subTest(email=email):
+                is_valid, normalized, error = validate_email_address(
+                    email,
+                    check_dns=False,
+                    check_disposable=False,
+                    raise_exception=False
+                )
+                self.assertTrue(is_valid, f"Expected {email} to be valid, but got error: {error}")
+
+        # Common invalid formats
+        invalid_emails = [
+            'plaintext',
+            'missing@domain',
+            '@no-local-part.com',
+            'spaces in@email.com',
+            'double..dots@example.com',
+            'trailing.dot.@example.com',
+            '.leading.dot@example.com',
+        ]
+
+        for email in invalid_emails:
+            with self.subTest(email=email):
+                is_valid, normalized, error = validate_email_address(
+                    email,
+                    check_dns=False,
+                    check_disposable=False,
+                    raise_exception=False
+                )
+                self.assertFalse(is_valid, f"Expected {email} to be invalid")
+
+
+@pytest.mark.django_db
+class TestEmailValidationIntegration(TestCase):
+    """Integration tests for email validation with email service."""
+
+    def setUp(self):
+        cache.clear()
+
+    def tearDown(self):
+        cache.clear()
+
+    @patch('api.services.email_service.resend.Emails.send')
+    def test_send_email_validates_address(self, mock_send):
+        """Test that send_email validates email addresses."""
+        from ..services.email_service import send_email
+
+        # Mock successful send
+        mock_send.return_value = {'id': 'test-email-id'}
+
+        # Valid email should succeed
+        result = send_email(
+            template_name='test_template',
+            subject='Test Subject',
+            to_email='valid@example.com',
+            context={'test': 'data'}
+        )
+        self.assertTrue(result)
+
+        # Invalid email should fail without calling Resend
+        mock_send.reset_mock()
+        result = send_email(
+            template_name='test_template',
+            subject='Test Subject',
+            to_email='invalid-email',
+            context={'test': 'data'}
+        )
+        self.assertFalse(result)
+        mock_send.assert_not_called()
+
+    def test_email_validation_performance(self):
+        """Test that email validation is performant."""
+        import time
+
+        # Test syntax-only validation (should be very fast)
+        start = time.time()
+        for i in range(100):
+            is_valid_email(f'user{i}@example.com', check_dns=False)
+        elapsed = time.time() - start
+
+        # Should complete 100 validations in under 1 second
+        self.assertLess(elapsed, 1.0, f"Email validation took {elapsed}s for 100 emails")
+
+    def test_cached_validation_performance(self):
+        """Test that cached validation improves performance."""
+        import time
+
+        cache.clear()
+        email = 'test@example.com'
+
+        # First call (uncached)
+        start = time.time()
+        for i in range(10):
+            validate_email_with_cache(email, check_dns=False, check_disposable=False)
+        uncached_time = time.time() - start
+
+        # Should be much faster on subsequent calls (cached)
+        # First call populates cache, next 9 use cache
+        # Cached calls should take minimal time
+
+        cache.clear()

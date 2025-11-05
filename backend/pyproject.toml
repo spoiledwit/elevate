@@ -40,6 +40,9 @@ dependencies = [
     "django-tinymce>=4.1.0",
     "resend>=2.13.1",
     "django-cors-headers>=4.9.0",
+    # Email validation
+    "email-validator>=2.1.0",
+    "django-disposable-email-checker>=2.0.0",
 ]
 
 [dependency-groups]

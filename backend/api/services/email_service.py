@@ -39,7 +39,25 @@ def send_email(
     Returns:
         bool: True if email sent successfully, False otherwise
     """
+    # Import validation utility
+    from ..utils import validate_email_address
+
     try:
+        # Validate email address before sending (syntax only, fast)
+        is_valid, normalized_email, error_msg = validate_email_address(
+            to_email,
+            check_dns=False,  # Skip DNS check (already validated at entry)
+            check_disposable=False,  # Skip disposable check (already validated at entry)
+            raise_exception=False
+        )
+
+        if not is_valid:
+            logger.error(f"Invalid email address {to_email}: {error_msg}")
+            return False
+
+        # Use normalized email
+        to_email = normalized_email
+
         # Add common context variables
         context.update({
             'frontend_url': getattr(settings, 'FRONTEND_URL', 'http://localhost:3000'),
@@ -76,19 +94,26 @@ def send_email(
 
 def send_welcome_email(subscription: Subscription) -> bool:
     """Send welcome email when subscription is created."""
+    from ..utils import is_valid_email
+
     user = subscription.user
-    
+
     if not user.email:
         logger.warning(f"No email found for user {user.username}")
         return False
-    
+
+    # Validate email before sending
+    if not is_valid_email(user.email, check_dns=False):
+        logger.error(f"Invalid email for user {user.username}: {user.email}")
+        return False
+
     context = {
         'user': user,
         'subscription': subscription,
         'plan_name': subscription.plan.name if subscription.plan else 'LinkHub Pro',
         'username': user.username,
     }
-    
+
     return send_email(
         template_name='welcome',
         subject=f'Welcome to Elevate Social - Your {context["plan_name"]} subscription is active!',
@@ -99,12 +124,19 @@ def send_welcome_email(subscription: Subscription) -> bool:
 
 def send_trial_ending_email(subscription: Subscription) -> bool:
     """Send trial ending reminder email (3 days before trial ends)."""
+    from ..utils import is_valid_email
+
     user = subscription.user
-    
+
     if not user.email:
         logger.warning(f"No email found for user {user.username}")
         return False
-    
+
+    # Validate email before sending
+    if not is_valid_email(user.email, check_dns=False):
+        logger.error(f"Invalid email for user {user.username}: {user.email}")
+        return False
+
     context = {
         'user': user,
         'subscription': subscription,
@@ -112,7 +144,7 @@ def send_trial_ending_email(subscription: Subscription) -> bool:
         'username': user.username,
         'trial_end_date': subscription.trial_end,
     }
-    
+
     return send_email(
         template_name='trial_ending',
         subject='Your Elevate Social trial is ending soon - Action required',
@@ -123,12 +155,19 @@ def send_trial_ending_email(subscription: Subscription) -> bool:
 
 def send_payment_succeeded_email(subscription: Subscription) -> bool:
     """Send payment confirmation email."""
+    from ..utils import is_valid_email
+
     user = subscription.user
-    
+
     if not user.email:
         logger.warning(f"No email found for user {user.username}")
         return False
-    
+
+    # Validate email before sending
+    if not is_valid_email(user.email, check_dns=False):
+        logger.error(f"Invalid email for user {user.username}: {user.email}")
+        return False
+
     context = {
         'user': user,
         'subscription': subscription,
@@ -136,7 +175,7 @@ def send_payment_succeeded_email(subscription: Subscription) -> bool:
         'username': user.username,
         'next_billing_date': subscription.current_period_end,
     }
-    
+
     return send_email(
         template_name='payment_succeeded',
         subject=f'Payment confirmed - Elevate Social {context["plan_name"]} plan',
@@ -147,19 +186,26 @@ def send_payment_succeeded_email(subscription: Subscription) -> bool:
 
 def send_payment_failed_email(subscription: Subscription) -> bool:
     """Send payment failure notification email."""
+    from ..utils import is_valid_email
+
     user = subscription.user
-    
+
     if not user.email:
         logger.warning(f"No email found for user {user.username}")
         return False
-    
+
+    # Validate email before sending
+    if not is_valid_email(user.email, check_dns=False):
+        logger.error(f"Invalid email for user {user.username}: {user.email}")
+        return False
+
     context = {
         'user': user,
         'subscription': subscription,
         'plan_name': subscription.plan.name if subscription.plan else 'LinkHub Pro',
         'username': user.username,
     }
-    
+
     return send_email(
         template_name='payment_failed',
         subject='Payment failed - Update your Elevate Social payment method',
@@ -170,19 +216,26 @@ def send_payment_failed_email(subscription: Subscription) -> bool:
 
 def send_subscription_cancelled_email(subscription: Subscription) -> bool:
     """Send subscription cancellation confirmation email."""
+    from ..utils import is_valid_email
+
     user = subscription.user
-    
+
     if not user.email:
         logger.warning(f"No email found for user {user.username}")
         return False
-    
+
+    # Validate email before sending
+    if not is_valid_email(user.email, check_dns=False):
+        logger.error(f"Invalid email for user {user.username}: {user.email}")
+        return False
+
     context = {
         'user': user,
         'subscription': subscription,
         'plan_name': subscription.plan.name if subscription.plan else 'LinkHub Pro',
         'username': user.username,
     }
-    
+
     return send_email(
         template_name='subscription_cancelled',
         subject='Elevate Social subscription cancelled - We\'re sorry to see you go',
@@ -242,6 +295,17 @@ def send_product_delivery_email(order: Order) -> bool:
 
 def send_digital_product_email(order: Order) -> bool:
     """Send digital product delivery email with download link."""
+    from ..utils import is_valid_email
+
+    if not order.customer_email:
+        logger.warning(f"No customer email found for order {order.order_id}")
+        return False
+
+    # Validate email before sending
+    if not is_valid_email(order.customer_email, check_dns=False):
+        logger.error(f"Invalid customer email for order {order.order_id}: {order.customer_email}")
+        return False
+
     custom_link = order.custom_link
     additional_info = custom_link.additional_info or {}
 
@@ -274,6 +338,17 @@ def send_digital_product_email(order: Order) -> bool:
 
 def send_optin_email(order: Order) -> bool:
     """Send opt-in page delivery email with HTP Elevate welcome message."""
+    from ..utils import is_valid_email
+
+    if not order.customer_email:
+        logger.warning(f"No customer email found for order {order.order_id}")
+        return False
+
+    # Validate email before sending
+    if not is_valid_email(order.customer_email, check_dns=False):
+        logger.error(f"Invalid customer email for order {order.order_id}: {order.customer_email}")
+        return False
+
     custom_link = order.custom_link
     additional_info = custom_link.additional_info or {}
 
@@ -316,6 +391,17 @@ def send_optin_email(order: Order) -> bool:
 
 def send_freebie_email(order: Order) -> bool:
     """Send freebie product delivery email with free download link."""
+    from ..utils import is_valid_email
+
+    if not order.customer_email:
+        logger.warning(f"No customer email found for order {order.order_id}")
+        return False
+
+    # Validate email before sending
+    if not is_valid_email(order.customer_email, check_dns=False):
+        logger.error(f"Invalid customer email for order {order.order_id}: {order.customer_email}")
+        return False
+
     custom_link = order.custom_link
     additional_info = custom_link.additional_info or {}
 
@@ -352,6 +438,17 @@ def send_freebie_email(order: Order) -> bool:
 
 def send_ecourse_email(order: Order) -> bool:
     """Send e-course enrollment confirmation email."""
+    from ..utils import is_valid_email
+
+    if not order.customer_email:
+        logger.warning(f"No customer email found for order {order.order_id}")
+        return False
+
+    # Validate email before sending
+    if not is_valid_email(order.customer_email, check_dns=False):
+        logger.error(f"Invalid customer email for order {order.order_id}: {order.customer_email}")
+        return False
+
     custom_link = order.custom_link
     additional_info = custom_link.additional_info or {}
 
@@ -377,6 +474,17 @@ def send_ecourse_email(order: Order) -> bool:
 
 def send_url_media_email(order: Order) -> bool:
     """Send URL/media access email."""
+    from ..utils import is_valid_email
+
+    if not order.customer_email:
+        logger.warning(f"No customer email found for order {order.order_id}")
+        return False
+
+    # Validate email before sending
+    if not is_valid_email(order.customer_email, check_dns=False):
+        logger.error(f"Invalid customer email for order {order.order_id}: {order.customer_email}")
+        return False
+
     custom_link = order.custom_link
     additional_info = custom_link.additional_info or {}
 
@@ -402,6 +510,17 @@ def send_url_media_email(order: Order) -> bool:
 
 def send_custom_product_email(order: Order) -> bool:
     """Send custom product order confirmation email."""
+    from ..utils import is_valid_email
+
+    if not order.customer_email:
+        logger.warning(f"No customer email found for order {order.order_id}")
+        return False
+
+    # Validate email before sending
+    if not is_valid_email(order.customer_email, check_dns=False):
+        logger.error(f"Invalid customer email for order {order.order_id}: {order.customer_email}")
+        return False
+
     custom_link = order.custom_link
     additional_info = custom_link.additional_info or {}
 
@@ -426,6 +545,17 @@ def send_custom_product_email(order: Order) -> bool:
 
 def send_generic_product_email(order: Order) -> bool:
     """Send generic product order confirmation email."""
+    from ..utils import is_valid_email
+
+    if not order.customer_email:
+        logger.warning(f"No customer email found for order {order.order_id}")
+        return False
+
+    # Validate email before sending
+    if not is_valid_email(order.customer_email, check_dns=False):
+        logger.error(f"Invalid customer email for order {order.order_id}: {order.customer_email}")
+        return False
+
     custom_link = order.custom_link
 
     context = {
@@ -450,7 +580,19 @@ def send_optin_followup_email(scheduled_email) -> bool:
     """
     Send a follow-up email from the opt-in sequence.
     """
+    from ..utils import is_valid_email
+
     order = scheduled_email.order
+
+    if not order.customer_email:
+        logger.warning(f"No customer email found for order {order.order_id}")
+        return False
+
+    # Validate email before sending
+    if not is_valid_email(order.customer_email, check_dns=False):
+        logger.error(f"Invalid customer email for order {order.order_id}: {order.customer_email}")
+        return False
+
     template = scheduled_email.email_template
     custom_link = order.custom_link
     seller_profile = custom_link.user_profile
@@ -502,7 +644,19 @@ def send_freebie_followup_email(scheduled_email) -> bool:
     """
     Send a follow-up email from the freebie sequence.
     """
+    from ..utils import is_valid_email
+
     order = scheduled_email.order
+
+    if not order.customer_email:
+        logger.warning(f"No customer email found for order {order.order_id}")
+        return False
+
+    # Validate email before sending
+    if not is_valid_email(order.customer_email, check_dns=False):
+        logger.error(f"Invalid customer email for order {order.order_id}: {order.customer_email}")
+        return False
+
     template = scheduled_email.email_template
     custom_link = order.custom_link
     seller_profile = custom_link.user_profile

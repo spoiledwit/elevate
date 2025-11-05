@@ -119,6 +119,8 @@ class UserViewSet(
     @action(["post"], url_path="password-reset/request", detail=False)
     def password_reset_request(self, request, *args, **kwargs):
         """Send password reset email if the username or email exists. Always returns 200."""
+        from ..utils import is_valid_email
+
         serializer = PasswordResetRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -131,6 +133,12 @@ class UserViewSet(
             )
         except User.DoesNotExist:
             # Don't reveal whether the username/email exists
+            return Response({"detail": "If an account with that username or email exists, a reset email has been sent."}, status=status.HTTP_200_OK)
+
+        # Validate user email before sending (prevent enumeration by always returning success)
+        if not user.email or not is_valid_email(user.email, check_dns=False):
+            logger.error(f"Invalid email for user {user.username}: {user.email}")
+            # Still return success to prevent email enumeration
             return Response({"detail": "If an account with that username or email exists, a reset email has been sent."}, status=status.HTTP_200_OK)
 
         # Build uid and token

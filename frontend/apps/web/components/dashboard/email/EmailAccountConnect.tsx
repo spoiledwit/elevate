@@ -51,10 +51,12 @@ export function EmailAccountConnect({
         const pollTimer = setInterval(async () => {
           if (popup?.closed) {
             clearInterval(pollTimer)
-            // Refresh accounts list
+            // Refresh accounts list and filter out inactive accounts
             const accountsResult = await getEmailAccountsAction()
             if (!('error' in accountsResult)) {
-              onAccountConnected(accountsResult)
+              // Only include active accounts
+              const activeAccounts = accountsResult.filter((account: EmailAccount) => account.is_active)
+              onAccountConnected(activeAccounts)
             }
             setLoading(false)
           }
@@ -73,10 +75,12 @@ export function EmailAccountConnect({
     try {
       const result = await disconnectEmailAccountAction(accountId)
       if (!('error' in result)) {
-        // Refresh accounts list
+        // Refresh accounts list and filter out inactive accounts
         const accountsResult = await getEmailAccountsAction()
         if (!('error' in accountsResult)) {
-          onAccountConnected(accountsResult)
+          // Only include active accounts
+          const activeAccounts = accountsResult.filter((account: EmailAccount) => account.is_active)
+          onAccountConnected(activeAccounts)
         }
       }
     } catch (error) {

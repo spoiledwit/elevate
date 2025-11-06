@@ -432,7 +432,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   </button>
 
                   {/* Canva Designs */}
-                  {/* <button
+                  <button
                     onClick={() => {
                       setActiveItem('canva')
                       router.push('/canva')
@@ -441,7 +441,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   >
                     <Palette className="w-5 h-5 text-gray-500" />
                     <span>Canva Designs</span>
-                  </button> */}
+                  </button>
 
                   {/* Elevate Training */}
                   <button

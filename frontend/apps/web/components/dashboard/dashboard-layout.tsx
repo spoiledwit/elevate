@@ -8,6 +8,7 @@ import { OnboardingTrigger } from './onboarding-trigger'
 import { getCurrentUser } from '@/actions/user-action'
 import type { UserCurrent } from '@frontend/types/api'
 import '@/styles/driver-theme.css'
+import { MiloChatbot } from '@/components/milo-chatbot/milo-chatbot'
 import {
   Home,
   BarChart3,
@@ -490,6 +491,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {!disableOnboarding && (
         <OnboardingTrigger expandSection={(sectionId: string) => setExpandedSections([sectionId])} />
       )}
+
+      {/* Milo Chatbot - Global AI Assistant */}
+      <MiloChatbot />
     </div>
   )
 }

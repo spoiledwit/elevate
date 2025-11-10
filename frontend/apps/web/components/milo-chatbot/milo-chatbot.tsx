@@ -1,114 +1,118 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { X, Mic, MicOff, AlertCircle } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { X, AlertCircle, Send, Mic, Phone } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { useRealtimeAI, RealtimeConnectionState } from "@/hooks/useRealtimeAI";
+import { useElevenLabs, ConnectionState } from "@/hooks/useElevenLabs";
 import milo from "@/assets/milo.gif";
 
-interface MiloChatbotProps {
-  onContentUpdate?: (content: string) => void;
-  onTypingComplete?: () => void;
-  onImageGenerated?: (imageFile: File) => void;
-  onImageGenerationStart?: () => void;
-  onImageGenerationComplete?: () => void;
-}
-
-export function MiloChatbot(props: MiloChatbotProps = {}) {
-  const {
-    onContentUpdate,
-    onTypingComplete,
-    onImageGenerated,
-    onImageGenerationStart,
-    onImageGenerationComplete,
-  } = props;
+export function MiloChatbot() {
   const [isOpen, setIsOpen] = useState(false);
-  const [audioData, setAudioData] = useState<Uint8Array>(new Uint8Array(7));
+  const [textInput, setTextInput] = useState("");
+  const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
+  const [mode, setMode] = useState<'text' | 'voice' | null>(null); // null = user hasn't chosen yet
 
-  const {
-    connectionState,
-    error,
-    isAvailable,
-    connect,
-    disconnect,
-    getAudioData,
-  } = useRealtimeAI({
-    onError: (error) => {
-      console.error("Milo AI Error:", error);
-    },
-    onStateChange: (state) => {
-      console.log("Milo AI State:", state);
-    },
-    onContentUpdate: onContentUpdate,
-    onTypingComplete: onTypingComplete,
-    onImageGenerated: onImageGenerated,
-    onImageGenerationStart: onImageGenerationStart,
-    onImageGenerationComplete: onImageGenerationComplete,
+  const messagesRef = useRef(messages);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
+  // Shared message handler
+  const handleMessage = useCallback((message: any) => {
+    const messageText = message.message;
+    const source = message.source;
+    const isAiMessage = source === 'ai';
+
+    if (isAiMessage && messageText) {
+      const newMessages: Array<{ role: 'user' | 'assistant'; content: string }> = [
+        ...messagesRef.current,
+        { role: 'assistant' as const, content: messageText }
+      ];
+      setMessages(newMessages);
+    }
+  }, []);
+
+  // Text mode instance
+  const textChat = useElevenLabs({
+    mode: 'text',
+    onError: (error) => console.error("Milo Text Error:", error),
+    onStateChange: (state) => console.log("Milo Text State:", state),
+    onMessage: handleMessage,
   });
 
-  const isConnected =
-    connectionState === RealtimeConnectionState.CONNECTED ||
-    connectionState === RealtimeConnectionState.LISTENING ||
-    connectionState === RealtimeConnectionState.SPEAKING;
+  // Voice mode instance
+  const voiceChat = useElevenLabs({
+    mode: 'voice',
+    onError: (error) => console.error("Milo Voice Error:", error),
+    onStateChange: (state) => console.log("Milo Voice State:", state),
+    onMessage: handleMessage,
+  });
 
-  const isListening = connectionState === RealtimeConnectionState.LISTENING;
-  const isSpeaking = connectionState === RealtimeConnectionState.SPEAKING;
-  const isConnecting = connectionState === RealtimeConnectionState.CONNECTING;
-
-  // Update audio visualization data
-  useEffect(() => {
-    let animationFrame: number;
-
-    const updateAudioData = () => {
-      if (isConnected) {
-        const data = getAudioData();
-        // Convert to 7 bars by grouping frequency bins
-        const bars = new Uint8Array(7);
-        const binSize = Math.floor(data.length / 7);
-
-        for (let i = 0; i < 7; i++) {
-          let sum = 0;
-          for (let j = 0; j < binSize; j++) {
-            sum += data[i * binSize + j] || 0;
-          }
-          bars[i] = sum / binSize;
-        }
-
-        setAudioData(bars);
-      }
-      animationFrame = requestAnimationFrame(updateAudioData);
-    };
-
-    if (isConnected) {
-      updateAudioData();
-    }
-
-    return () => {
-      if (animationFrame) {
-        cancelAnimationFrame(animationFrame);
-      }
-    };
-  }, [isConnected, getAudioData]);
-
-  const handleMicClick = useCallback(async () => {
-    if (!isAvailable) {
-      return;
-    }
-
-    if (isConnected) {
-      disconnect();
-    } else {
-      await connect();
-    }
-  }, [isAvailable, isConnected, connect, disconnect]);
+  // Active chat based on mode
+  const activeChat = mode === 'voice' ? voiceChat : textChat;
+  const isConnected = activeChat.isConnected;
+  const error = activeChat.error;
 
   const handleClose = useCallback(() => {
     if (isConnected) {
-      disconnect();
+      activeChat.disconnect();
     }
     setIsOpen(false);
-  }, [isConnected, disconnect]);
+    setMode(null); // Reset mode when closing
+  }, [isConnected, activeChat]);
+
+  const handleVoiceClick = useCallback(async () => {
+    // Switch to voice mode
+    setMode('voice');
+
+    // Connect to voice
+    if (!voiceChat.isConnected) {
+      await voiceChat.connect();
+    }
+  }, [voiceChat]);
+
+  const handleSendMessage = useCallback(() => {
+    if (!textInput.trim()) return;
+
+    // First message sent = activate text mode
+    if (mode === null) {
+      setMode('text');
+    }
+
+    // Add user message to chat immediately
+    const newMessages: Array<{ role: 'user' | 'assistant'; content: string }> = [
+      ...messagesRef.current,
+      { role: 'user' as const, content: textInput }
+    ];
+    setMessages(newMessages);
+
+    // Use text chat
+    if (textChat.isConnected) {
+      textChat.sendUserMessage(textInput);
+    } else {
+      // Auto-connect and send
+      textChat.connect().then(() => {
+        textChat.sendUserMessage(textInput);
+      });
+    }
+
+    setTextInput("");
+  }, [textInput, mode, textChat]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  }, [handleSendMessage]);
 
   return (
     <>
@@ -137,7 +141,8 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
       <div
         className={cn(
           "fixed bottom-6 right-6 z-50",
-          "w-[420px] h-[600px] max-h-[80vh]",
+          "w-[420px] h-[700px]",
+          "max-h-[85vh]",
           "bg-gradient-to-b from-gray-900/95 to-black/95",
           "backdrop-blur-2xl",
           "rounded-3xl",
@@ -150,7 +155,7 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
             : "scale-0 opacity-0 pointer-events-none"
         )}
       >
-        {/* Header - Minimal */}
+        {/* Header */}
         <div className="flex items-center justify-between p-6 pb-4">
           <div className="flex items-center gap-3">
             <div className="relative">
@@ -162,16 +167,18 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
                   className="object-contain"
                 />
               </div>
-              {/* Animated status dot */}
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full border-2 border-gray-900">
-                <div className="absolute inset-0 bg-green-400 rounded-full animate-ping"></div>
-              </div>
+              {/* Status dot */}
+              {isConnected && (
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full border-2 border-gray-900">
+                  <div className="absolute inset-0 bg-green-400 rounded-full animate-ping"></div>
+                </div>
+              )}
             </div>
             <div>
               <h3 className="font-bold text-white text-lg tracking-tight">
                 MILO
               </h3>
-              <p className="text-xs text-purple-400 font-medium">AI Voice</p>
+              <p className="text-xs text-purple-400 font-medium">AI Assistant</p>
             </div>
           </div>
           <button
@@ -182,194 +189,146 @@ export function MiloChatbot(props: MiloChatbotProps = {}) {
           </button>
         </div>
 
-        {/* Voice Visualization Area - Futuristic */}
-        <div className="flex-1 relative flex flex-col items-center justify-center p-8">
-          {/* Background gradient orb */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div
-              className={cn(
-                "w-64 h-64 rounded-full transition-all duration-1000",
-                isConnected
-                  ? "bg-gradient-to-r from-violet-600/20 to-brand-600/20 blur-3xl animate-pulse"
-                  : isConnecting
-                  ? "bg-gradient-to-r from-blue-600/15 to-violet-600/15 blur-3xl animate-pulse"
-                  : "bg-gradient-to-r from-violet-600/10 to-brand-600/10 blur-3xl"
+        {/* Chat Messages Area */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          {messages.length === 0 && mode === null ? (
+            <div className="flex flex-col items-center justify-center h-full">
+              <div className="relative w-24 h-24 mb-4">
+                <Image src={milo.src} alt="Milo" fill className="object-contain" />
+              </div>
+              <h3 className="text-white font-medium text-lg mb-2">Hey! I'm Milo</h3>
+              <p className="text-gray-400 text-sm text-center max-w-xs mb-6">
+                Your AI assistant for social media. Choose how you'd like to communicate:
+              </p>
+
+              {/* Mode Selection Buttons */}
+              <div className="flex gap-4">
+                <button
+                  onClick={handleVoiceClick}
+                  className="flex flex-col items-center gap-2 px-6 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 rounded-2xl transition-all duration-300 shadow-lg shadow-purple-500/20"
+                >
+                  <Phone className="w-6 h-6 text-white" />
+                  <span className="text-white font-medium text-sm">Voice Call</span>
+                </button>
+
+                <div className="flex flex-col items-center gap-2 px-6 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all duration-300">
+                  <Send className="w-6 h-6 text-gray-300" />
+                  <span className="text-gray-300 font-medium text-sm">Type Message</span>
+                </div>
+              </div>
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full">
+              <div className="relative w-24 h-24 mb-4">
+                <Image src={milo.src} alt="Milo" fill className="object-contain" />
+              </div>
+              {mode === 'voice' && voiceChat.isConnecting && (
+                <p className="text-purple-400 text-sm animate-pulse">Connecting to voice...</p>
               )}
-            ></div>
-          </div>
-
-          {/* Debug: Show current state - commented out for production */}
-          {/* <div className="absolute top-2 left-2 text-xs text-white/70 z-50">
-            State: {connectionState} | Connecting: {isConnecting.toString()} | Connected: {isConnected.toString()}
-          </div> */}
-
-          {error ? (
-            <div className="relative text-center space-y-6 z-10">
-              <div className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-red-500/20 to-red-600/20 backdrop-blur-xl flex items-center justify-center">
-                <AlertCircle className="w-12 h-12 text-red-400" />
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-red-400 font-light tracking-widest uppercase text-sm">
-                  Error
-                </h3>
-                <p className="text-xs text-red-300 max-w-xs">{error}</p>
-                <div className="flex items-center justify-center gap-6 pt-2">
-                  <button
-                    onClick={handleMicClick}
-                    className="p-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-400/50 transition-all duration-300 group"
-                  >
-                    <Mic className="w-5 h-5 text-purple-300 group-hover:text-purple-200" />
-                  </button>
-                  <button
-                    onClick={handleClose}
-                    className="p-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-red-400/50 transition-all duration-300 group"
-                  >
-                    <X className="w-5 h-5 text-gray-400 group-hover:text-red-300" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : isConnecting ? (
-            <div className="relative text-center space-y-6 z-10">
-              <div className="relative w-32 h-32 mx-auto">
-                <Image
-                  src={milo.src}
-                  alt="Milo"
-                  fill
-                  className="object-contain animate-pulse"
-                />
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-blue-300 font-light tracking-widest uppercase text-sm">
-                  Connecting
-                </h3>
-                <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-blue-500 to-transparent mx-auto"></div>
-              </div>
-            </div>
-          ) : isConnected ? (
-            <div className="relative space-y-8 z-10">
-              {/* Real-time audio visualization */}
-              <div className="flex items-center justify-center gap-1.5">
-                {Array.from(audioData).map((amplitude, i) => {
-                  const height = Math.max(20, (amplitude / 255) * 80 + 20);
-                  return (
-                    <div
-                      key={i}
-                      className={cn(
-                        "w-1 rounded-full transition-all duration-75",
-                        isListening
-                          ? "bg-gradient-to-t from-violet-500 to-purple-400 shadow-lg shadow-brand-500/50"
-                          : isSpeaking
-                          ? "bg-gradient-to-t from-green-500 to-emerald-400 shadow-lg shadow-green-500/50"
-                          : "bg-gradient-to-t from-violet-500/50 to-purple-400/50"
-                      )}
-                      style={{ height: `${height}px` }}
-                    ></div>
-                  );
-                })}
-              </div>
-
-              {/* Status */}
-              <div className="text-center space-y-4">
-                <div className="flex items-center justify-center gap-2">
-                  <div
-                    className={cn(
-                      "w-2 h-2 rounded-full animate-pulse",
-                      isListening
-                        ? "bg-purple-400"
-                        : isSpeaking
-                        ? "bg-green-400"
-                        : "bg-blue-400"
-                    )}
-                  ></div>
-                  <span
-                    className={cn(
-                      "text-sm font-medium tracking-wider uppercase",
-                      isListening
-                        ? "text-purple-400"
-                        : isSpeaking
-                        ? "text-green-400"
-                        : "text-blue-400"
-                    )}
-                  >
-                    {isListening
-                      ? "Listening"
-                      : isSpeaking
-                      ? "Speaking"
-                      : "Connected"}
-                  </span>
-                </div>
-
-                {/* Control Icons */}
-                <div className="flex items-center justify-center gap-6 pt-2">
-                  <button
-                    onClick={handleMicClick}
-                    className="p-3 rounded-full bg-red-500/20 hover:bg-red-500/30 border border-red-400/30 hover:border-red-400/50 transition-all duration-300 group"
-                  >
-                    <MicOff className="w-5 h-5 text-red-300 group-hover:text-red-200" />
-                  </button>
-
-                  <button
-                    onClick={handleClose}
-                    className="p-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-red-400/50 transition-all duration-300 group"
-                  >
-                    <X className="w-5 h-5 text-gray-400 group-hover:text-red-300" />
-                  </button>
-                </div>
-              </div>
+              {mode === 'voice' && voiceChat.isListening && (
+                <p className="text-purple-400 text-sm">Listening...</p>
+              )}
+              {mode === 'voice' && voiceChat.isSpeaking && (
+                <p className="text-green-400 text-sm">Speaking...</p>
+              )}
             </div>
           ) : (
-            <div className="relative text-center space-y-6 z-10">
-              {/* Milo icon */}
-              <div className="relative w-32 h-32 mx-auto">
-                <Image
-                  src={milo.src}
-                  alt="Milo"
-                  fill
-                  className="object-contain"
-                />
-              </div>
-
-              {/* Minimal text */}
-              <div className="space-y-4">
-                <h3 className="text-white font-light tracking-widest uppercase text-sm">
-                  Milo
-                </h3>
-                <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-brand-500 to-transparent mx-auto"></div>
-
-                {/* Control Icons */}
-                <div className="flex items-center justify-center gap-6 pt-2">
-                  <button
-                    onClick={handleMicClick}
-                    disabled={!isAvailable}
+            <>
+              {messages.map((msg, index) => (
+                <div
+                  key={index}
+                  className={cn(
+                    "flex",
+                    msg.role === 'user' ? "justify-end" : "justify-start"
+                  )}
+                >
+                  <div
                     className={cn(
-                      "p-3 rounded-full border transition-all duration-300 group",
-                      isAvailable
-                        ? "bg-white/5 hover:bg-white/10 border-white/10 hover:border-purple-400/50"
-                        : "bg-gray-500/20 border-gray-500/30 cursor-not-allowed opacity-50"
+                      "max-w-[80%] rounded-2xl px-4 py-3",
+                      msg.role === 'user'
+                        ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white"
+                        : "bg-white/10 text-white border border-white/20"
                     )}
                   >
-                    <Mic
-                      className={cn(
-                        "w-5 h-5 transition-colors",
-                        isAvailable
-                          ? "text-purple-300 group-hover:text-purple-200"
-                          : "text-gray-500"
-                      )}
-                    />
-                  </button>
-
-                  <button
-                    onClick={handleClose}
-                    className="p-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-red-400/50 transition-all duration-300 group"
-                  >
-                    <X className="w-5 h-5 text-gray-400 group-hover:text-red-300" />
-                  </button>
+                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                  </div>
                 </div>
-              </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </>
+          )}
+
+          {error && (
+            <div className="flex items-center gap-2 px-4 py-3 bg-red-500/10 border border-red-400/30 rounded-xl">
+              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+              <p className="text-sm text-red-300">{error}</p>
             </div>
           )}
         </div>
+
+        {/* Voice Status Bar - Only show in voice mode */}
+        {mode === 'voice' && voiceChat.isConnected && (
+          <div className="flex-shrink-0 border-t border-white/10 py-4 px-6">
+            <div className="flex items-center justify-center gap-3">
+              <div className={cn(
+                "w-3 h-3 rounded-full animate-pulse",
+                voiceChat.isListening ? "bg-purple-400" :
+                voiceChat.isSpeaking ? "bg-green-400" : "bg-blue-400"
+              )} />
+              <span className="text-sm text-gray-300 uppercase tracking-wider">
+                {voiceChat.isListening ? "Listening..." :
+                 voiceChat.isSpeaking ? "Speaking..." : "Voice Active"}
+              </span>
+              <button
+                onClick={() => {
+                  voiceChat.disconnect();
+                  setMode(null);
+                  setMessages([]);
+                }}
+                className="ml-auto p-2 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <X className="w-4 h-4 text-gray-400" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Text Input Area - Only show when not in active voice call */}
+        {mode !== 'voice' && (
+          <div className="flex-shrink-0 border-t border-white/10 p-4">
+            <div className="flex items-end gap-2">
+              {/* Text Input */}
+              <div className="flex-1">
+                <textarea
+                  value={textInput}
+                  onChange={(e) => setTextInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Type a message to Milo..."
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-400/50 resize-none transition-colors"
+                  rows={2}
+                  style={{ maxHeight: '100px' }}
+                />
+              </div>
+
+              {/* Send Button */}
+              <button
+                onClick={handleSendMessage}
+                disabled={!textInput.trim()}
+                className={cn(
+                  "p-3 rounded-xl transition-all duration-300 flex-shrink-0",
+                  textInput.trim()
+                    ? "bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white shadow-lg shadow-purple-500/20"
+                    : "bg-white/5 text-gray-500 cursor-not-allowed"
+                )}
+              >
+                <Send className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-2 text-center">
+              Press Enter to send • Shift+Enter for new line
+            </p>
+          </div>
+        )}
       </div>
     </>
   );

@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@elevenlabs/react": "^0.9.1",
     "@frontend/types": "workspace:^",
     "@frontend/ui": "workspace:^",
     "@hookform/resolvers": "^3.9.1",

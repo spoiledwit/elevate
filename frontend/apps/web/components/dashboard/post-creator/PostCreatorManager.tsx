@@ -7,7 +7,7 @@ import { PlatformSelector } from '@/components/dashboard/post-creator/platform-s
 import { PostScheduler } from '@/components/dashboard/post-creator/post-scheduler'
 import { PostPreview } from '@/components/dashboard/post-creator/post-preview'
 import { ImageGenerationDialog } from '@/components/dashboard/post-creator/image-generation-dialog'
-import { MiloChatbot } from '@/components/milo-chatbot/milo-chatbot'
+
 import {
   saveAsDraftAction,
   schedulePostAction,
@@ -386,14 +386,7 @@ export function PostCreatorManager({ initialPlatforms }: PostCreatorManagerProps
         onInsert={handleGeneratedImageInsert}
       />
 
-      {/* Milo Chatbot */}
-      <MiloChatbot
-        onContentUpdate={handleMiloContentUpdate}
-        onTypingComplete={handleMiloTypingComplete}
-        onImageGenerated={handleGeneratedImageInsert}
-        onImageGenerationStart={handleMiloImageGenerationStart}
-        onImageGenerationComplete={handleMiloImageGenerationComplete}
-      />
+
     </div>
   )
 }

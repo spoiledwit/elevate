@@ -385,15 +385,6 @@ export function PostCreatorManager({ initialPlatforms }: PostCreatorManagerProps
         onClose={() => setShowImageGenDialog(false)}
         onInsert={handleGeneratedImageInsert}
       />
-
-      {/* Milo Chatbot */}
-      <MiloChatbot
-        onContentUpdate={handleMiloContentUpdate}
-        onTypingComplete={handleMiloTypingComplete}
-        onImageGenerated={handleGeneratedImageInsert}
-        onImageGenerationStart={handleMiloImageGenerationStart}
-        onImageGenerationComplete={handleMiloImageGenerationComplete}
-      />
     </div>
   )
 }

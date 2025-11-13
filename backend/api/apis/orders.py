@@ -141,3 +141,98 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
 
         serializer = self.get_serializer(order)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['patch'])
+    def update_email_preference(self, request, pk=None):
+        """
+        Update email automation preference for a single order.
+        Allows affiliates to opt-out specific leads from automated email sequences.
+        """
+        order = self.get_object()
+
+        # Check if user owns the product
+        if order.custom_link.user_profile.user != request.user:
+            return Response(
+                {'error': 'You do not have permission to update this order'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Get the enabled flag from request
+        enabled = request.data.get('email_automation_enabled')
+        if enabled is None:
+            return Response(
+                {'error': 'email_automation_enabled field is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Update the preference
+        order.email_automation_enabled = bool(enabled)
+        order.save(update_fields=['email_automation_enabled', 'updated_at'])
+
+        # Count pending emails (for informational purposes)
+        pending_count = (
+            order.followup_emails.filter(sent=False).count() +
+            order.optin_followup_emails.filter(sent=False).count()
+        )
+
+        serializer = self.get_serializer(order)
+        return Response({
+            **serializer.data,
+            'pending_emails': pending_count,
+            'message': f'Email automation {"enabled" if enabled else "disabled"}. {pending_count} scheduled emails will {"resume" if enabled else "be paused"}.'
+        })
+
+    @action(detail=False, methods=['post'])
+    def bulk_update_email_preference(self, request):
+        """
+        Bulk update email automation preference for multiple orders.
+        Allows affiliates to enable/disable automation for multiple leads at once.
+        """
+        user = request.user
+        order_ids = request.data.get('order_ids', [])
+        enabled = request.data.get('email_automation_enabled')
+
+        if not order_ids:
+            return Response(
+                {'error': 'order_ids field is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if enabled is None:
+            return Response(
+                {'error': 'email_automation_enabled field is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Get orders owned by the user
+        orders = Order.objects.filter(
+            id__in=order_ids,
+            custom_link__user_profile__user=user
+        )
+
+        if not orders.exists():
+            return Response(
+                {'error': 'No valid orders found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Update all orders
+        updated_count = orders.update(
+            email_automation_enabled=bool(enabled),
+            updated_at=timezone.now()
+        )
+
+        # Count total pending emails across all orders (for informational purposes)
+        total_pending = 0
+        for order in orders:
+            total_pending += (
+                order.followup_emails.filter(sent=False).count() +
+                order.optin_followup_emails.filter(sent=False).count()
+            )
+
+        return Response({
+            'success': True,
+            'updated_count': updated_count,
+            'pending_emails': total_pending,
+            'message': f'Email automation {"enabled" if enabled else "disabled"} for {updated_count} order(s). {total_pending} scheduled emails will {"resume" if enabled else "be paused"}.'
+        })

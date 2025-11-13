@@ -710,9 +710,9 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         const result = await updateCustomLinkWithFileAction(link.id.toString(), formData)
 
         if (result.error) {
-          toast.error(`Failed to update product: ${result.error}`)
+          toast.error(`Failed to update listing: ${result.error}`)
         } else {
-          toast.success('Product updated successfully!')
+          toast.success('Listing updated successfully!')
           if (onClose) {
             onClose()
           } else {
@@ -740,9 +740,9 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         const result = await updateCustomLinkAction(link.id.toString(), updateData)
 
         if ('error' in result) {
-          toast.error(`Failed to update product: ${result.error}`)
+          toast.error(`Failed to update listing: ${result.error}`)
         } else {
-          toast.success('Product updated successfully!')
+          toast.success('Listing updated successfully!')
           if (onClose) {
             onClose()
           } else {
@@ -752,7 +752,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       }
 
     } catch (error) {
-      console.error('Error updating product:', error)
+      console.error('Error updating listing:', error)
       toast.error('An unexpected error occurred')
     } finally {
       setIsSubmitting(false)
@@ -849,14 +849,14 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       const result = await createNewProductAction(productData)
 
       if (result.error) {
-        toast.error(`Failed to create product: ${result.error}`)
+        toast.error(`Failed to create listing: ${result.error}`)
       } else {
-        toast.success('Product created successfully!')
+        toast.success('Listing created successfully!')
         router.push('/custom-links')
       }
 
     } catch (error) {
-      console.error('Error creating product:', error)
+      console.error('Error creating listing:', error)
       toast.error('An unexpected error occurred')
     } finally {
       setIsSubmitting(false)
@@ -870,15 +870,15 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         <div className="flex items-center gap-3">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">
-              {link ? 'Edit Product' : 'Add New Product'}
+              {link ? 'Edit Listing' : 'Add New Listing'}
             </h2>
             <p className="text-sm text-gray-600">
               Step {selectedType === 'url-media' && step === 5 ? '3' : step} of {selectedType === 'url-media' ? '3' : '5'}: {
-                step === 1 ? 'Choose your product type' :
+                step === 1 ? 'Choose your listing type' :
                   step === 2 ? 'Add basic information' :
                     step === 3 ? 'Configure checkout & pricing' :
                       step === 4 ? 'Information to collect' :
-                        'Product-specific details'
+                        'Listing-specific details'
               }
             </p>
           </div>
@@ -942,7 +942,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
               {/* Thumbnail Upload */}
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Product Thumbnail
+                  Listing Thumbnail
                 </label>
 
                 {thumbnailPreview ? (
@@ -992,14 +992,14 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
               {/* Title Field */}
               <div>
                 <label htmlFor="title" className="block text-sm font-semibold text-gray-900 mb-2">
-                  Product Title
+                  Listing Title
                 </label>
                 <input
                   type="text"
                   id="title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Enter a catchy title for your product"
+                  placeholder="Enter a catchy title for your listing"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-300"
                   maxLength={100}
                 />
@@ -1011,7 +1011,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
               {/* Subtitle Field */}
               <div>
                 <label htmlFor="subtitle" className="block text-sm font-semibold text-gray-900 mb-2">
-                  Product Subtitle <span className="text-gray-400 font-normal">(Optional)</span>
+                  Listing Subtitle <span className="text-gray-400 font-normal">(Optional)</span>
                 </label>
                 <input
                   type="text"
@@ -1260,7 +1260,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
               {/* Checkout Description */}
               <div>
                 <label htmlFor="checkout-description" className="block text-sm font-semibold text-gray-900 mb-2">
-                  Product Description
+                  Listing Description
                 </label>
                 <div className="border border-gray-300 rounded-lg overflow-hidden">
                   <TinyMCEEditor
@@ -1949,7 +1949,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
               className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
               <Plus className="w-4 h-4" />
-              {isSubmitting ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Product' : 'Create Product')}
+              {isSubmitting ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Listing' : 'Create Listing')}
             </button>
           </div>
         </div>

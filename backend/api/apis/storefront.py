@@ -873,10 +873,16 @@ class CustomLinkViewSet(viewsets.ModelViewSet):
                 {"detail": "Rate limit exceeded"},
                 status=status.HTTP_429_TOO_MANY_REQUESTS
             )
-        
+
         # Prepare order data
         order_data = request.data.copy()
         order_data['custom_link'] = link.id
+
+        # Remove email_automation_enabled from request to let database default (True) apply
+        if 'email_automation_enabled' in order_data:
+            logger.info(f"DEBUG - Removing email_automation_enabled from request (was: {order_data['email_automation_enabled']})")
+            order_data.pop('email_automation_enabled')
+
         logger.info(f"DEBUG - Prepared order data: {order_data}")
         
         # Create serializer with custom link context

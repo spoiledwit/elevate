@@ -200,9 +200,9 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
                   <Package className="w-7 h-7 text-blue-600" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">My Products</h1>
+                  <h1 className="text-2xl font-bold text-gray-900">My Listing</h1>
                   <p className="text-gray-600">
-                    Manage up to 10 products and links for your storefront
+                    Manage up to 10 listings and links for your storefront
                   </p>
                 </div>
               </div>
@@ -213,7 +213,7 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
                   }`}
               >
                 <Plus className="w-4 h-4" />
-                Add Product
+                Add Listing
               </NextLink>
             </div>
           </div>
@@ -230,7 +230,7 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
                   <Package className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Products</p>
+                  <p className="text-sm font-medium text-gray-600">Total Listings</p>
                   <p className="text-2xl font-bold text-gray-900">{links.length}/10</p>
                 </div>
               </div>
@@ -242,7 +242,7 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
                   <Eye className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Active Products</p>
+                  <p className="text-sm font-medium text-gray-600">Active Listings</p>
                   <p className="text-2xl font-bold text-gray-900">{activeLinksCount}</p>
                 </div>
               </div>
@@ -267,7 +267,7 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
             <div className="xl:col-span-2">
               <div className="bg-white rounded-xl" style={{ boxShadow: 'rgba(0, 0, 0, 0.02) 0px 2px 8px' }}>
                 <div className="p-6 border-b border-gray-200">
-                  <h2 className="text-lg font-semibold text-gray-900">Your Products</h2>
+                  <h2 className="text-lg font-semibold text-gray-900">Your Listings</h2>
                 </div>
 
                 <div className="p-6">
@@ -436,7 +436,7 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
                         className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium text-base"
                       >
                         <Plus className="w-5 h-5" />
-                        Add Your First Products
+                        Add Your First Listing
                       </NextLink>
                     </div>
                   )}

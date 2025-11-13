@@ -208,12 +208,12 @@ export function MiloChatbot() {
                   className="flex flex-col items-center gap-2 px-6 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 rounded-2xl transition-all duration-300 shadow-lg shadow-purple-500/20"
                 >
                   <Phone className="w-6 h-6 text-white" />
-                  <span className="text-white font-medium text-sm">Voice Call</span>
+                  <span className="text-white font-medium text-sm">Voice</span>
                 </button>
 
                 <div className="flex flex-col items-center gap-2 px-6 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all duration-300">
                   <Send className="w-6 h-6 text-gray-300" />
-                  <span className="text-gray-300 font-medium text-sm">Type Message</span>
+                  <span className="text-gray-300 font-medium text-sm">Text</span>
                 </div>
               </div>
             </div>

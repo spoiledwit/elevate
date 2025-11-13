@@ -4,8 +4,8 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Create Product - Elevate Social',
-  description: 'Create a new product for your storefront'
+  title: 'Create Listing - Elevate Social',
+  description: 'Create a new listing for your storefront'
 }
 
 export default function CreateProductPage() {
@@ -21,7 +21,7 @@ export default function CreateProductPage() {
                 className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Back to Products
+                Back to Listing
               </Link>
             </div>
           </div>

@@ -14,16 +14,11 @@
     <p style="font-size: 18px; font-weight: 600; color: #667eea; margin: 0;">{{ sender_name }}</p>
 </div>
 
-<div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 8px; padding: 20px; margin-top: 30px; text-align: center;">
-    <p style="margin: 0; font-size: 14px; color: #6c757d;">
-        <strong>Keep growing with Elevate Social</strong><br>
-        Your journey to freedom starts here 🚀
-    </p>
-</div>
-
 <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center;">
     <p style="margin: 0; font-size: 12px; color: #999; line-height: 1.6;">
-        Want to unsubscribe? Message {% if contact_email %}<a href="mailto:{{ contact_email }}?subject=Unsubscribe" style="color: #bea456; text-decoration: underline;">{{ contact_email }}</a>{% else %}me{% endif %} "unsubscribe" and I'll remove you.
+        Want to unsubscribe? Message {% if contact_email %}<a href="mailto:{{ contact_email }}?subject=Unsubscribe"
+            style="color: #bea456; text-decoration: underline;">{{ contact_email }}</a>{% else %}me{% endif %}
+        "unsubscribe" and I'll remove you.
     </p>
 </div>
 {% endblock %}

@@ -585,6 +585,11 @@ def schedule_freebie_email_sequence(order_id):
             logger.info(f"Skipping email sequence for non-freebie order {order.order_id}")
             return
 
+        # Check if email automation is enabled for this order
+        if not order.email_automation_enabled:
+            logger.info(f"Email automation is disabled for order {order.order_id}. Skipping sequence.")
+            return {'success': False, 'reason': 'automation_disabled', 'message': 'Email automation is disabled for this lead'}
+
         # Check if this email is already enrolled in any active sequence from ANY community leader
         customer_email = order.customer_email
         existing_freebie_sequences = ScheduledFollowupEmail.objects.filter(
@@ -655,6 +660,11 @@ def send_scheduled_followup_emails():
 
     for scheduled_email in pending_emails:
         try:
+            # Check if email automation is still enabled for this order
+            if not scheduled_email.order.email_automation_enabled:
+                logger.info(f"Skipping email {scheduled_email.id} - automation disabled for order {scheduled_email.order.order_id}")
+                continue
+
             # Send the email
             success = send_freebie_followup_email(scheduled_email)
 
@@ -696,6 +706,11 @@ def schedule_optin_email_sequence(order_id):
         if order.custom_link.type != 'opt_in':
             logger.info(f"Skipping email sequence for non-opt-in order {order.order_id}")
             return
+
+        # Check if email automation is enabled for this order
+        if not order.email_automation_enabled:
+            logger.info(f"Email automation is disabled for order {order.order_id}. Skipping sequence.")
+            return {'success': False, 'reason': 'automation_disabled', 'message': 'Email automation is disabled for this lead'}
 
         # Get the selected program from additional_info
         additional_info = order.custom_link.additional_info or {}
@@ -780,6 +795,11 @@ def send_scheduled_optin_emails():
 
     for scheduled_email in pending_emails:
         try:
+            # Check if email automation is still enabled for this order
+            if not scheduled_email.order.email_automation_enabled:
+                logger.info(f"Skipping email {scheduled_email.id} - automation disabled for order {scheduled_email.order.order_id}")
+                continue
+
             # Send the email
             success = send_optin_followup_email(scheduled_email)
 

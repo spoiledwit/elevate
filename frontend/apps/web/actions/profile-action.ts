@@ -32,3 +32,31 @@ export async function profileAction(
 
   return false
 }
+
+/**
+ * Update email automation default preference for user profile
+ */
+export async function updateProfileEmailAutomationAction(
+  enabled: boolean
+) {
+  const session = await getServerSession(authOptions)
+
+  if (!session) {
+    return { success: false, error: 'Authentication required' }
+  }
+
+  try {
+    const apiClient = await getApiClient(session)
+    const response = await apiClient.profiles.profilesUpdateEmailAutomationDefaultPartialUpdate({
+      enabled
+    })
+
+    return { success: true, data: response }
+  } catch (error) {
+    console.error('Error updating profile email automation preference:', error)
+    if (error instanceof ApiError) {
+      return { success: false, error: error.message }
+    }
+    return { success: false, error: 'Failed to update email automation preference' }
+  }
+}

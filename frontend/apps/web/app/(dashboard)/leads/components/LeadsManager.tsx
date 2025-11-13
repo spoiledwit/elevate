@@ -13,23 +13,30 @@ import {
   X,
   FileText,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Bell,
+  BellOff,
+  Settings
 } from 'lucide-react'
-import { getOrdersPaginatedAction } from '@/actions/orders-action'
+import { getOrdersPaginatedAction, updateOrderEmailPreferenceAction } from '@/actions/orders-action'
+import { updateProfileEmailAutomationAction } from '@/actions/profile-action'
+import { toast } from 'sonner'
 
 interface LeadsManagerProps {
   initialOrders: any[]
   initialPage?: number
   initialCount?: number
+  profileEmailAutomation?: boolean
 }
 
-export function LeadsManager({ initialOrders, initialPage = 1, initialCount = 0 }: LeadsManagerProps) {
+export function LeadsManager({ initialOrders, initialPage = 1, initialCount = 0, profileEmailAutomation = true }: LeadsManagerProps) {
   const [orders, setOrders] = useState(initialOrders)
   const [selectedOrder, setSelectedOrder] = useState<any>(null)
   const [showDialog, setShowDialog] = useState(false)
   const [currentPage, setCurrentPage] = useState(initialPage)
   const [totalCount, setTotalCount] = useState(initialCount)
   const [isLoading, setIsLoading] = useState(false)
+  const [profileEmailAutomationEnabled, setProfileEmailAutomationEnabled] = useState(profileEmailAutomation)
 
   const pageSize = 10 // Backend default page size
   const totalPages = Math.ceil(totalCount / pageSize)
@@ -73,6 +80,63 @@ export function LeadsManager({ initialOrders, initialPage = 1, initialCount = 0 
     setSelectedOrder(null)
   }
 
+  const handleToggleEmailAutomation = async (orderId: string, currentValue: boolean, e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent opening the dialog when clicking toggle
+
+    const newValue = !currentValue
+
+    try {
+      const result = await updateOrderEmailPreferenceAction(orderId, newValue)
+
+      if (result.success) {
+        // Update local state
+        setOrders(prev => prev.map(order =>
+          order.id === parseInt(orderId)
+            ? { ...order, email_automation_enabled: newValue }
+            : order
+        ))
+
+        // Update selected order if it's open in the dialog
+        if (selectedOrder && selectedOrder.id === parseInt(orderId)) {
+          setSelectedOrder({ ...selectedOrder, email_automation_enabled: newValue })
+        }
+
+        toast.success(
+          newValue
+            ? 'Email automation enabled for this lead'
+            : 'Email automation paused for this lead'
+        )
+      } else {
+        toast.error(result.error || 'Failed to update email preference')
+      }
+    } catch (error) {
+      console.error('Error toggling email automation:', error)
+      toast.error('An error occurred while updating email preference')
+    }
+  }
+
+  const handleToggleProfileEmailAutomation = async () => {
+    const newValue = !profileEmailAutomationEnabled
+
+    try {
+      const result = await updateProfileEmailAutomationAction(newValue)
+
+      if (result.success) {
+        setProfileEmailAutomationEnabled(newValue)
+        toast.success(
+          newValue
+            ? 'Email automation enabled by default for new leads'
+            : 'Email automation disabled by default for new leads'
+        )
+      } else {
+        toast.error(result.error || 'Failed to update email automation default')
+      }
+    } catch (error) {
+      console.error('Error toggling profile email automation:', error)
+      toast.error('An error occurred while updating email automation default')
+    }
+  }
+
   return (
     <div className="p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -90,6 +154,29 @@ export function LeadsManager({ initialOrders, initialPage = 1, initialCount = 0 
                     View and manage customer orders from your products
                   </p>
                 </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleToggleProfileEmailAutomation}
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    profileEmailAutomationEnabled
+                      ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                  title={profileEmailAutomationEnabled ? 'Email automation enabled by default for new leads' : 'Email automation disabled by default for new leads'}
+                >
+                  {profileEmailAutomationEnabled ? (
+                    <>
+                      <Bell className="w-4 h-4" />
+                      <span>Auto Emails: ON</span>
+                    </>
+                  ) : (
+                    <>
+                      <BellOff className="w-4 h-4" />
+                      <span>Auto Emails: OFF</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </div>
@@ -194,6 +281,29 @@ export function LeadsManager({ initialOrders, initialPage = 1, initialCount = 0 
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
+                          {/* Email Automation Toggle */}
+                          <button
+                            onClick={(e) => handleToggleEmailAutomation(String(order.id), order.email_automation_enabled ?? true, e)}
+                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                              order.email_automation_enabled !== false
+                                ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                            title={order.email_automation_enabled !== false ? 'Click to pause automated emails' : 'Click to enable automated emails'}
+                          >
+                            {order.email_automation_enabled !== false ? (
+                              <>
+                                <Bell className="w-3 h-3 mr-1" />
+                                Auto Emails
+                              </>
+                            ) : (
+                              <>
+                                <BellOff className="w-3 h-3 mr-1" />
+                                Paused
+                              </>
+                            )}
+                          </button>
+
                           {order.status === 'completed' && (
                             <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
                               <CheckCircle className="w-3 h-3 mr-1" />
@@ -416,6 +526,49 @@ export function LeadsManager({ initialOrders, initialPage = 1, initialCount = 0 
                     <span className="text-sm font-medium text-gray-900 font-mono">
                       {selectedOrder.order_id}
                     </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Email Automation Settings */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                  <Mail className="w-4 h-4" />
+                  Email Automation
+                </h3>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Automated Emails</p>
+                      <p className="text-xs text-gray-600 mt-1">
+                        {selectedOrder.email_automation_enabled !== false
+                          ? 'This lead will receive automated follow-up emails'
+                          : 'Automated emails are paused. You can send manual emails instead.'}
+                      </p>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleToggleEmailAutomation(String(selectedOrder.id), selectedOrder.email_automation_enabled ?? true, e)
+                      }}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        selectedOrder.email_automation_enabled !== false
+                          ? 'bg-blue-600 text-white hover:bg-blue-700'
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                    >
+                      {selectedOrder.email_automation_enabled !== false ? (
+                        <span className="flex items-center gap-2">
+                          <Bell className="w-4 h-4" />
+                          Enabled
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-2">
+                          <BellOff className="w-4 h-4" />
+                          Paused
+                        </span>
+                      )}
+                    </button>
                   </div>
                 </div>
               </div>

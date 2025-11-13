@@ -417,7 +417,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = UserProfile
         fields = [
             'id', 'slug', 'display_name', 'bio', 'profile_image',
-            'embedded_video', 'affiliate_link', 'creators_code', 'nurture_email', 'contact_email', 'is_active', 'social_icons', 'custom_links', 'cta_banner'
+            'embedded_video', 'affiliate_link', 'creators_code', 'nurture_email', 'contact_email', 'is_active', 'email_automation_enabled', 'social_icons', 'custom_links', 'cta_banner'
         ]
 
     def get_profile_image(self, obj):
@@ -445,6 +445,14 @@ class UserProfilePublicSerializer(serializers.ModelSerializer):
         if obj.profile_image:
             return obj.profile_image.url
         return None
+
+
+class UserProfileEmailAutomationSerializer(serializers.Serializer):
+    """Serializer for updating user profile email automation default preference."""
+    enabled = serializers.BooleanField(
+        required=True,
+        help_text="Whether email automation should be enabled by default for new leads"
+    )
 
 
 class UserPermissionsSerializer(serializers.ModelSerializer):
@@ -1993,14 +2001,17 @@ class AutomationSettingsCreateSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     """Serializer for Order model to handle digital product purchases."""
-    
+
     # Custom link info for read operations
     product_title = serializers.CharField(source='custom_link.title', read_only=True)
-    product_subtitle = serializers.CharField(source='custom_link.subtitle', read_only=True) 
+    product_subtitle = serializers.CharField(source='custom_link.subtitle', read_only=True)
     product_thumbnail = serializers.CharField(source='custom_link.thumbnail', read_only=True)
     checkout_price = serializers.DecimalField(source='custom_link.checkout_price', max_digits=10, decimal_places=2, read_only=True)
     checkout_discounted_price = serializers.DecimalField(source='custom_link.checkout_discounted_price', max_digits=10, decimal_places=2, read_only=True)
-    
+
+    # Email automation setting - no default here, will use profile default in create() method
+    email_automation_enabled = serializers.BooleanField(required=False)
+
     # Formatted responses for easier consumption
     formatted_responses = serializers.SerializerMethodField()
     
@@ -2008,15 +2019,16 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = [
             'id',
-            'order_id', 
+            'order_id',
             'status',
             'custom_link',
             'customer_email',
             'customer_name',
             'form_responses',
             'formatted_responses',
+            'email_automation_enabled',
             'product_title',
-            'product_subtitle', 
+            'product_subtitle',
             'product_thumbnail',
             'checkout_price',
             'checkout_discounted_price',
@@ -2038,10 +2050,6 @@ class OrderSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         """Create a new order with the provided form responses."""
         import json
-        import logging
-        logger = logging.getLogger(__name__)
-
-        logger.info(f"DEBUG - OrderSerializer.create() called with data: {validated_data}")
 
         # Extract custom_link to get collect_info_fields
         custom_link = validated_data.get('custom_link')
@@ -2052,7 +2060,6 @@ class OrderSerializer(serializers.ModelSerializer):
             try:
                 form_responses = json.loads(form_responses)
                 validated_data['form_responses'] = form_responses
-                logger.info(f"DEBUG - Parsed form_responses from string: {form_responses}")
             except json.JSONDecodeError:
                 raise serializers.ValidationError("Invalid JSON format for form_responses.")
 
@@ -2062,9 +2069,11 @@ class OrderSerializer(serializers.ModelSerializer):
             if field.label not in form_responses or not form_responses[field.label]:
                 raise serializers.ValidationError(f"Field '{field.label}' is required.")
 
-        logger.info(f"DEBUG - About to call super().create() with validated_data: {validated_data}")
+        # ALWAYS use user profile's email automation setting, ignore what comes from request
+        user_profile = custom_link.user_profile
+        validated_data['email_automation_enabled'] = user_profile.email_automation_enabled
+
         order = super().create(validated_data)
-        logger.info(f"DEBUG - Created order: {order.order_id} with data: customer_name={order.customer_name}, customer_email={order.customer_email}, form_responses={order.form_responses}")
         return order
 
 

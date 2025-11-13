@@ -35,6 +35,14 @@ class UserProfile(models.Model):
     contact_email = models.EmailField(_("contact email"), blank=True, help_text="Contact email displayed on storefront")
     is_active = models.BooleanField(_("is active"), default=True)
     view_count = models.PositiveIntegerField(_("view count"), default=0)
+
+    # Email automation default preference
+    email_automation_enabled = models.BooleanField(
+        _("email automation enabled by default"),
+        default=True,
+        help_text="Default setting for email automation on new leads. When enabled, all new leads will automatically receive follow-up emails unless individually disabled."
+    )
+
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
     modified_at = models.DateTimeField(_("modified at"), auto_now=True)
 
@@ -1147,7 +1155,14 @@ class Order(models.Model):
     
     # Form responses from checkout fields
     form_responses = models.JSONField(_("form responses"), default=dict, help_text="JSON object with field_label: response mappings")
-    
+
+    # Email automation settings
+    email_automation_enabled = models.BooleanField(
+        _("email automation enabled"),
+        default=True,
+        help_text="Whether this lead should receive automated follow-up emails. Set to False if affiliate wants to send manual emails."
+    )
+
     # Timestamps
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
     updated_at = models.DateTimeField(_("updated at"), auto_now=True)

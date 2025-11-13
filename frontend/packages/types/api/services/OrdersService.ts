@@ -46,6 +46,28 @@ export class OrdersService {
         });
     }
     /**
+     * Update email automation preference for a single order.
+     * Allows affiliates to opt-out specific leads from automated email sequences.
+     * @param id
+     * @param requestBody
+     * @returns Order
+     * @throws ApiError
+     */
+    public ordersUpdateEmailPreferencePartialUpdate(
+        id: string,
+        requestBody?: PatchedOrder,
+    ): CancelablePromise<Order> {
+        return this.httpRequest.request({
+            method: 'PATCH',
+            url: '/api/orders/{id}/update_email_preference/',
+            path: {
+                'id': id,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
      * Update order status.
      * Only the owner of the product can update the order status.
      * @param id
@@ -63,6 +85,23 @@ export class OrdersService {
             path: {
                 'id': id,
             },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Bulk update email automation preference for multiple orders.
+     * Allows affiliates to enable/disable automation for multiple leads at once.
+     * @param requestBody
+     * @returns Order
+     * @throws ApiError
+     */
+    public ordersBulkUpdateEmailPreferenceCreate(
+        requestBody: Order,
+    ): CancelablePromise<Order> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/api/orders/bulk_update_email_preference/',
             body: requestBody,
             mediaType: 'application/json',
         });

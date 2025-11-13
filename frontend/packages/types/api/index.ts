@@ -119,6 +119,7 @@ export type { PatchedSocialMediaPost } from './models/PatchedSocialMediaPost';
 export type { PatchedUserCurrent } from './models/PatchedUserCurrent';
 export type { PatchedUserPermissions } from './models/PatchedUserPermissions';
 export type { PatchedUserProfile } from './models/PatchedUserProfile';
+export type { PatchedUserProfileEmailAutomation } from './models/PatchedUserProfileEmailAutomation';
 export type { PaymentTransaction } from './models/PaymentTransaction';
 export { PaymentTransactionStatusEnum } from './models/PaymentTransactionStatusEnum';
 export type { PinterestAuthUrl } from './models/PinterestAuthUrl';

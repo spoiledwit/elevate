@@ -34,6 +34,7 @@ import {
   LogOut
 } from 'lucide-react'
 import logo from '@/assets/logo.png'
+import { MiloChatbot } from '@/components/milo-chatbot/milo-chatbot'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -534,6 +535,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {!disableOnboarding && (
         <OnboardingTrigger expandSection={(sectionId: string) => setExpandedSections([sectionId])} />
       )}
+
+      {/* Milo Chatbot */}
+      <MiloChatbot />
     </div>
   )
 }

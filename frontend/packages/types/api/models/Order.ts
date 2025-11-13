@@ -18,6 +18,7 @@ export type Order = {
      */
     form_responses?: any;
     readonly formatted_responses: string;
+    email_automation_enabled?: boolean;
     readonly product_title: string;
     readonly product_subtitle: string;
     readonly product_thumbnail: string;

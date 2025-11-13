@@ -362,6 +362,11 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
+        'api.serializers': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
     },
 }
 

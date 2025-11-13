@@ -53,8 +53,8 @@ class GroupAdmin(BaseGroupAdmin, ModelAdmin, ImportExportModelAdmin):
 class UserProfileAdmin(ModelAdmin, ImportExportModelAdmin):
     import_form_class = ImportForm
     export_form_class = ExportForm
-    list_display = ['user', 'display_name', 'slug', 'view_count', 'is_active', 'created_at']
-    list_filter = ['is_active', 'created_at']
+    list_display = ['user', 'display_name', 'slug', 'view_count', 'is_active', 'email_automation_status', 'created_at']
+    list_filter = ['is_active', 'email_automation_enabled', 'created_at']
     search_fields = ['user__username', 'user__email', 'display_name', 'slug']
     readonly_fields = ['created_at', 'modified_at', 'view_count']
     fieldsets = (
@@ -66,6 +66,10 @@ class UserProfileAdmin(ModelAdmin, ImportExportModelAdmin):
         }),
         ('Business Information', {
             'fields': ('affiliate_link', 'creators_code', 'nurture_email', 'contact_email')
+        }),
+        ('Email Automation Settings', {
+            'fields': ('email_automation_enabled',),
+            'description': 'Default email automation preference for new leads. When enabled, all new leads will automatically receive follow-up emails unless individually disabled.'
         }),
         ('Analytics', {
             'fields': ('view_count',)
@@ -83,7 +87,14 @@ class UserProfileAdmin(ModelAdmin, ImportExportModelAdmin):
         """Return the number of profile views"""
         return obj.profile_views.count()
     view_count.short_description = 'Profile Views'
-    
+
+    def email_automation_status(self, obj):
+        """Display email automation status"""
+        if obj.email_automation_enabled:
+            return 'Enabled'
+        return 'Disabled'
+    email_automation_status.short_description = 'Default Email Auto'
+
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('user').prefetch_related('profile_views')
 
@@ -574,15 +585,15 @@ class CollectInfoResponseAdmin(ModelAdmin, ImportExportModelAdmin):
 class OrderAdmin(ModelAdmin, ImportExportModelAdmin):
     import_form_class = ImportForm
     export_form_class = ExportForm
-    list_display = ['order_id', 'custom_link_product', 'customer_email', 'customer_name', 'status', 'created_at']
-    list_filter = ['status', 'created_at', 'custom_link__type']
+    list_display = ['order_id', 'custom_link_product', 'customer_email', 'customer_name', 'status', 'email_automation_status', 'created_at']
+    list_filter = ['status', 'email_automation_enabled', 'created_at', 'custom_link__type']
     search_fields = ['order_id', 'customer_email', 'customer_name', 'custom_link__title', 'custom_link__checkout_title']
     readonly_fields = ['order_id', 'created_at', 'updated_at', 'formatted_responses']
     date_hierarchy = 'created_at'
-    
+
     fieldsets = (
         ('Order Information', {
-            'fields': ('order_id', 'custom_link', 'status')
+            'fields': ('order_id', 'custom_link', 'status', 'email_automation_enabled')
         }),
         ('Customer Details', {
             'fields': ('customer_name', 'customer_email')
@@ -621,7 +632,15 @@ class OrderAdmin(ModelAdmin, ImportExportModelAdmin):
         return formatted_html
     formatted_responses.short_description = 'Form Responses'
     formatted_responses.allow_tags = True
-    
+
+    def email_automation_status(self, obj):
+        """Display email automation status"""
+        if obj.email_automation_enabled:
+            return 'Enabled'
+        else:
+            return 'Paused'
+    email_automation_status.short_description = 'Email Automation'
+
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('custom_link')
 

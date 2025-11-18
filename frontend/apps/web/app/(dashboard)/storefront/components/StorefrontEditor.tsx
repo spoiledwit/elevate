@@ -400,7 +400,7 @@ export function StorefrontEditor({ profile, onUpdate, onPreviewUpdate }: Storefr
               type="text"
               value={formData.creators_code}
               onChange={(e) => handleInputChange('creators_code', e.target.value)}
-              placeholder="Paste your creators code affiliate link here"
+              placeholder="Paste your Creators Code affiliate link here"
               className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all duration-300 ease-in-out"
             />
           </div>

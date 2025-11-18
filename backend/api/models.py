@@ -43,6 +43,29 @@ class UserProfile(models.Model):
         help_text="Default setting for email automation on new leads. When enabled, all new leads will automatically receive follow-up emails unless individually disabled."
     )
 
+    # Milo Credits System
+    milo_credits = models.DecimalField(
+        _("Milo credits"),
+        max_digits=10,
+        decimal_places=2,
+        default=0.00,
+        help_text="Available credits for Milo AI calls. 0.5 credits = 1 minute"
+    )
+    total_credits_purchased = models.DecimalField(
+        _("total credits purchased"),
+        max_digits=10,
+        decimal_places=2,
+        default=0.00,
+        help_text="Lifetime total credits purchased"
+    )
+    total_credits_used = models.DecimalField(
+        _("total credits used"),
+        max_digits=10,
+        decimal_places=2,
+        default=0.00,
+        help_text="Lifetime total credits used"
+    )
+
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
     modified_at = models.DateTimeField(_("modified at"), auto_now=True)
 
@@ -136,7 +159,7 @@ class UserPermissions(models.Model):
     One-to-one relationship with User for granular access control.
     """
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='permissions')
-    
+
     # Dashboard Permissions (based on the 7 main sections)
     can_access_overview = models.BooleanField(_("Can Access Overview"), default=True, help_text="Dashboard section access")
     can_access_linkinbio = models.BooleanField(_("Can Access Link-in-Bio"), default=True, help_text="Storefront, Custom Links, CTA Banners")
@@ -145,7 +168,16 @@ class UserPermissions(models.Model):
     can_access_ai_tools = models.BooleanField(_("Can Access AI & Tools"), default=True, help_text="AI Assistant and related tools")
     can_access_business = models.BooleanField(_("Can Access Business"), default=True, help_text="Subscription and billing management")
     can_access_account = models.BooleanField(_("Can Access Account"), default=True, help_text="Account settings and profile")
-    
+
+    # Individual page permissions
+    can_access_community = models.BooleanField(_("Can Access Community"), default=True, help_text="Community page access")
+    can_access_prompt_library = models.BooleanField(_("Can Access Prompt Library"), default=True, help_text="Prompt Library page access")
+    can_access_canva = models.BooleanField(_("Can Access Canva"), default=True, help_text="Canva Designs page access")
+    can_access_training = models.BooleanField(_("Can Access Training"), default=True, help_text="Elevate Training page access")
+    can_access_faq = models.BooleanField(_("Can Access FAQ"), default=True, help_text="FAQ page access")
+    can_access_inbox = models.BooleanField(_("Can Access Inbox"), default=True, help_text="Email inbox page access")
+    can_access_milo = models.BooleanField(_("Can Access Milo"), default=True, help_text="Milo AI chatbot access")
+
     # Additional granular permissions
     can_edit_profile = models.BooleanField(_("Can Edit Profile"), default=True, help_text="Edit user profile and settings")
     can_manage_integrations = models.BooleanField(_("Can Manage Integrations"), default=True, help_text="Connect/disconnect social media accounts")
@@ -163,7 +195,7 @@ class UserPermissions(models.Model):
         return f"{self.user.username} - Permissions"
     
     def get_accessible_sections(self):
-        """Returns a list of accessible dashboard sections"""
+        """Returns a list of accessible dashboard sections and pages"""
         sections = []
         if self.can_access_overview:
             sections.append('overview')
@@ -179,6 +211,20 @@ class UserPermissions(models.Model):
             sections.append('business')
         if self.can_access_account:
             sections.append('account')
+        if self.can_access_community:
+            sections.append('community')
+        if self.can_access_prompt_library:
+            sections.append('prompt-library')
+        if self.can_access_canva:
+            sections.append('canva')
+        if self.can_access_training:
+            sections.append('training')
+        if self.can_access_faq:
+            sections.append('faq')
+        if self.can_access_inbox:
+            sections.append('inbox')
+        if self.can_access_milo:
+            sections.append('milo')
         return sections
 
 
@@ -195,6 +241,13 @@ def create_user_permissions(sender, instance, created, **kwargs):
             can_access_ai_tools=False,
             can_access_business=False,
             can_access_account=False,
+            can_access_community=True,
+            can_access_prompt_library=True,
+            can_access_canva=True,
+            can_access_training=True,
+            can_access_faq=True,
+            can_access_inbox=False,
+            can_access_milo=True,
             can_edit_profile=False,
             can_manage_integrations=False,
             can_view_analytics=False
@@ -1640,6 +1693,124 @@ class MiloPrompt(models.Model):
 
     def __str__(self):
         return f"Milo Prompt - {self.modified_at.strftime('%Y-%m-%d %H:%M')}"
+
+
+class CreditTransaction(models.Model):
+    """
+    Model to track all credit transactions (purchases, usage, refunds, adjustments).
+    """
+    TRANSACTION_TYPE_CHOICES = [
+        ('purchase', _('Purchase')),
+        ('usage', _('Usage - Milo Call')),
+        ('refund', _('Refund')),
+        ('admin_adjustment', _('Admin Adjustment')),
+        ('bonus', _('Bonus Credits')),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='credit_transactions')
+    transaction_type = models.CharField(_("transaction type"), max_length=20, choices=TRANSACTION_TYPE_CHOICES)
+    amount = models.DecimalField(
+        _("amount"),
+        max_digits=10,
+        decimal_places=2,
+        help_text="Positive for credits added, negative for credits used"
+    )
+    balance_after = models.DecimalField(
+        _("balance after"),
+        max_digits=10,
+        decimal_places=2,
+        help_text="Credit balance after this transaction"
+    )
+    description = models.TextField(_("description"), blank=True)
+
+    # Optional links
+    payment_transaction = models.ForeignKey(
+        'PaymentTransaction',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='credit_transactions',
+        help_text="Link to payment if this is a purchase"
+    )
+    milo_call_log = models.OneToOneField(
+        'MiloCallLog',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='credit_transaction',
+        help_text="Link to Milo call if this is usage"
+    )
+
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+
+    class Meta:
+        db_table = "credit_transactions"
+        verbose_name = _("Credit Transaction")
+        verbose_name_plural = _("Credit Transactions")
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['transaction_type']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.get_transaction_type_display()} - {self.amount} credits"
+
+
+class MiloCallLog(models.Model):
+    """
+    Model to log Milo AI voice calls and track duration for billing.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='milo_call_logs')
+
+    # Call details
+    conversation_id = models.CharField(
+        _("conversation ID"),
+        max_length=255,
+        blank=True,
+        help_text="Eleven Labs conversation ID if available"
+    )
+    call_duration_seconds = models.IntegerField(
+        _("call duration (seconds)"),
+        default=0,
+        help_text="Total duration of the call in seconds"
+    )
+    credits_used = models.DecimalField(
+        _("credits used"),
+        max_digits=10,
+        decimal_places=2,
+        default=0.00,
+        help_text="Credits deducted for this call (0.5 per minute)"
+    )
+
+    # Timestamps
+    started_at = models.DateTimeField(_("started at"), null=True, blank=True)
+    ended_at = models.DateTimeField(_("ended at"), null=True, blank=True)
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+
+    # Optional metadata
+    metadata = models.JSONField(_("metadata"), default=dict, blank=True)
+
+    class Meta:
+        db_table = "milo_call_logs"
+        verbose_name = _("Milo Call Log")
+        verbose_name_plural = _("Milo Call Logs")
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['conversation_id']),
+        ]
+
+    def __str__(self):
+        duration_minutes = self.call_duration_seconds / 60 if self.call_duration_seconds else 0
+        return f"{self.user.username} - {duration_minutes:.2f} min - {self.credits_used} credits"
+
+    def calculate_credits(self):
+        """Calculate credits based on duration: 0.5 credits per minute"""
+        if self.call_duration_seconds:
+            minutes = self.call_duration_seconds / 60
+            return round(minutes * 0.5, 2)
+        return 0.00
 
 
 class FreebieFollowupEmail(models.Model):

@@ -13,6 +13,7 @@ import { AutomationStatsService } from './services/AutomationStatsService';
 import { CanvaService } from './services/CanvaService';
 import { CommentRepliesService } from './services/CommentRepliesService';
 import { CommentsService } from './services/CommentsService';
+import { CreditsService } from './services/CreditsService';
 import { DirectMessagesService } from './services/DirectMessagesService';
 import { DmAutomationRulesService } from './services/DmAutomationRulesService';
 import { DmAutomationStatsService } from './services/DmAutomationStatsService';
@@ -44,6 +45,7 @@ export class ApiClient {
     public readonly canva: CanvaService;
     public readonly commentReplies: CommentRepliesService;
     public readonly comments: CommentsService;
+    public readonly credits: CreditsService;
     public readonly directMessages: DirectMessagesService;
     public readonly dmAutomationRules: DmAutomationRulesService;
     public readonly dmAutomationStats: DmAutomationStatsService;
@@ -86,6 +88,7 @@ export class ApiClient {
         this.canva = new CanvaService(this.request);
         this.commentReplies = new CommentRepliesService(this.request);
         this.comments = new CommentsService(this.request);
+        this.credits = new CreditsService(this.request);
         this.directMessages = new DirectMessagesService(this.request);
         this.dmAutomationRules = new DmAutomationRulesService(this.request);
         this.dmAutomationStats = new DmAutomationStatsService(this.request);

@@ -34,6 +34,34 @@ export type UserPermissions = {
      */
     can_access_account?: boolean;
     /**
+     * Community page access
+     */
+    can_access_community?: boolean;
+    /**
+     * Prompt Library page access
+     */
+    can_access_prompt_library?: boolean;
+    /**
+     * Canva Designs page access
+     */
+    can_access_canva?: boolean;
+    /**
+     * Elevate Training page access
+     */
+    can_access_training?: boolean;
+    /**
+     * FAQ page access
+     */
+    can_access_faq?: boolean;
+    /**
+     * Email inbox page access
+     */
+    can_access_inbox?: boolean;
+    /**
+     * Milo AI chatbot access
+     */
+    can_access_milo?: boolean;
+    /**
      * Edit user profile and settings
      */
     can_edit_profile?: boolean;

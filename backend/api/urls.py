@@ -127,6 +127,14 @@ from .apis.upload import (
 )
 from .apis.orders import OrderViewSet
 from .apis.milo import MiloPromptViewSet
+from .apis.credits import (
+    CreditBalanceView,
+    CreditTransactionListView,
+    MiloCallLogListView,
+    PurchaseCreditsView,
+    DeductMiloCreditsView,
+    EndMiloCallView,
+)
 from .apis.email import (
     GmailAuthUrlView,
     GmailCallbackView,
@@ -198,7 +206,15 @@ urlpatterns = [
     path("api/subscriptions/create-portal/", CreatePortalSessionView.as_view(), name="create_portal_session"),
     path("api/subscriptions/current/", CurrentSubscriptionView.as_view(), name="current_subscription"),
     path("api/subscriptions/cancel/", CancelSubscriptionView.as_view(), name="cancel_subscription"),
-    
+
+    # Milo Credit System URLs
+    path("api/credits/balance/", CreditBalanceView.as_view(), name="credit_balance"),
+    path("api/credits/transactions/", CreditTransactionListView.as_view(), name="credit_transactions"),
+    path("api/credits/call-logs/", MiloCallLogListView.as_view(), name="milo_call_logs"),
+    path("api/credits/purchase/", PurchaseCreditsView.as_view(), name="purchase_credits"),
+    path("api/credits/deduct/", DeductMiloCreditsView.as_view(), name="deduct_milo_credits"),
+    path("api/credits/end-call/", EndMiloCallView.as_view(), name="end_milo_call"),
+
     # Webhook URLs
     path("api/webhooks/stripe/", StripeWebhookView.as_view(), name="stripe_webhook"),
     path("api/webhooks/facebook/", FacebookWebhookView.as_view(), name="facebook_webhook"),

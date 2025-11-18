@@ -411,11 +411,10 @@ OPENAI_API_KEY = environ.get("OPENAI_API_KEY", "")
 SITE_ID = 1
 
 # Django Allauth Settings
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION = 'optional'
 ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 
 # Social Account Settings
@@ -592,6 +591,16 @@ UNFOLD = {
                         "title": _("Milo Prompts"),
                         "icon": "smart_toy",
                         "link": reverse_lazy("admin:api_miloprompt_changelist"),
+                    },
+                    {
+                        "title": _("Milo Call Logs"),
+                        "icon": "call",
+                        "link": reverse_lazy("admin:api_milocalllog_changelist"),
+                    },
+                    {
+                        "title": _("Credit Transactions"),
+                        "icon": "account_balance_wallet",
+                        "link": reverse_lazy("admin:api_credittransaction_changelist"),
                     },
                     {
                         "title": _("Freebie Email Templates"),

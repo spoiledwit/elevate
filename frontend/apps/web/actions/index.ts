@@ -9,12 +9,23 @@ export { deleteAccountAction } from './delete-account-action'
 export { getPlansAction } from './plans-action'
 
 // Subscription actions
-export { 
+export {
   createCheckoutSessionAction,
-  createPortalSessionAction, 
+  createPortalSessionAction,
   getCurrentSubscriptionAction,
-  cancelSubscriptionAction 
+  cancelSubscriptionAction
 } from './subscriptions-action'
+
+// Credit actions
+export {
+  getCreditBalanceAction,
+  getCreditTransactionsAction,
+  getMiloCallLogsAction,
+  purchaseCreditsAction,
+  getCreditStatsAction,
+  deductMiloCreditsAction,
+  endMiloCallAction
+} from './credits-action'
 
 // AI actions
 export {
@@ -221,3 +232,8 @@ export type {
   OrderFilters,
   OrderStatsResponse
 } from './orders-action'
+export type {
+  CreditPurchaseRequest,
+  CreditBalanceResponse,
+  CreditPurchaseResponse
+} from './credits-action'

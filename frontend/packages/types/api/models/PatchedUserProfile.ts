@@ -33,6 +33,18 @@ export type PatchedUserProfile = {
      * Default setting for email automation on new leads. When enabled, all new leads will automatically receive follow-up emails unless individually disabled.
      */
     email_automation_enabled?: boolean;
+    /**
+     * Available credits for Milo AI calls. 0.5 credits = 1 minute
+     */
+    milo_credits?: string;
+    /**
+     * Lifetime total credits purchased
+     */
+    readonly total_credits_purchased?: string;
+    /**
+     * Lifetime total credits used
+     */
+    readonly total_credits_used?: string;
     readonly social_icons?: Array<SocialIcon>;
     readonly custom_links?: Array<CustomLink>;
     readonly cta_banner?: CTABanner;

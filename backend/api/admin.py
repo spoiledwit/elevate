@@ -18,7 +18,7 @@ from .models import (
     ProfileView, LinkClick, BannerClick, Order,
     SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, PaymentEvent, Plan, PlanFeature, StripeCustomer,
     Folder, Media, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply, AIConfiguration, MiloPrompt,
-    StripeConnectAccount, PaymentTransaction, ConnectWebhookEvent, FreebieFollowupEmail, ScheduledFollowupEmail, OptinFollowupEmail, ScheduledOptinEmail,
+    CreditTransaction, MiloCallLog, StripeConnectAccount, PaymentTransaction, ConnectWebhookEvent, FreebieFollowupEmail, ScheduledFollowupEmail, OptinFollowupEmail, ScheduledOptinEmail,
     EmailAccount, EmailMessage, EmailAttachment, EmailDraft, CanvaConnection, CanvaDesign
 )
 from tinymce.widgets import TinyMCE
@@ -53,10 +53,10 @@ class GroupAdmin(BaseGroupAdmin, ModelAdmin, ImportExportModelAdmin):
 class UserProfileAdmin(ModelAdmin, ImportExportModelAdmin):
     import_form_class = ImportForm
     export_form_class = ExportForm
-    list_display = ['user', 'display_name', 'slug', 'view_count', 'is_active', 'email_automation_status', 'created_at']
+    list_display = ['user', 'display_name', 'slug', 'milo_credits', 'view_count', 'is_active', 'email_automation_status', 'created_at']
     list_filter = ['is_active', 'email_automation_enabled', 'created_at']
     search_fields = ['user__username', 'user__email', 'display_name', 'slug']
-    readonly_fields = ['created_at', 'modified_at', 'view_count']
+    readonly_fields = ['created_at', 'modified_at', 'view_count', 'total_credits_purchased', 'total_credits_used']
     fieldsets = (
         ('User Information', {
             'fields': ('user', 'display_name', 'slug')
@@ -66,6 +66,10 @@ class UserProfileAdmin(ModelAdmin, ImportExportModelAdmin):
         }),
         ('Business Information', {
             'fields': ('affiliate_link', 'creators_code', 'nurture_email', 'contact_email')
+        }),
+        ('Milo Credits', {
+            'fields': ('milo_credits', 'total_credits_purchased', 'total_credits_used'),
+            'description': 'Milo AI call credits. 0.5 credits = 1 minute of call time'
         }),
         ('Email Automation Settings', {
             'fields': ('email_automation_enabled',),
@@ -139,9 +143,11 @@ class UserPermissionsAdmin(ModelAdmin, ImportExportModelAdmin):
     export_form_class = ExportForm
     list_display = ['user', 'permissions_summary', 'can_edit_profile', 'can_manage_integrations', 'can_view_analytics', 'created_at']
     list_filter = [
-        'can_access_overview', 'can_access_linkinbio', 'can_access_content', 
-        'can_access_automation', 'can_access_ai_tools', 'can_access_business', 
-        'can_access_account', 'can_edit_profile', 'can_manage_integrations', 
+        'can_access_overview', 'can_access_linkinbio', 'can_access_content',
+        'can_access_automation', 'can_access_ai_tools', 'can_access_business',
+        'can_access_account', 'can_access_community', 'can_access_prompt_library',
+        'can_access_canva', 'can_access_training', 'can_access_faq', 'can_access_inbox',
+        'can_access_milo', 'can_edit_profile', 'can_manage_integrations',
         'can_view_analytics', 'created_at'
     ]
     search_fields = ['user__username', 'user__email']
@@ -152,20 +158,32 @@ class UserPermissionsAdmin(ModelAdmin, ImportExportModelAdmin):
         }),
         ('Dashboard Section Permissions', {
             'fields': (
-                'can_access_overview', 
-                'can_access_linkinbio', 
+                'can_access_overview',
+                'can_access_linkinbio',
                 'can_access_content',
-                'can_access_automation', 
-                'can_access_ai_tools', 
+                'can_access_automation',
+                'can_access_ai_tools',
                 'can_access_business',
                 'can_access_account'
             ),
             'description': 'Control access to the 7 main dashboard sections'
         }),
+        ('Individual Page Permissions', {
+            'fields': (
+                'can_access_community',
+                'can_access_prompt_library',
+                'can_access_canva',
+                'can_access_training',
+                'can_access_faq',
+                'can_access_inbox',
+                'can_access_milo'
+            ),
+            'description': 'Control access to individual standalone pages and features'
+        }),
         ('Additional Permissions', {
             'fields': (
-                'can_edit_profile', 
-                'can_manage_integrations', 
+                'can_edit_profile',
+                'can_manage_integrations',
                 'can_view_analytics'
             ),
             'description': 'Granular permissions for specific features'
@@ -177,27 +195,35 @@ class UserPermissionsAdmin(ModelAdmin, ImportExportModelAdmin):
     )
     
     def permissions_summary(self, obj):
-        """Show a summary of enabled dashboard sections"""
+        """Show a summary of enabled dashboard sections and pages"""
         sections = obj.get_accessible_sections()
         section_names = {
             'overview': 'Overview',
-            'linkinbio': 'Link-in-Bio', 
+            'linkinbio': 'Link-in-Bio',
             'content': 'Content',
             'automation': 'Automation',
             'ai-tools': 'AI Tools',
             'business': 'Business',
-            'account': 'Account'
+            'account': 'Account',
+            'community': 'Community',
+            'prompt-library': 'Prompt Library',
+            'canva': 'Canva',
+            'training': 'Training',
+            'faq': 'FAQ',
+            'inbox': 'Inbox',
+            'milo': 'Milo AI'
         }
         enabled = [section_names.get(s, s) for s in sections]
-        if len(enabled) == 7:
-            return "All Sections"
+        total_possible = 14  # 7 sections + 7 individual pages/features
+        if len(enabled) == total_possible:
+            return "Full Access"
         elif len(enabled) == 0:
             return "No Access"
         elif len(enabled) <= 3:
             return ", ".join(enabled)
         else:
             return f"{', '.join(enabled[:2])} +{len(enabled)-2} more"
-    permissions_summary.short_description = 'Accessible Sections'
+    permissions_summary.short_description = 'Accessible Sections & Pages'
     
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('user')
@@ -1474,6 +1500,87 @@ class MiloPromptAdmin(ModelAdmin, ImportExportModelAdmin):
     def has_delete_permission(self, request, obj=None):
         """Prevent deletion of the Milo prompt"""
         return False
+
+
+@admin.register(CreditTransaction)
+class CreditTransactionAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    """
+    Admin interface for credit transactions.
+    """
+    list_display = ['id', 'user', 'transaction_type', 'amount_display', 'balance_after', 'created_at']
+    list_filter = ['transaction_type', 'created_at']
+    search_fields = ['user__username', 'user__email', 'description']
+    readonly_fields = ['created_at', 'balance_after']
+    date_hierarchy = 'created_at'
+
+    fieldsets = (
+        ('Transaction Information', {
+            'fields': ('user', 'transaction_type', 'amount', 'balance_after', 'description')
+        }),
+        ('Related Records', {
+            'fields': ('payment_transaction', 'milo_call_log'),
+            'classes': ('collapse',)
+        }),
+        ('Timestamp', {
+            'fields': ('created_at',),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def amount_display(self, obj):
+        """Display amount with sign"""
+        if obj.amount >= 0:
+            return f"+{obj.amount}"
+        return str(obj.amount)
+    amount_display.short_description = 'Amount'
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user', 'payment_transaction', 'milo_call_log')
+
+
+@admin.register(MiloCallLog)
+class MiloCallLogAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    """
+    Admin interface for Milo call logs.
+    """
+    list_display = ['id', 'user', 'call_duration_display', 'credits_used', 'started_at', 'created_at']
+    list_filter = ['created_at', 'started_at']
+    search_fields = ['user__username', 'user__email', 'conversation_id']
+    readonly_fields = ['created_at', 'call_duration_display', 'credits_calculated']
+    date_hierarchy = 'created_at'
+
+    fieldsets = (
+        ('Call Information', {
+            'fields': ('user', 'conversation_id', 'call_duration_seconds', 'call_duration_display', 'credits_used', 'credits_calculated')
+        }),
+        ('Timestamps', {
+            'fields': ('started_at', 'ended_at', 'created_at')
+        }),
+        ('Additional Data', {
+            'fields': ('metadata',),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def call_duration_display(self, obj):
+        """Display call duration in minutes"""
+        if obj.call_duration_seconds:
+            minutes = obj.call_duration_seconds / 60
+            return f"{minutes:.2f} min"
+        return "0.00 min"
+    call_duration_display.short_description = 'Duration'
+
+    def credits_calculated(self, obj):
+        """Show calculated credits based on duration"""
+        return obj.calculate_credits()
+    credits_calculated.short_description = 'Calculated Credits'
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user')
 
 
 @admin.register(FreebieFollowupEmail)

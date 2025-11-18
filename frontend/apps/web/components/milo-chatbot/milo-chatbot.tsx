@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { X, AlertCircle, Send, Mic, Phone } from "lucide-react";
+import { X, AlertCircle, Send, Mic, Phone, Coins, CreditCard } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useElevenLabs, ConnectionState } from "@/hooks/useElevenLabs";
+import { getCreditBalanceAction, purchaseCreditsAction, deductMiloCreditsAction, endMiloCallAction } from "@/actions";
 import milo from "@/assets/milo.gif";
 
 export function MiloChatbot() {
@@ -12,9 +13,20 @@ export function MiloChatbot() {
   const [textInput, setTextInput] = useState("");
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
   const [mode, setMode] = useState<'text' | 'voice' | null>(null); // null = user hasn't chosen yet
+  const [credits, setCredits] = useState<string | null>(null);
+  const [isLoadingCredits, setIsLoadingCredits] = useState(false);
+  const [topUpAmount, setTopUpAmount] = useState("10");
+  const [callStartTime, setCallStartTime] = useState<number | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(null);
 
   const messagesRef = useRef(messages);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const deductionTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const callDurationIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const voiceChatRef = useRef<any>(null);
+  const conversationIdRef = useRef<string | null>(null);
+  const callStartTimeRef = useRef<number | null>(null);
+  const deductCreditsRef = useRef<typeof deductCredits | null>(null);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -24,6 +36,61 @@ export function MiloChatbot() {
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    conversationIdRef.current = conversationId;
+    callStartTimeRef.current = callStartTime;
+  }, [conversationId, callStartTime]);
+
+  // Fetch credit balance when chatbot opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchCredits();
+    }
+  }, [isOpen]);
+
+  const fetchCredits = async () => {
+    setIsLoadingCredits(true);
+    try {
+      const balance = await getCreditBalanceAction();
+      if ('error' in balance) {
+        console.error('Failed to fetch credits:', balance.error);
+      } else {
+        setCredits(balance.milo_credits);
+      }
+    } catch (error) {
+      console.error('Error fetching credits:', error);
+    } finally {
+      setIsLoadingCredits(false);
+    }
+  };
+
+  const handleTopUp = async () => {
+    const amount = parseFloat(topUpAmount);
+    if (isNaN(amount) || amount <= 0) {
+      alert('Please enter a valid amount');
+      return;
+    }
+
+    try {
+      const result = await purchaseCreditsAction({
+        amount,
+        success_url: window.location.href,
+        cancel_url: window.location.href,
+      });
+
+      if ('error' in result) {
+        alert(result.error);
+      } else {
+        // Redirect to Stripe checkout
+        window.location.href = result.checkout_url;
+      }
+    } catch (error) {
+      console.error('Error purchasing credits:', error);
+      alert('Failed to initiate credit purchase');
+    }
+  };
 
   // Shared message handler
   const handleMessage = useCallback((message: any) => {
@@ -56,10 +123,161 @@ export function MiloChatbot() {
     onMessage: handleMessage,
   });
 
+  // Store voiceChat in ref for use in callbacks
+  useEffect(() => {
+    voiceChatRef.current = voiceChat;
+  }, [voiceChat]);
+
   // Active chat based on mode
   const activeChat = mode === 'voice' ? voiceChat : textChat;
   const isConnected = activeChat.isConnected;
   const error = activeChat.error;
+
+  // Function to deduct credits for voice call
+  const deductCredits = useCallback(async (convId: string, minutes: number) => {
+    try {
+      const result = await deductMiloCreditsAction(convId, minutes);
+
+      if ('error' in result) {
+        console.error('Failed to deduct credits:', result.error);
+
+        // Check if insufficient credits
+        if (result.required && result.available) {
+          // Disconnect the call
+          if (voiceChatRef.current?.isConnected) {
+            voiceChatRef.current.disconnect();
+          }
+          setMode(null);
+          setMessages([]);
+        }
+        return false;
+      }
+
+      // Update credit balance with new remaining balance
+      setCredits(result.remaining_balance.toString());
+
+      return true;
+    } catch (error) {
+      console.error('Error deducting credits:', error);
+      return false;
+    }
+  }, []);
+
+  // Keep deductCredits ref in sync
+  useEffect(() => {
+    deductCreditsRef.current = deductCredits;
+  }, [deductCredits]);
+
+  // Function to end the Milo call
+  const endCall = useCallback(async (convId: string) => {
+    try {
+      const result = await endMiloCallAction(convId);
+
+      if ('error' in result) {
+        console.error('Failed to end call:', result.error);
+      } else {
+        console.log('Call ended successfully:', {
+          duration: Math.ceil(result.total_duration_seconds / 60),
+          creditsUsed: result.total_credits_used
+        });
+      }
+    } catch (error) {
+      console.error('Error ending call:', error);
+    }
+  }, []);
+
+  // Effect to handle credit deduction timer when voice call is active
+  useEffect(() => {
+    console.log('🔥 CREDIT DEDUCTION EFFECT TRIGGERED', {
+      mode,
+      voiceChatConnected: voiceChatRef.current?.isConnected,
+      hasActiveCall: !!callStartTimeRef.current
+    });
+
+    // Only run for voice calls
+    if (mode !== 'voice' || !voiceChatRef.current?.isConnected) {
+      console.log('❌ NOT VOICE MODE OR NOT CONNECTED - CLEANING UP', {
+        mode,
+        isConnected: voiceChatRef.current?.isConnected
+      });
+
+      // Clean up timers if switching away from voice mode
+      if (deductionTimerRef.current) {
+        console.log('🧹 Clearing deduction timer');
+        clearInterval(deductionTimerRef.current);
+        deductionTimerRef.current = null;
+      }
+      if (callDurationIntervalRef.current) {
+        console.log('🧹 Clearing duration timer');
+        clearInterval(callDurationIntervalRef.current);
+        callDurationIntervalRef.current = null;
+      }
+      if (callStartTimeRef.current && conversationIdRef.current) {
+        console.log('📞 Ending call', conversationIdRef.current);
+        // End the call when disconnecting
+        endCall(conversationIdRef.current);
+        setCallStartTime(null);
+        setConversationId(null);
+      }
+      return;
+    }
+
+    // Start tracking call if not already tracking
+    if (!callStartTimeRef.current && !deductionTimerRef.current) {
+      console.log('🚀 STARTING CREDIT TRACKING FOR NEW CALL');
+      const now = Date.now();
+      setCallStartTime(now);
+      callStartTimeRef.current = now; // Set ref immediately
+
+      // Generate a unique conversation ID (using timestamp + random string)
+      const newConvId = `milo_${now}_${Math.random().toString(36).substring(2, 15)}`;
+      setConversationId(newConvId);
+      conversationIdRef.current = newConvId; // Set ref immediately
+      console.log('📝 Generated conversation ID:', newConvId);
+
+      // Deduct first minute immediately
+      console.log('💰 Deducting FIRST minute credits immediately');
+      deductCredits(newConvId, 1);
+
+      // Set up interval to deduct credits every minute
+      deductionTimerRef.current = setInterval(async () => {
+        if (!callStartTimeRef.current || !conversationIdRef.current || !deductCreditsRef.current) {
+          console.log('⚠️ Missing refs, skipping deduction');
+          return;
+        }
+
+        const currentMinutesElapsed = Math.ceil((Date.now() - callStartTimeRef.current) / 1000 / 60);
+        console.log('⏰ Timer tick - minutes elapsed:', currentMinutesElapsed);
+
+        if (currentMinutesElapsed > 1) {
+          console.log('💰 Deducting credits for minute:', currentMinutesElapsed);
+          const success = await deductCreditsRef.current(conversationIdRef.current, currentMinutesElapsed);
+
+          // If deduction failed (insufficient credits), the deductCredits function will disconnect
+          if (!success) {
+            console.log('❌ Credit deduction FAILED - stopping timers');
+            if (deductionTimerRef.current) {
+              clearInterval(deductionTimerRef.current);
+              deductionTimerRef.current = null;
+            }
+            if (callDurationIntervalRef.current) {
+              clearInterval(callDurationIntervalRef.current);
+              callDurationIntervalRef.current = null;
+            }
+          }
+        }
+      }, 60000); // Every 60 seconds (1 minute)
+      console.log('⏰ Credit deduction timer started (60s interval)');
+    } else {
+      console.log('⚠️ Call already tracking, intervals preserved');
+    }
+
+    // Cleanup on unmount - but NOT on re-render
+    return () => {
+      // Only cleanup if we're actually disconnecting (mode changes or unmounts)
+      console.log('🧹 CLEANUP FUNCTION CALLED');
+    };
+  }, [mode, voiceChat.isConnected]);
 
   const handleClose = useCallback(() => {
     if (isConnected) {
@@ -70,14 +288,36 @@ export function MiloChatbot() {
   }, [isConnected, activeChat]);
 
   const handleVoiceClick = useCallback(async () => {
+    console.log('🎤 VOICE BUTTON CLICKED', {
+      credits,
+      isConnected: voiceChat.isConnected,
+      currentMode: mode
+    });
+
+    // Check if user has credits
+    if (credits !== null && parseFloat(credits) === 0) {
+      console.log('❌ NO CREDITS - blocking voice call');
+      alert('You need credits to use voice calls. Please top up your account.');
+      return;
+    }
+
+    console.log('✅ Credits OK, switching to voice mode');
     // Switch to voice mode
     setMode('voice');
 
     // Connect to voice
     if (!voiceChat.isConnected) {
-      await voiceChat.connect();
+      console.log('📡 Connecting to voice chat...');
+      try {
+        await voiceChat.connect();
+        console.log('✅ Voice chat connected successfully');
+      } catch (error) {
+        console.error('❌ Voice chat connection failed:', error);
+      }
+    } else {
+      console.log('⚠️ Voice chat already connected');
     }
-  }, [voiceChat]);
+  }, [voiceChat, credits, mode]);
 
   const handleSendMessage = useCallback(() => {
     if (!textInput.trim()) return;
@@ -181,12 +421,34 @@ export function MiloChatbot() {
               <p className="text-xs text-purple-400 font-medium">AI Assistant</p>
             </div>
           </div>
-          <button
-            onClick={handleClose}
-            className="p-2.5 hover:bg-white/10 rounded-xl transition-all duration-300 group"
-          >
-            <X className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
-          </button>
+          <div className="flex items-center gap-3">
+            {/* Credit Display */}
+            {!isLoadingCredits && credits !== null && (
+              <div className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-xl border",
+                parseFloat(credits) === 0
+                  ? "bg-red-500/10 border-red-400/30"
+                  : "bg-purple-500/10 border-purple-400/30"
+              )}>
+                <Coins className={cn(
+                  "w-4 h-4",
+                  parseFloat(credits) === 0 ? "text-red-400" : "text-purple-400"
+                )} />
+                <span className={cn(
+                  "text-sm font-semibold",
+                  parseFloat(credits) === 0 ? "text-red-300" : "text-purple-300"
+                )}>
+                  {parseFloat(credits).toFixed(1)}
+                </span>
+              </div>
+            )}
+            <button
+              onClick={handleClose}
+              className="p-2.5 hover:bg-white/10 rounded-xl transition-all duration-300 group"
+            >
+              <X className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
+            </button>
+          </div>
         </div>
 
         {/* Chat Messages Area */}
@@ -201,21 +463,84 @@ export function MiloChatbot() {
                 Your AI assistant for social media. Choose how you'd like to communicate:
               </p>
 
-              {/* Mode Selection Buttons */}
-              <div className="flex gap-4">
-                <button
-                  onClick={handleVoiceClick}
-                  className="flex flex-col items-center gap-2 px-6 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 rounded-2xl transition-all duration-300 shadow-lg shadow-purple-500/20"
-                >
-                  <Phone className="w-6 h-6 text-white" />
-                  <span className="text-white font-medium text-sm">Voice</span>
-                </button>
+              {/* Show top-up UI if credits are zero */}
+              {credits !== null && parseFloat(credits) === 0 ? (
+                <div className="w-full max-w-sm space-y-4">
+                  <div className="bg-red-500/10 border border-red-400/30 rounded-xl p-4 text-center">
+                    <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-2" />
+                    <p className="text-red-300 text-sm font-medium mb-1">No Credits Available</p>
+                    <p className="text-gray-400 text-xs">
+                      Top up to use voice calls. Voice calls cost 0.5 credits per minute ($1 = 1 credit)
+                    </p>
+                  </div>
 
-                <div className="flex flex-col items-center gap-2 px-6 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all duration-300">
-                  <Send className="w-6 h-6 text-gray-300" />
-                  <span className="text-gray-300 font-medium text-sm">Text</span>
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                    <label className="text-gray-300 text-sm font-medium mb-2 block">
+                      Amount (credits)
+                    </label>
+                    <div className="flex gap-2 mb-3">
+                      <input
+                        type="number"
+                        value={topUpAmount}
+                        onChange={(e) => setTopUpAmount(e.target.value)}
+                        min="1"
+                        max="10000"
+                        className="flex-1 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-400/50"
+                        placeholder="Enter amount"
+                      />
+                      <button
+                        onClick={handleTopUp}
+                        className="px-6 py-2.5 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 rounded-xl text-white font-medium transition-all duration-300 shadow-lg shadow-purple-500/20 flex items-center gap-2"
+                      >
+                        <CreditCard className="w-4 h-4" />
+                        Pay ${topUpAmount}
+                      </button>
+                    </div>
+                    <div className="flex gap-2">
+                      {[10, 25, 50, 100].map((amount) => (
+                        <button
+                          key={amount}
+                          onClick={() => setTopUpAmount(amount.toString())}
+                          className="flex-1 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-gray-300 text-xs font-medium transition-all"
+                        >
+                          {amount}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-gray-500 text-center">
+                    Text chat is always free • Voice calls require credits
+                  </p>
                 </div>
-              </div>
+              ) : (
+                <>
+                  {/* Mode Selection Buttons */}
+                  <div className="flex gap-4">
+                    <button
+                      onClick={handleVoiceClick}
+                      disabled={credits !== null && parseFloat(credits) === 0}
+                      className={cn(
+                        "flex flex-col items-center gap-2 px-6 py-4 rounded-2xl transition-all duration-300 shadow-lg",
+                        credits !== null && parseFloat(credits) === 0
+                          ? "bg-white/5 border border-white/10 text-gray-500 cursor-not-allowed"
+                          : "bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 shadow-purple-500/20"
+                      )}
+                    >
+                      <Phone className="w-6 h-6 text-white" />
+                      <span className="text-white font-medium text-sm">Voice</span>
+                    </button>
+
+                    <div className="flex flex-col items-center gap-2 px-6 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all duration-300">
+                      <Send className="w-6 h-6 text-gray-300" />
+                      <span className="text-gray-300 font-medium text-sm">Text</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-4">
+                    Voice calls: 0.5 credits/min • Text: Free
+                  </p>
+                </>
+              )}
             </div>
           ) : messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full">

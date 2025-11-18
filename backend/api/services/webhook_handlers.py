@@ -4,6 +4,7 @@ Stripe Webhook Handlers for processing payment events
 import json
 import logging
 import datetime
+from decimal import Decimal
 from typing import Dict, Any
 
 import stripe
@@ -11,8 +12,9 @@ from django.conf import settings
 from django.utils import timezone
 
 from ..models import (
-    Plan, Subscription, StripeCustomer, 
-    PaymentEvent, User
+    Plan, Subscription, StripeCustomer,
+    PaymentEvent, User, UserProfile,
+    CreditTransaction, PaymentTransaction
 )
 from .email_service import (
     send_welcome_email, send_trial_ending_email, 
@@ -159,19 +161,96 @@ def _log_payment_event(event: stripe.Event):
         logger.error(f"Error logging payment event: {e}")
 
 
+def handle_credit_purchase(session: stripe.checkout.Session) -> Dict[str, Any]:
+    """
+    Handle credit purchase from checkout session.
+    """
+    user_id = session.metadata.get("user_id")
+    credit_amount = session.metadata.get("credit_amount")
+
+    if not user_id or not credit_amount:
+        logger.error(f"Missing user_id or credit_amount in session metadata")
+        return {"status": "error", "message": "Missing required metadata"}
+
+    try:
+        from django.db import transaction as db_transaction
+
+        with db_transaction.atomic():
+            # Get user and profile
+            user = User.objects.get(id=user_id)
+            user_profile = UserProfile.objects.select_for_update().get(user=user)
+
+            # Convert credit amount to Decimal
+            credits = Decimal(str(credit_amount))
+
+            # Calculate price (should match frontend: $1.00 per credit)
+            price_per_credit = Decimal('1.00')
+            total_paid = credits * price_per_credit
+
+            # Update user profile credits
+            old_balance = user_profile.milo_credits
+            user_profile.milo_credits += credits
+            user_profile.total_credits_purchased += credits
+            user_profile.save()
+
+            # Create credit transaction record
+            payment_intent_id = session.payment_intent if hasattr(session, 'payment_intent') else 'N/A'
+            credit_transaction = CreditTransaction.objects.create(
+                user=user,
+                transaction_type='purchase',
+                amount=credits,
+                balance_after=user_profile.milo_credits,
+                description=f"Credit purchase via Stripe - {credits} credits (${total_paid}) | Session: {session.id} | Payment Intent: {payment_intent_id}"
+            )
+
+            logger.info(f"Credit purchase successful for user {user.username}:")
+            logger.info(f"  Credits purchased: {credits}")
+            logger.info(f"  Amount paid: ${total_paid}")
+            logger.info(f"  Old balance: {old_balance}")
+            logger.info(f"  New balance: {user_profile.milo_credits}")
+            logger.info(f"  Transaction ID: {credit_transaction.id}")
+
+            return {
+                "status": "success",
+                "user_id": user.id,
+                "credits_added": float(credits),
+                "new_balance": float(user_profile.milo_credits),
+                "transaction_id": credit_transaction.id
+            }
+
+    except User.DoesNotExist:
+        logger.error(f"User not found for credit purchase: user_id={user_id}")
+        return {"status": "error", "message": "User not found"}
+    except UserProfile.DoesNotExist:
+        logger.error(f"UserProfile not found for user_id={user_id}")
+        return {"status": "error", "message": "User profile not found"}
+    except Exception as e:
+        logger.error(f"Error processing credit purchase: {e}", exc_info=True)
+        return {"status": "error", "message": str(e)}
+
+
 def handle_checkout_session_completed(event: stripe.Event) -> Dict[str, Any]:
     """
     Handle successful checkout session completion.
-    User has completed signup (with or without trial).
+    Routes to either subscription or credit purchase handler based on metadata.
     """
     session = event.data.object
     logger.info(f"Processing checkout.session.completed event: {event.id}")
-    
+
+    # Check if this is a credit purchase
+    session_type = session.metadata.get("type")
+    if session_type == "credit_purchase":
+        logger.info(f"Detected credit purchase session")
+        return handle_credit_purchase(session)
+
+    # Otherwise, handle as subscription
+    logger.info(f"Detected subscription session")
+
     # Extract metadata
     username = session.metadata.get("username")
     plan_id = session.metadata.get("plan_id")
     user_id = session.metadata.get("user_id")
-    
+
     try:
         user = User.objects.get(id=user_id)
         plan = Plan.objects.get(id=plan_id)

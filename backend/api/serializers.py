@@ -7,7 +7,7 @@ from rest_framework import exceptions, serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.db.models import Q
 
-from .models import UserProfile, UserSocialLinks, UserPermissions, SocialIcon, CustomLink, CollectInfoField, CollectInfoResponse, CTABanner, SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, Plan, PlanFeature, Subscription, Folder, Media, ProfileView, LinkClick, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply, Order, StripeConnectAccount, PaymentTransaction, ConnectWebhookEvent, MiloPrompt, EmailAccount, EmailMessage, EmailAttachment, EmailDraft, CanvaConnection, CanvaDesign
+from .models import UserProfile, UserSocialLinks, UserPermissions, SocialIcon, CustomLink, CollectInfoField, CollectInfoResponse, CTABanner, SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, Plan, PlanFeature, Subscription, Folder, Media, ProfileView, LinkClick, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply, Order, StripeConnectAccount, PaymentTransaction, ConnectWebhookEvent, MiloPrompt, CreditTransaction, MiloCallLog, EmailAccount, EmailMessage, EmailAttachment, EmailDraft, CanvaConnection, CanvaDesign
 
 # Backwards compatibility aliases
 CommentAutomationRule = AutomationRule
@@ -417,8 +417,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = UserProfile
         fields = [
             'id', 'slug', 'display_name', 'bio', 'profile_image',
-            'embedded_video', 'affiliate_link', 'creators_code', 'nurture_email', 'contact_email', 'is_active', 'email_automation_enabled', 'social_icons', 'custom_links', 'cta_banner'
+            'embedded_video', 'affiliate_link', 'creators_code', 'nurture_email', 'contact_email', 'is_active', 'email_automation_enabled', 'milo_credits', 'total_credits_purchased', 'total_credits_used', 'social_icons', 'custom_links', 'cta_banner'
         ]
+        read_only_fields = ['total_credits_purchased', 'total_credits_used']
 
     def get_profile_image(self, obj):
         """Return the full Cloudinary URL for the profile image"""
@@ -457,19 +458,26 @@ class UserProfileEmailAutomationSerializer(serializers.Serializer):
 
 class UserPermissionsSerializer(serializers.ModelSerializer):
     accessible_sections = serializers.ReadOnlyField(source='get_accessible_sections')
-    
+
     class Meta:
         model = UserPermissions
         fields = [
             'id',
             'user',
             'can_access_overview',
-            'can_access_linkinbio', 
+            'can_access_linkinbio',
             'can_access_content',
             'can_access_automation',
             'can_access_ai_tools',
             'can_access_business',
             'can_access_account',
+            'can_access_community',
+            'can_access_prompt_library',
+            'can_access_canva',
+            'can_access_training',
+            'can_access_faq',
+            'can_access_inbox',
+            'can_access_milo',
             'can_edit_profile',
             'can_manage_integrations',
             'can_view_analytics',
@@ -2277,6 +2285,138 @@ class MiloPromptSerializer(serializers.ModelSerializer):
         model = MiloPrompt
         fields = ['id', 'system_prompt', 'created_at', 'modified_at']
         read_only_fields = ['id', 'created_at', 'modified_at']
+
+
+class CreditTransactionSerializer(serializers.ModelSerializer):
+    """Serializer for credit transactions"""
+    user_email = serializers.EmailField(source='user.email', read_only=True)
+    username = serializers.CharField(source='user.username', read_only=True)
+    transaction_type_display = serializers.CharField(source='get_transaction_type_display', read_only=True)
+
+    class Meta:
+        model = CreditTransaction
+        fields = [
+            'id', 'user', 'user_email', 'username',
+            'transaction_type', 'transaction_type_display',
+            'amount', 'balance_after', 'description',
+            'payment_transaction', 'milo_call_log',
+            'created_at'
+        ]
+        read_only_fields = ['id', 'user', 'balance_after', 'created_at']
+
+
+class MiloCallLogSerializer(serializers.ModelSerializer):
+    """Serializer for Milo call logs"""
+    user_email = serializers.EmailField(source='user.email', read_only=True)
+    username = serializers.CharField(source='user.username', read_only=True)
+    call_duration_minutes = serializers.SerializerMethodField()
+    calculated_credits = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MiloCallLog
+        fields = [
+            'id', 'user', 'user_email', 'username',
+            'conversation_id', 'call_duration_seconds', 'call_duration_minutes',
+            'credits_used', 'calculated_credits',
+            'started_at', 'ended_at', 'created_at', 'metadata'
+        ]
+        read_only_fields = ['id', 'user', 'created_at']
+
+    def get_call_duration_minutes(self, obj):
+        """Return call duration in minutes"""
+        if obj.call_duration_seconds:
+            return round(obj.call_duration_seconds / 60, 2)
+        return 0.00
+
+    def get_calculated_credits(self, obj):
+        """Return calculated credits based on duration"""
+        return obj.calculate_credits()
+
+
+class CreditPurchaseSerializer(serializers.Serializer):
+    """Serializer for credit purchase request"""
+    amount = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        required=True,
+        help_text="Amount of credits to purchase"
+    )
+    success_url = serializers.URLField(
+        required=False,
+        help_text="URL to redirect after successful purchase"
+    )
+    cancel_url = serializers.URLField(
+        required=False,
+        help_text="URL to redirect if purchase is canceled"
+    )
+
+    def validate_amount(self, value):
+        """Validate that amount is positive and reasonable"""
+        if value <= 0:
+            raise serializers.ValidationError("Amount must be greater than 0")
+        if value > 10000:
+            raise serializers.ValidationError("Maximum purchase amount is 10,000 credits")
+        return value
+
+
+class CreditPurchaseResponseSerializer(serializers.Serializer):
+    """Serializer for credit purchase response"""
+    checkout_url = serializers.URLField(help_text="Stripe Checkout Session URL for credit purchase")
+
+
+class CreditBalanceSerializer(serializers.Serializer):
+    """Serializer for credit balance response"""
+    milo_credits = serializers.DecimalField(max_digits=10, decimal_places=2)
+    total_credits_purchased = serializers.DecimalField(max_digits=10, decimal_places=2)
+    total_credits_used = serializers.DecimalField(max_digits=10, decimal_places=2)
+
+
+class DeductMiloCreditsSerializer(serializers.Serializer):
+    """Serializer for deducting Milo credits during voice calls"""
+    conversation_id = serializers.CharField(
+        required=True,
+        help_text="Unique conversation/session ID from ElevenLabs"
+    )
+    minutes_elapsed = serializers.IntegerField(
+        required=True,
+        min_value=1,
+        help_text="Total minutes elapsed in the call"
+    )
+
+    def validate_conversation_id(self, value):
+        """Validate conversation ID is not empty"""
+        if not value or not value.strip():
+            raise serializers.ValidationError("Conversation ID cannot be empty")
+        return value.strip()
+
+
+class DeductMiloCreditsResponseSerializer(serializers.Serializer):
+    """Serializer for deduct credits response"""
+    success = serializers.BooleanField()
+    credits_deducted = serializers.DecimalField(max_digits=10, decimal_places=2)
+    remaining_balance = serializers.DecimalField(max_digits=10, decimal_places=2)
+    message = serializers.CharField()
+
+
+class EndMiloCallSerializer(serializers.Serializer):
+    """Serializer for ending a Milo call session"""
+    conversation_id = serializers.CharField(
+        required=True,
+        help_text="Unique conversation/session ID from ElevenLabs"
+    )
+
+    def validate_conversation_id(self, value):
+        """Validate conversation ID is not empty"""
+        if not value or not value.strip():
+            raise serializers.ValidationError("Conversation ID cannot be empty")
+        return value.strip()
+
+
+class EndMiloCallResponseSerializer(serializers.Serializer):
+    """Serializer for end call response"""
+    success = serializers.BooleanField()
+    total_duration_seconds = serializers.IntegerField()
+    total_credits_used = serializers.DecimalField(max_digits=10, decimal_places=2)
 
 
 # ============================================================================

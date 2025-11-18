@@ -134,7 +134,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     }
   ]
 
-  // Check if user has permission for a section
+  // Check if user has permission for a section or page
   const hasPermission = (sectionId: string): boolean => {
     if (!userPermissions?.permissions || permissionsLoading) return false // Hide sections until permissions are loaded
 
@@ -153,6 +153,20 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         return permissions.can_access_business
       case 'account':
         return permissions.can_access_account
+      case 'community':
+        return permissions.can_access_community
+      case 'prompt-library':
+        return permissions.can_access_prompt_library
+      case 'canva':
+        return permissions.can_access_canva
+      case 'training':
+        return permissions.can_access_training
+      case 'faq':
+        return permissions.can_access_faq
+      case 'inbox':
+        return permissions.can_access_inbox
+      case 'milo':
+        return permissions.can_access_milo
       default:
         return false
     }
@@ -401,79 +415,91 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 ))}
 
                 {/* Community - Standalone clickable item */}
-                <button
-                  onClick={() => {
-                    setActiveItem('community')
-                    router.push('/community')
-                  }}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors ${activeItem === 'community'
-                    ? 'text-gray-900 bg-gray-50'
-                    : 'text-gray-700 hover:bg-gray-50'
-                    }`}
-                >
-                  <Users className="w-5 h-5 text-gray-500" />
-                  <span>Community</span>
-                </button>
+                {hasPermission('community') && (
+                  <button
+                    onClick={() => {
+                      setActiveItem('community')
+                      router.push('/community')
+                    }}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors ${activeItem === 'community'
+                      ? 'text-gray-900 bg-gray-50'
+                      : 'text-gray-700 hover:bg-gray-50'
+                      }`}
+                  >
+                    <Users className="w-5 h-5 text-gray-500" />
+                    <span>Community</span>
+                  </button>
+                )}
 
                 {/* External Links Section */}
-                <div className="pt-4 mt-4 border-t border-gray-200">
-                  {/* Prompt Library */}
-                  <button
-                    onClick={() => {
-                      setActiveItem('prompt-library')
-                      router.push('/prompt-library')
-                    }}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors ${activeItem === 'prompt-library'
-                      ? 'text-gray-900 bg-gray-50'
-                      : 'text-gray-700 hover:bg-gray-50'
-                      }`}
-                  >
-                    <Bot className="w-5 h-5 text-gray-500" />
-                    <span>Prompt Library</span>
-                  </button>
+                {(hasPermission('prompt-library') || hasPermission('canva') || hasPermission('training') || hasPermission('faq')) && (
+                  <div className="pt-4 mt-4 border-t border-gray-200">
+                    {/* Prompt Library */}
+                    {hasPermission('prompt-library') && (
+                      <button
+                        onClick={() => {
+                          setActiveItem('prompt-library')
+                          router.push('/prompt-library')
+                        }}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors ${activeItem === 'prompt-library'
+                          ? 'text-gray-900 bg-gray-50'
+                          : 'text-gray-700 hover:bg-gray-50'
+                          }`}
+                      >
+                        <Bot className="w-5 h-5 text-gray-500" />
+                        <span>Prompt Library</span>
+                      </button>
+                    )}
 
-                  {/* Canva Designs */}
-                  <button
-                    onClick={() => {
-                      setActiveItem('canva')
-                      router.push('/canva')
-                    }}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
-                  >
-                    <Palette className="w-5 h-5 text-gray-500" />
-                    <span>Canva Designs</span>
-                  </button>
+                    {/* Canva Designs */}
+                    {hasPermission('canva') && (
+                      <button
+                        onClick={() => {
+                          setActiveItem('canva')
+                          router.push('/canva')
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
+                      >
+                        <Palette className="w-5 h-5 text-gray-500" />
+                        <span>Canva Designs</span>
+                      </button>
+                    )}
 
-                  {/* Elevate Training */}
-                  <button
-                    onClick={() => {
-                      setActiveItem('training')
-                      router.push('/training')
-                    }}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors ${activeItem === 'training'
-                      ? 'text-gray-900 bg-gray-50'
-                      : 'text-gray-700 hover:bg-gray-50'
-                      }`}
-                  >
-                    <GraduationCap className="w-5 h-5 text-gray-500" />
-                    <span>Elevate Training</span>
-                  </button>
+                    {/* Elevate Training */}
+                    {hasPermission('training') && (
+                      <button
+                        onClick={() => {
+                          setActiveItem('training')
+                          router.push('/training')
+                        }}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors ${activeItem === 'training'
+                          ? 'text-gray-900 bg-gray-50'
+                          : 'text-gray-700 hover:bg-gray-50'
+                          }`}
+                      >
+                        <GraduationCap className="w-5 h-5 text-gray-500" />
+                        <span>Elevate Training</span>
+                      </button>
+                    )}
 
-                  {/* FAQ */}
-                  <button
-                    onClick={() => {
-                      setActiveItem('faq')
-                      router.push('/faq')
-                    }}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors ${activeItem === 'faq'
-                      ? 'text-gray-900 bg-gray-50'
-                      : 'text-gray-700 hover:bg-gray-50'
-                      }`}
-                  >
-                    <HelpCircle className="w-5 h-5 text-gray-500" />
-                    <span>FAQ</span>
-                  </button>
-                </div>
+                    {/* FAQ */}
+                    {hasPermission('faq') && (
+                      <button
+                        onClick={() => {
+                          setActiveItem('faq')
+                          router.push('/faq')
+                        }}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors ${activeItem === 'faq'
+                          ? 'text-gray-900 bg-gray-50'
+                          : 'text-gray-700 hover:bg-gray-50'
+                          }`}
+                      >
+                        <HelpCircle className="w-5 h-5 text-gray-500" />
+                        <span>FAQ</span>
+                      </button>
+                    )}
+                  </div>
+                )}
               </>
             )}
           </div>
@@ -537,7 +563,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       )}
 
       {/* Milo Chatbot */}
-      <MiloChatbot />
+      {hasPermission('milo') && <MiloChatbot />}
     </div>
   )
 }

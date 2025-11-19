@@ -527,7 +527,7 @@ class CustomLinkAdmin(ModelAdmin, ImportExportModelAdmin):
                 messages.ERROR
             )
 
-    @action(description="Create Iframe Listing", icon="add_box")
+    @action(description="Create Iframe Listing")
     def create_iframe_listing(self, request, queryset):
         """Custom action to create an iframe listing"""
         from django.shortcuts import render, redirect
@@ -2099,8 +2099,22 @@ class EmailDraftAdmin(ModelAdmin, ImportExportModelAdmin):
         return super().get_queryset(request).select_related('account')
 
 
+class IframeMenuItemAdminForm(forms.ModelForm):
+    """Form for IframeMenuItem with distribution option"""
+    distribute_to_all_users = forms.BooleanField(
+        required=False,
+        initial=False,
+        help_text="Check this to automatically add this menu item to all user permissions"
+    )
+
+    class Meta:
+        model = IframeMenuItem
+        fields = '__all__'
+
+
 @admin.register(IframeMenuItem)
 class IframeMenuItemAdmin(ModelAdmin, ImportExportModelAdmin):
+    form = IframeMenuItemAdminForm
     import_form_class = ImportForm
     export_form_class = ExportForm
     list_display = ['title', 'slug', 'icon', 'order', 'is_active', 'created_at']
@@ -2114,8 +2128,28 @@ class IframeMenuItemAdmin(ModelAdmin, ImportExportModelAdmin):
         ('Menu Item Details', {
             'fields': ('title', 'slug', 'link', 'icon', 'order', 'is_active')
         }),
+        ('Distribution', {
+            'fields': ('distribute_to_all_users',),
+            'description': 'Control whether this menu item should be added to all user permissions'
+        }),
         ('Timestamps', {
             'fields': ('created_at', 'modified_at'),
             'classes': ('collapse',)
         }),
     )
+
+    def save_model(self, request, obj, form, change):
+        """Override save to handle distribution to all users"""
+        super().save_model(request, obj, form, change)
+
+        # Check if distribution checkbox was checked
+        if form.cleaned_data.get('distribute_to_all_users'):
+            # Add this menu item to all user permissions
+            user_permissions = UserPermissions.objects.all()
+            for permission in user_permissions:
+                permission.accessible_iframe_menu_items.add(obj)
+
+            messages.success(
+                request,
+                f"Menu item '{obj.title}' has been added to {user_permissions.count()} user permissions"
+            )

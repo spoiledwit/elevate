@@ -3,13 +3,13 @@ import { notFound } from 'next/navigation'
 import IframeClient from './IframeClient'
 
 interface PageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
 export default async function IframePage({ params }: PageProps) {
-  const { slug } = params
+  const { slug } = await params
 
   // Fetch menu items on the server
   const result = await getIframeMenuItemsAction()

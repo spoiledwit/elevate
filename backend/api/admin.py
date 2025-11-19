@@ -4,6 +4,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group
 from unfold.admin import ModelAdmin
 from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
+from unfold.decorators import action
 from django.utils.translation import gettext_lazy as _
 from django.utils.html import format_html
 from .services.stripe_service import stripe_service
@@ -260,7 +261,13 @@ class CustomLinkTemplateAdmin(ModelAdmin, ImportExportModelAdmin):
         ('Additional Info', {
             'fields': ('additional_info',),
             'classes': ('collapse',),
-            'description': 'Product-specific information stored as JSON'
+            'description': '''Product-specific information stored as JSON.
+
+For iframe type: Add iframe URL in this format:
+{"iframe_url": "https://your-url.com"}
+
+For url_media type: Add destination URL in this format:
+{"destination_url": "https://your-url.com"}'''
         }),
         ('Timestamps', {
             'fields': ('created_at', 'modified_at'),
@@ -414,6 +421,48 @@ class CustomLinkAdminForm(forms.ModelForm):
         }
 
 
+class IframeListingForm(forms.Form):
+    """Form for creating iframe listings"""
+    from unfold.widgets import UnfoldAdminTextInputWidget, UnfoldAdminSelectWidget, UnfoldAdminIntegerFieldWidget
+
+    user_profile = forms.ModelChoiceField(
+        queryset=UserProfile.objects.all(),
+        widget=UnfoldAdminSelectWidget(),
+        help_text="Select the user profile for this iframe listing"
+    )
+    title = forms.CharField(
+        max_length=100,
+        widget=UnfoldAdminTextInputWidget(),
+        help_text="Display title for the iframe listing"
+    )
+    subtitle = forms.CharField(
+        max_length=150,
+        required=False,
+        widget=UnfoldAdminTextInputWidget(),
+        help_text="Optional subtitle"
+    )
+    iframe_url = forms.URLField(
+        widget=UnfoldAdminTextInputWidget(),
+        help_text="URL to display in the iframe"
+    )
+    style = forms.ChoiceField(
+        choices=[('callout', 'Callout'), ('button', 'Button')],
+        widget=UnfoldAdminSelectWidget(),
+        initial='callout',
+        help_text="Display style for the listing"
+    )
+    order = forms.IntegerField(
+        initial=0,
+        widget=UnfoldAdminIntegerFieldWidget(),
+        help_text="Display order (lower numbers appear first)"
+    )
+    is_active = forms.BooleanField(
+        initial=True,
+        required=False,
+        help_text="Make this listing active immediately"
+    )
+
+
 @admin.register(CustomLink)
 class CustomLinkAdmin(ModelAdmin, ImportExportModelAdmin):
     form = CustomLinkAdminForm
@@ -425,6 +474,7 @@ class CustomLinkAdmin(ModelAdmin, ImportExportModelAdmin):
     readonly_fields = ['created_at', 'modified_at', 'click_count']
     list_editable = ['order']
     actions = ['convert_to_template']
+    actions_list = ['create_iframe_listing']
 
     def display_title(self, obj):
         return obj.title or obj.button_text or obj.checkout_title or 'Untitled'
@@ -476,7 +526,47 @@ class CustomLinkAdmin(ModelAdmin, ImportExportModelAdmin):
                 f"Error creating templates: {str(e)}. All changes have been rolled back.",
                 messages.ERROR
             )
-    
+
+    @action(description="Create Iframe Listing", icon="add_box")
+    def create_iframe_listing(self, request, queryset):
+        """Custom action to create an iframe listing"""
+        from django.shortcuts import render, redirect
+        from django.urls import reverse
+
+        if request.method == 'POST':
+            form = IframeListingForm(request.POST)
+            if form.is_valid():
+                # Create the custom link with iframe type
+                custom_link = CustomLink.objects.create(
+                    user_profile=form.cleaned_data['user_profile'],
+                    type='iframe',
+                    title=form.cleaned_data['title'],
+                    subtitle=form.cleaned_data['subtitle'],
+                    style=form.cleaned_data['style'],
+                    order=form.cleaned_data['order'],
+                    is_active=form.cleaned_data['is_active'],
+                    additional_info={'iframe_url': form.cleaned_data['iframe_url']}
+                )
+
+                self.message_user(
+                    request,
+                    f"Successfully created iframe listing: {custom_link.title}",
+                    messages.SUCCESS
+                )
+                return redirect('admin:api_customlink_changelist')
+        else:
+            form = IframeListingForm()
+
+        context = {
+            'form': form,
+            'title': 'Create Iframe Listing',
+            'site_title': 'Create Iframe Listing',
+            'site_header': 'Administration',
+            'has_view_permission': True,
+        }
+
+        return render(request, 'admin/api/customlink/create_iframe_listing.html', context)
+
     fieldsets = (
         ('Basic Information', {
             'fields': ('user_profile', 'type', 'style', 'order', 'is_active')
@@ -504,7 +594,13 @@ class CustomLinkAdmin(ModelAdmin, ImportExportModelAdmin):
         ('Additional Info', {
             'fields': ('additional_info',),
             'classes': ('collapse',),
-            'description': 'Product-specific information stored as JSON'
+            'description': '''Product-specific information stored as JSON.
+
+For iframe type: Add iframe URL in this format:
+{"iframe_url": "https://your-url.com"}
+
+For url_media type: Add destination URL in this format:
+{"destination_url": "https://your-url.com"}'''
         }),
         ('Analytics', {
             'fields': ('click_count',)

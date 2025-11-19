@@ -18,6 +18,7 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
   const [hasTrackedView, setHasTrackedView] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<any>(null)
   const [showIframe, setShowIframe] = useState(false)
+  const [iframeUrl, setIframeUrl] = useState<string>('')
 
   // Track profile view on mount
   useEffect(() => {
@@ -55,7 +56,8 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
   const handleOrderSuccess = () => {
     // For opt-in products, show iframe instead of redirecting
     if (selectedProduct?.type === 'opt_in') {
-      // Show iframe with the checkout URL
+      // Show iframe with the checkout URL (with creator_id parameter)
+      setIframeUrl(`https://highticketpurpose.com/htp-checkout?creator_id=${username}`)
       setShowIframe(true)
     } else {
       // For other products, just navigate back to products list
@@ -69,6 +71,10 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
     // If it's a url_media type, redirect directly to the destination URL
     if (link.type === 'url_media' && link.additional_info?.destination_url) {
       window.open(link.additional_info.destination_url, '_blank')
+    } else if (link.type === 'iframe' && link.additional_info?.iframe_url) {
+      // If it's an iframe type, show iframe popup directly
+      setIframeUrl(link.additional_info.iframe_url)
+      setShowIframe(true)
     } else {
       // Otherwise, open the checkout page
       setSelectedProduct(link)
@@ -161,8 +167,8 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
                       title={link.title || link.text}
                       subtitle={link.subtitle}
                       displayStyle={link.style}
-                      price={link.type === 'url_media' || link.type === 'opt_in' ? undefined : link.checkout_price}
-                      discountedPrice={link.type === 'url_media' || link.type === 'opt_in' ? undefined : link.checkout_discounted_price}
+                      price={link.type === 'url_media' || link.type === 'opt_in' || link.type === 'iframe' ? undefined : link.checkout_price}
+                      discountedPrice={link.type === 'url_media' || link.type === 'opt_in' || link.type === 'iframe' ? undefined : link.checkout_discounted_price}
                     />
                   </div>
                 ))}
@@ -236,8 +242,8 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
                       title={link.title || link.text}
                       subtitle={link.subtitle}
                       displayStyle="callout"
-                      price={link.type === 'url_media' || link.type === 'opt_in' ? undefined : link.checkout_price}
-                      discountedPrice={link.type === 'url_media' || link.type === 'opt_in' ? undefined : link.checkout_discounted_price}
+                      price={link.type === 'url_media' || link.type === 'opt_in' || link.type === 'iframe' ? undefined : link.checkout_price}
+                      discountedPrice={link.type === 'url_media' || link.type === 'opt_in' || link.type === 'iframe' ? undefined : link.checkout_discounted_price}
                     />
                   </div>
                 ))}
@@ -260,12 +266,15 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
       </div>
 
       {/* Iframe Overlay */}
-      {showIframe && (
+      {showIframe && iframeUrl && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg w-full h-full max-w-5xl max-h-[90vh] relative overflow-hidden">
             {/* Close Button */}
             <button
-              onClick={() => setShowIframe(false)}
+              onClick={() => {
+                setShowIframe(false)
+                setIframeUrl('')
+              }}
               className="absolute top-4 right-4 z-10 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center text-gray-600 hover:text-gray-900 hover:shadow-xl transition-all"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -275,9 +284,9 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
 
             {/* Iframe */}
             <iframe
-              src={`https://highticketpurpose.com/htp-checkout?creator_id=${username}`}
+              src={iframeUrl}
               className="w-full h-full"
-              title="Checkout"
+              title="Content"
               allow="payment"
             />
           </div>

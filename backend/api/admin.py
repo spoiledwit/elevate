@@ -425,10 +425,18 @@ class IframeListingForm(forms.Form):
     """Form for creating iframe listings"""
     from unfold.widgets import UnfoldAdminTextInputWidget, UnfoldAdminSelectWidget, UnfoldAdminIntegerFieldWidget
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Add better labels for user profiles
+        self.fields['user_profile'].label_from_instance = lambda obj: f"{obj.user.username} ({obj.user.email})"
+
     user_profile = forms.ModelChoiceField(
-        queryset=UserProfile.objects.all(),
-        widget=UnfoldAdminSelectWidget(),
-        help_text="Select the user profile for this iframe listing"
+        queryset=UserProfile.objects.select_related('user').all(),
+        widget=forms.Select(attrs={
+            'class': 'searchable-select',
+            'style': 'width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem;'
+        }),
+        help_text="Search and select the user profile for this iframe listing"
     )
     title = forms.CharField(
         max_length=100,

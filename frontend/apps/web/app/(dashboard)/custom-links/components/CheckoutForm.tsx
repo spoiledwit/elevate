@@ -14,7 +14,7 @@ import { InlineStripePayment } from './InlineStripePayment'
 
 interface CheckoutFormProps {
   linkId?: string
-  productType: 'digital' | 'opt_in' | 'url-media' | 'freebie' | null
+  productType: 'digital' | 'opt_in' | 'url-media' | 'freebie' | 'iframe' | null
   thumbnail: string | null
   title: string
   subtitle?: string

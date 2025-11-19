@@ -10,6 +10,7 @@ import { getIframeMenuItemsAction } from '@/actions'
 import type { UserCurrent, IframeMenuItem } from '@frontend/types/api'
 import '@/styles/driver-theme.css'
 import { MiloChatbot } from '@/components/milo-chatbot/milo-chatbot'
+import * as LucideIcons from 'lucide-react'
 import {
   Home,
   BarChart3,
@@ -467,7 +468,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
                 {/* Iframe Menu Items */}
                 {iframeMenuItems.map((item) => {
-                  const IconComponent = ExternalLink // Default icon, we'll make this dynamic later
+                  // Dynamically get the icon component from lucide-react
+                  const IconComponent = (item.icon && (LucideIcons as any)[item.icon]) || ExternalLink
                   return (
                     <button
                       key={item.id}

@@ -240,6 +240,28 @@ class SocialIcon(models.Model):
         return f"{self.user_profile.user.username} - {self.platform}"
 
 
+class IframeMenuItem(models.Model):
+    """
+    System-wide iframe menu items for opt-in checkout flow.
+    These menu items are displayed to all users after opt-in completion.
+    """
+    title = models.CharField(_("title"), max_length=255, help_text="Menu item title")
+    link = models.URLField(_("link"), help_text="URL to display in iframe")
+    order = models.IntegerField(_("order"), default=0, help_text="Display order (lower numbers appear first)")
+    is_active = models.BooleanField(_("is active"), default=True)
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    modified_at = models.DateTimeField(_("modified at"), auto_now=True)
+
+    class Meta:
+        db_table = "iframe_menu_items"
+        verbose_name = _("iframe menu item")
+        verbose_name_plural = _("iframe menu items")
+        ordering = ['order', 'created_at']
+
+    def __str__(self):
+        return self.title
+
+
 class CustomLinkTemplate(models.Model):
     """
     Master templates for custom links that can be distributed to all users.

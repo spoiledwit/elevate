@@ -7,7 +7,7 @@ from rest_framework import exceptions, serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.db.models import Q
 
-from .models import UserProfile, UserSocialLinks, UserPermissions, SocialIcon, CustomLink, CollectInfoField, CollectInfoResponse, CTABanner, SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, Plan, PlanFeature, Subscription, Folder, Media, ProfileView, LinkClick, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply, Order, StripeConnectAccount, PaymentTransaction, ConnectWebhookEvent, MiloPrompt, EmailAccount, EmailMessage, EmailAttachment, EmailDraft
+from .models import UserProfile, UserSocialLinks, UserPermissions, SocialIcon, IframeMenuItem, CustomLink, CollectInfoField, CollectInfoResponse, CTABanner, SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, Plan, PlanFeature, Subscription, Folder, Media, ProfileView, LinkClick, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply, Order, StripeConnectAccount, PaymentTransaction, ConnectWebhookEvent, MiloPrompt, EmailAccount, EmailMessage, EmailAttachment, EmailDraft
 
 # Backwards compatibility aliases
 CommentAutomationRule = AutomationRule
@@ -2450,3 +2450,10 @@ class EmailMarkReadSerializer(serializers.Serializer):
     """Serializer for marking email as read"""
     message_id = serializers.CharField(required=True)
     is_read = serializers.BooleanField(required=True)
+
+
+class IframeMenuItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IframeMenuItem
+        fields = ['id', 'title', 'link', 'order', 'is_active']
+        read_only_fields = ['id', 'created_at', 'modified_at']

@@ -746,6 +746,17 @@ UNFOLD = {
                     },
                 ],
             },
+            {
+                "title": _("System"),
+                "separator": True,
+                "items": [
+                    {
+                        "title": _("Iframe Menu Items"),
+                        "icon": "menu",
+                        "link": reverse_lazy("admin:api_iframemenuitem_changelist"),
+                    },
+                ],
+            },
         ],
     },
 }

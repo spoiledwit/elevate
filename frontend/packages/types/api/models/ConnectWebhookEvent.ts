@@ -12,7 +12,7 @@ export type ConnectWebhookEvent = {
     /**
      * Connected account ID if applicable
      */
-    account_id?: string;
+    account_id?: string | null;
     readonly account_username: string | null;
     readonly transaction_order_id: string | null;
     processed?: boolean;

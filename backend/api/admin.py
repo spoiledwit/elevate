@@ -19,7 +19,7 @@ from .models import (
     SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, PaymentEvent, Plan, PlanFeature, StripeCustomer,
     Folder, Media, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply, AIConfiguration, MiloPrompt,
     StripeConnectAccount, PaymentTransaction, ConnectWebhookEvent, FreebieFollowupEmail, ScheduledFollowupEmail, OptinFollowupEmail, ScheduledOptinEmail,
-    EmailAccount, EmailMessage, EmailAttachment, EmailDraft
+    EmailAccount, EmailMessage, EmailAttachment, EmailDraft, IframeMenuItem
 )
 from tinymce.widgets import TinyMCE
 from django import forms
@@ -1996,3 +1996,24 @@ class EmailDraftAdmin(ModelAdmin, ImportExportModelAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('account')
+
+
+@admin.register(IframeMenuItem)
+class IframeMenuItemAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    list_display = ['title', 'link', 'order', 'is_active', 'created_at']
+    list_filter = ['is_active', 'created_at']
+    search_fields = ['title', 'link']
+    readonly_fields = ['created_at', 'modified_at']
+    list_editable = ['order', 'is_active']
+    
+    fieldsets = (
+        ('Menu Item Details', {
+            'fields': ('title', 'link', 'order', 'is_active')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'modified_at'),
+            'classes': ('collapse',)
+        }),
+    )

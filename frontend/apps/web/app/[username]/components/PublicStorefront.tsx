@@ -275,7 +275,7 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
 
             {/* Iframe */}
             <iframe
-              src="https://highticketpurpose.com/htp-checkout"
+              src={`https://highticketpurpose.com/htp-checkout?creator_id=${username}`}
               className="w-full h-full"
               title="Checkout"
               allow="payment"

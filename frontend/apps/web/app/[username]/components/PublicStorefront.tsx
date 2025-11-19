@@ -57,7 +57,7 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
     // For opt-in products, show iframe instead of redirecting
     if (selectedProduct?.type === 'opt_in') {
       // Show iframe with the checkout URL (with creator_id parameter)
-      setIframeUrl(`https://highticketpurpose.com/htp-checkout?creator_id=${username}`)
+      setIframeUrl(`https://highticketpurpose.com/launchspecial`)
       setShowIframe(true)
     } else {
       // For other products, just navigate back to products list

@@ -9,7 +9,7 @@ export class SystemService {
     constructor(public readonly httpRequest: BaseHttpRequest) {}
     /**
      * List active iframe menu items
-     * Get a list of all active iframe menu items ordered by their display order.
+     * Get a list of all active iframe menu items ordered by their display order, filtered by user permissions.
      * @param page A page number within the paginated result set.
      * @returns PaginatedIframeMenuItemList
      * @throws ApiError
@@ -27,7 +27,7 @@ export class SystemService {
     }
     /**
      * List active iframe menu items
-     * Get a list of all active iframe menu items ordered by their display order.
+     * Get a list of all active iframe menu items ordered by their display order, filtered by user permissions.
      * @param id A unique integer value identifying this iframe menu item.
      * @param page A page number within the paginated result set.
      * @returns PaginatedIframeMenuItemList

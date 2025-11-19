@@ -126,7 +126,7 @@ class UserPermissions(models.Model):
     One-to-one relationship with User for granular access control.
     """
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='permissions')
-    
+
     # Dashboard Permissions (based on the 7 main sections)
     can_access_overview = models.BooleanField(_("Can Access Overview"), default=True, help_text="Dashboard section access")
     can_access_linkinbio = models.BooleanField(_("Can Access Link-in-Bio"), default=True, help_text="Storefront, Custom Links, CTA Banners")
@@ -135,12 +135,20 @@ class UserPermissions(models.Model):
     can_access_ai_tools = models.BooleanField(_("Can Access AI & Tools"), default=True, help_text="AI Assistant and related tools")
     can_access_business = models.BooleanField(_("Can Access Business"), default=True, help_text="Subscription and billing management")
     can_access_account = models.BooleanField(_("Can Access Account"), default=True, help_text="Account settings and profile")
-    
+
     # Additional granular permissions
     can_edit_profile = models.BooleanField(_("Can Edit Profile"), default=True, help_text="Edit user profile and settings")
     can_manage_integrations = models.BooleanField(_("Can Manage Integrations"), default=True, help_text="Connect/disconnect social media accounts")
     can_view_analytics = models.BooleanField(_("Can View Analytics"), default=True, help_text="View performance analytics and stats")
-    
+
+    # Iframe Menu Items - Many-to-Many relationship
+    accessible_iframe_menu_items = models.ManyToManyField(
+        'IframeMenuItem',
+        blank=True,
+        related_name='users_with_access',
+        help_text="Iframe menu items this user can access"
+    )
+
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
     modified_at = models.DateTimeField(_("modified at"), auto_now=True)
 

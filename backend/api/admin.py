@@ -138,11 +138,11 @@ class UserPermissionsAdmin(ModelAdmin, ImportExportModelAdmin):
         }),
         ('Dashboard Section Permissions', {
             'fields': (
-                'can_access_overview', 
-                'can_access_linkinbio', 
+                'can_access_overview',
+                'can_access_linkinbio',
                 'can_access_content',
-                'can_access_automation', 
-                'can_access_ai_tools', 
+                'can_access_automation',
+                'can_access_ai_tools',
                 'can_access_business',
                 'can_access_account'
             ),
@@ -150,17 +150,22 @@ class UserPermissionsAdmin(ModelAdmin, ImportExportModelAdmin):
         }),
         ('Additional Permissions', {
             'fields': (
-                'can_edit_profile', 
-                'can_manage_integrations', 
+                'can_edit_profile',
+                'can_manage_integrations',
                 'can_view_analytics'
             ),
             'description': 'Granular permissions for specific features'
+        }),
+        ('Iframe Menu Items', {
+            'fields': ('accessible_iframe_menu_items',),
+            'description': 'Select which iframe menu items this user can access'
         }),
         ('Timestamps', {
             'fields': ('created_at', 'modified_at'),
             'classes': ('collapse',)
         }),
     )
+    filter_horizontal = ('accessible_iframe_menu_items',)
     
     def permissions_summary(self, obj):
         """Show a summary of enabled dashboard sections"""

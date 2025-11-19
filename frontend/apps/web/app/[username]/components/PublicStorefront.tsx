@@ -17,6 +17,7 @@ interface PublicStorefrontProps {
 export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
   const [hasTrackedView, setHasTrackedView] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<any>(null)
+  const [showIframe, setShowIframe] = useState(false)
 
   // Track profile view on mount
   useEffect(() => {
@@ -48,15 +49,14 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
 
   const handleBackToProducts = () => {
     setSelectedProduct(null)
+    setShowIframe(false)
   }
 
   const handleOrderSuccess = () => {
-    // For opt-in products, redirect to affiliate link if available
-    if (selectedProduct?.type === 'opt_in' && profile?.affiliate_link) {
-      // Open affiliate link immediately (confetti already showed for 5 seconds)
-      window.open(profile.affiliate_link, '_blank')
-      // Also navigate back to products list
-      setSelectedProduct(null)
+    // For opt-in products, show iframe instead of redirecting
+    if (selectedProduct?.type === 'opt_in') {
+      // Show iframe with the checkout URL
+      setShowIframe(true)
     } else {
       // For other products, just navigate back to products list
       setSelectedProduct(null)
@@ -258,6 +258,31 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
           </div>
         )}
       </div>
+
+      {/* Iframe Overlay */}
+      {showIframe && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg w-full h-full max-w-5xl max-h-[90vh] relative overflow-hidden">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowIframe(false)}
+              className="absolute top-4 right-4 z-10 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center text-gray-600 hover:text-gray-900 hover:shadow-xl transition-all"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Iframe */}
+            <iframe
+              src="https://highticketpurpose.com/htp-checkout"
+              className="w-full h-full"
+              title="Checkout"
+              allow="payment"
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

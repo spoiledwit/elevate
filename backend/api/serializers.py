@@ -2455,5 +2455,5 @@ class EmailMarkReadSerializer(serializers.Serializer):
 class IframeMenuItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = IframeMenuItem
-        fields = ['id', 'title', 'link', 'order', 'is_active']
+        fields = ['id', 'title', 'slug', 'link', 'icon', 'order', 'is_active']
         read_only_fields = ['id', 'created_at', 'modified_at']

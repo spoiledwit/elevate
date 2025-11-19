@@ -2002,15 +2002,16 @@ class EmailDraftAdmin(ModelAdmin, ImportExportModelAdmin):
 class IframeMenuItemAdmin(ModelAdmin, ImportExportModelAdmin):
     import_form_class = ImportForm
     export_form_class = ExportForm
-    list_display = ['title', 'link', 'order', 'is_active', 'created_at']
+    list_display = ['title', 'slug', 'icon', 'order', 'is_active', 'created_at']
     list_filter = ['is_active', 'created_at']
-    search_fields = ['title', 'link']
+    search_fields = ['title', 'slug', 'link']
     readonly_fields = ['created_at', 'modified_at']
     list_editable = ['order', 'is_active']
-    
+    prepopulated_fields = {'slug': ('title',)}
+
     fieldsets = (
         ('Menu Item Details', {
-            'fields': ('title', 'link', 'order', 'is_active')
+            'fields': ('title', 'slug', 'link', 'icon', 'order', 'is_active')
         }),
         ('Timestamps', {
             'fields': ('created_at', 'modified_at'),

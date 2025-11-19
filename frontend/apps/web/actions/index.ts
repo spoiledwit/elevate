@@ -154,6 +154,11 @@ export {
   updateOrderStatusAction
 } from './orders-action'
 
+// System actions
+export {
+  getIframeMenuItemsAction
+} from './system-action'
+
 // Export types
 export type { RegisterFormSchema } from './register-action'
 export type { ProfileFormSchema } from './profile-action'

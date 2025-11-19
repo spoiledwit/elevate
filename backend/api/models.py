@@ -246,7 +246,9 @@ class IframeMenuItem(models.Model):
     These menu items are displayed to all users after opt-in completion.
     """
     title = models.CharField(_("title"), max_length=255, help_text="Menu item title")
+    slug = models.SlugField(_("slug"), max_length=255, unique=True, help_text="URL-friendly identifier")
     link = models.URLField(_("link"), help_text="URL to display in iframe")
+    icon = models.CharField(_("icon"), max_length=100, default="ExternalLink", help_text="Lucide React icon name")
     order = models.IntegerField(_("order"), default=0, help_text="Display order (lower numbers appear first)")
     is_active = models.BooleanField(_("is active"), default=True)
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
@@ -257,6 +259,12 @@ class IframeMenuItem(models.Model):
         verbose_name = _("iframe menu item")
         verbose_name_plural = _("iframe menu items")
         ordering = ['order', 'created_at']
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            from django.utils.text import slugify
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title

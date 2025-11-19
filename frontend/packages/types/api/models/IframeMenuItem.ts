@@ -9,9 +9,17 @@ export type IframeMenuItem = {
      */
     title: string;
     /**
+     * URL-friendly identifier
+     */
+    slug: string;
+    /**
      * URL to display in iframe
      */
     link: string;
+    /**
+     * Lucide React icon name
+     */
+    icon?: string;
     /**
      * Display order (lower numbers appear first)
      */

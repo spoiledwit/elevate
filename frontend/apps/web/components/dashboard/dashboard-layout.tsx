@@ -6,7 +6,8 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useOnboarding } from '@/hooks/useOnboarding'
 import { OnboardingTrigger } from './onboarding-trigger'
 import { getCurrentUser } from '@/actions/user-action'
-import type { UserCurrent } from '@frontend/types/api'
+import { getIframeMenuItemsAction } from '@/actions'
+import type { UserCurrent, IframeMenuItem } from '@frontend/types/api'
 import '@/styles/driver-theme.css'
 import { MiloChatbot } from '@/components/milo-chatbot/milo-chatbot'
 import {
@@ -43,6 +44,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [expandedSections, setExpandedSections] = useState<string[]>(['overview'])
   const [userPermissions, setUserPermissions] = useState<UserCurrent | null>(null)
   const [permissionsLoading, setPermissionsLoading] = useState(true)
+  const [iframeMenuItems, setIframeMenuItems] = useState<IframeMenuItem[]>([])
   const { data: session } = useSession()
   const pathname = usePathname()
   const router = useRouter()
@@ -71,6 +73,22 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
     fetchUserPermissions()
   }, [session?.accessToken])
+
+  // Fetch iframe menu items
+  useEffect(() => {
+    const fetchIframeMenuItems = async () => {
+      try {
+        const result = await getIframeMenuItemsAction()
+        if (result && 'results' in result && result.results) {
+          setIframeMenuItems(result.results)
+        }
+      } catch (error) {
+        console.error('Error fetching iframe menu items:', error)
+      }
+    }
+
+    fetchIframeMenuItems()
+  }, [])
 
   // Define sidebar sections first
   const sidebarSections = [
@@ -182,6 +200,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   // Map pathname to sidebar items and sections
   const getActiveItemFromPath = (path: string) => {
+    // Check for iframe menu items (/en/{slug})
+    if (path.startsWith('/en/')) {
+      const slug = path.split('/en/')[1]
+      return { itemId: `iframe-${slug}`, sectionId: 'iframe' }
+    }
+
     switch (path) {
       case '/dashboard':
         return { itemId: 'dashboard', sectionId: 'overview' }
@@ -440,6 +464,28 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <GraduationCap className="w-5 h-5 text-gray-500" />
                   <span>Elevate Training</span>
                 </button>
+
+                {/* Iframe Menu Items */}
+                {iframeMenuItems.map((item) => {
+                  const IconComponent = ExternalLink // Default icon, we'll make this dynamic later
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setActiveItem(`iframe-${item.slug}`)
+                        router.push(`/en/${item.slug}`)
+                      }}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors ${
+                        activeItem === `iframe-${item.slug}`
+                          ? 'text-gray-900 bg-gray-50'
+                          : 'text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      <IconComponent className="w-5 h-5 text-gray-500" />
+                      <span>{item.title}</span>
+                    </button>
+                  )
+                })}
               </>
             )}
           </div>

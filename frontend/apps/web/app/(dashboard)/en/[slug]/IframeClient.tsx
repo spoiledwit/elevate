@@ -7,6 +7,8 @@ interface IframeClientProps {
 }
 
 export default function IframeClient({ menuItem }: IframeClientProps) {
+
+  console.log('Rendering IframeClient with menuItem:', menuItem)
   return (
     <div className="h-screen flex flex-col">
       <iframe

@@ -485,6 +485,9 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
                           let productType = link.type?.replace('_product', '') || 'digital';
                           if (productType === 'url_media') productType = 'url-media';
 
+                          // Hide pricing for url_media, opt_in, and iframe types
+                          const shouldShowPrice = !['url_media', 'url-media', 'opt_in', 'iframe'].includes(productType);
+
                           return (
                             <ProductCard
                               key={link.id}
@@ -493,8 +496,8 @@ export function CustomLinksManager({ initialLinks }: CustomLinksManagerProps) {
                               title={link.title || link.text}
                               subtitle={link.subtitle}
                               displayStyle={link.style}
-                              price={link.checkout_price}
-                              discountedPrice={link.checkout_discounted_price}
+                              price={shouldShowPrice ? link.checkout_price : undefined}
+                              discountedPrice={shouldShowPrice ? link.checkout_discounted_price : undefined}
                             />
                           );
                         })}

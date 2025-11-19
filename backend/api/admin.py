@@ -528,7 +528,7 @@ class CustomLinkAdmin(ModelAdmin, ImportExportModelAdmin):
             )
 
     @action(description="Create Iframe Listing")
-    def create_iframe_listing(self, request, queryset):
+    def create_iframe_listing(self, request, queryset=None):
         """Custom action to create an iframe listing"""
         from django.shortcuts import render, redirect
         from django.urls import reverse

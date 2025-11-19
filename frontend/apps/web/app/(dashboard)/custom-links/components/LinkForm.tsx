@@ -50,7 +50,7 @@ interface LinkFormProps {
   onClose?: () => void
 }
 
-type ProductType = 'digital' | 'url-media' | 'freebie' | 'opt_in' | null
+type ProductType = 'digital' | 'url-media' | 'freebie' | 'opt_in' | 'iframe' | null
 
 export function LinkForm({ link, onClose }: LinkFormProps) {
   const router = useRouter()
@@ -167,6 +167,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
           case 'opt_in': return 'opt_in'
           case 'url_media': return 'url-media'
           case 'freebie': return 'freebie'
+          case 'iframe': return 'iframe'
           default: return 'digital'
         }
       }
@@ -214,6 +215,8 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         } else if (productType === 'url-media') {
           setMediaUrl(additionalInfo.destination_url || '')
           setButtonText(additionalInfo.button_text || 'View Content')
+        } else if (productType === 'iframe') {
+          setMediaUrl(additionalInfo.iframe_url || '')
         } else if (productType === 'freebie') {
           setDigitalFileUrl(additionalInfo.digital_file_url || '')
           setDownloadInstructions(additionalInfo.download_instructions || '')
@@ -392,16 +395,16 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
   const handleContinue = () => {
     if (step === 1 && selectedType) {
       setStep(2)
-    } else if (step === 2 && title.trim() && selectedStyle && (selectedType === 'url-media' || selectedType === 'opt_in' || selectedType === 'freebie' || checkoutPrice)) {
-      // Skip checkout configuration (step 3) and collect info (step 4) for url-media, go straight to step 5
-      if (selectedType === 'url-media') {
+    } else if (step === 2 && title.trim() && selectedStyle && (selectedType === 'url-media' || selectedType === 'iframe' || selectedType === 'opt_in' || selectedType === 'freebie' || checkoutPrice)) {
+      // Skip checkout configuration (step 3) and collect info (step 4) for url-media and iframe, go straight to step 5
+      if (selectedType === 'url-media' || selectedType === 'iframe') {
         setStep(5)
       } else {
         setStep(3)
       }
     } else if (step === 3) {
-      // Skip collect info step (step 4) for url-media, go straight to step 5
-      if (selectedType === 'url-media') {
+      // Skip collect info step (step 4) for url-media and iframe, go straight to step 5
+      if (selectedType === 'url-media' || selectedType === 'iframe') {
         setStep(5)
       } else {
         setStep(4)
@@ -418,8 +421,8 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
 
   const handleBack = () => {
     if (step > 1) {
-      // Skip step 3 and 4 when going back from step 5 for url-media
-      if (step === 5 && selectedType === 'url-media') {
+      // Skip step 3 and 4 when going back from step 5 for url-media and iframe
+      if (step === 5 && (selectedType === 'url-media' || selectedType === 'iframe')) {
         setStep(2)
       } else {
         setStep(step - 1)
@@ -645,6 +648,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
           case 'opt_in': return 'opt_in'
           case 'url-media': return 'url_media'
           case 'freebie': return 'freebie'
+          case 'iframe': return 'iframe'
           default: return 'generic'
         }
       }
@@ -666,6 +670,10 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         additionalInfo = {
           destination_url: mediaUrl,
           button_text: buttonText
+        }
+      } else if (selectedType === 'iframe') {
+        additionalInfo = {
+          iframe_url: mediaUrl
         }
       } else if (selectedType === 'freebie') {
         additionalInfo = {
@@ -791,6 +799,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
           case 'opt_in': return 'opt_in'
           case 'url-media': return 'url_media'
           case 'freebie': return 'freebie'
+          case 'iframe': return 'iframe'
           default: return 'generic'
         }
       }
@@ -812,6 +821,10 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         additionalInfo = {
           destination_url: mediaUrl,
           button_text: buttonText
+        }
+      } else if (selectedType === 'iframe') {
+        additionalInfo = {
+          iframe_url: mediaUrl
         }
       } else if (selectedType === 'freebie') {
         additionalInfo = {
@@ -869,7 +882,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
               {link ? 'Edit Product' : 'Add New Product'}
             </h2>
             <p className="text-sm text-gray-600">
-              Step {selectedType === 'url-media' && step === 5 ? '3' : step} of {selectedType === 'url-media' ? '3' : '5'}: {
+              Step {(selectedType === 'url-media' || selectedType === 'iframe') && step === 5 ? '3' : step} of {(selectedType === 'url-media' || selectedType === 'iframe') ? '3' : '5'}: {
                 step === 1 ? 'Choose your product type' :
                   step === 2 ? 'Add basic information' :
                     step === 3 ? 'Configure checkout & pricing' :
@@ -1081,8 +1094,8 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                 </div>
               </div>
 
-              {/* Pricing Section - Hide for Opt-In, Freebie, and URL/Media */}
-              {selectedType !== 'opt_in' && selectedType !== 'freebie' && selectedType !== 'url-media' && (
+              {/* Pricing Section - Hide for Opt-In, Freebie, URL/Media, and Iframe */}
+              {selectedType !== 'opt_in' && selectedType !== 'freebie' && selectedType !== 'url-media' && selectedType !== 'iframe' && (
                 <div>
                   <label className="block text-sm font-semibold text-gray-900 mb-3">
                     Pricing
@@ -1164,7 +1177,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
             <button
               type="button"
               onClick={handleContinue}
-              disabled={!title.trim() || !selectedStyle || !checkoutPrice}
+              disabled={!title.trim() || !selectedStyle || (!checkoutPrice && selectedType !== 'url-media' && selectedType !== 'iframe' && selectedType !== 'opt_in' && selectedType !== 'freebie')}
               className={`${!(isEditMode && step === 2) ? 'flex-1' : 'w-full'} flex items-center justify-center gap-2 px-4 py-3 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium`}
             >
               Continue
@@ -1351,8 +1364,8 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         </div>
       )}
 
-      {/* Step 4: Collect Info Fields Configuration - Hide for URL/Media */}
-      {step === 4 && selectedType !== 'url-media' && (
+      {/* Step 4: Collect Info Fields Configuration - Hide for URL/Media and Iframe */}
+      {step === 4 && selectedType !== 'url-media' && selectedType !== 'iframe' && (
         <div className="p-6">
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -1859,6 +1872,31 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                 </div>
               </>
             )}
+
+            {/* Iframe Fields */}
+            {selectedType === 'iframe' && (
+              <>
+                <div>
+                  <label htmlFor="iframe-url" className="block text-sm font-semibold text-gray-900 mb-2">
+                    Iframe URL <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <ExternalLink className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="url"
+                      id="iframe-url"
+                      value={mediaUrl}
+                      onChange={(e) => setMediaUrl(e.target.value)}
+                      placeholder="https://example.com/iframe-content"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-300"
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    URL to display in iframe popup
+                  </p>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Form Actions */}
@@ -1877,7 +1915,8 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                 isSubmitting ||
                 (selectedType === 'digital' && !digitalFileUrl && !digitalFile) ||
                 (selectedType === 'freebie' && !digitalFileUrl && !digitalFile) ||
-                (selectedType === 'url-media' && !mediaUrl)
+                (selectedType === 'url-media' && !mediaUrl) ||
+                (selectedType === 'iframe' && !mediaUrl)
               }
               className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >

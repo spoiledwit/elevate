@@ -1152,7 +1152,12 @@ class CustomLinkCreateUpdateSerializer(serializers.ModelSerializer):
                 for field in fields_data:
                     if isinstance(field, str):
                         try:
-                            processed_fields.append(json.loads(field))
+                            parsed = json.loads(field)
+                            # If the parsed result is a list, extend instead of append
+                            if isinstance(parsed, list):
+                                processed_fields.extend(parsed)
+                            else:
+                                processed_fields.append(parsed)
                         except json.JSONDecodeError:
                             processed_fields.append(field)
                     else:

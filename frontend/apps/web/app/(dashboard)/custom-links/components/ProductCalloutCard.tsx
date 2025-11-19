@@ -1,9 +1,9 @@
 'use client'
 
-import { Package, ExternalLink } from 'lucide-react'
+import { Package, ExternalLink, Monitor } from 'lucide-react'
 
 interface ProductCalloutCardProps {
-  productType: 'digital' | 'custom' | 'ecourse' | 'url-media' | null
+  productType: 'digital' | 'custom' | 'ecourse' | 'url-media' | 'iframe' | null
   thumbnail: string | null
   title: string
   subtitle?: string
@@ -16,6 +16,7 @@ const productTypeIcons = {
   custom: Package,
   ecourse: Package,
   'url-media': ExternalLink,
+  iframe: Monitor,
 }
 
 export function ProductCalloutCard({

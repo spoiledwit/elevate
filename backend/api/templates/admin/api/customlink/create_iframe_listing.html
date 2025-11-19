@@ -1,240 +1,121 @@
-{% extends "admin/base_site.html" %}
-{% load i18n static %}
-
-{% block extrastyle %}
-{{ block.super }}
-<style>
-    .iframe-form-container {
-        max-width: 800px;
-        margin: 2rem auto;
-        padding: 2rem;
-    }
-
-    .form-row {
-        margin-bottom: 1.5rem;
-    }
-
-    .form-row label {
-        display: block;
-        margin-bottom: 0.5rem;
-        font-weight: 500;
-        color: #374151;
-    }
-
-    .form-row input[type="text"],
-    .form-row input[type="url"],
-    .form-row input[type="number"],
-    .form-row select {
-        width: 100%;
-        padding: 0.5rem;
-        border: 1px solid #d1d5db;
-        border-radius: 0.375rem;
-        font-size: 0.875rem;
-    }
-
-    .form-row input[type="checkbox"] {
-        width: 1.25rem;
-        height: 1.25rem;
-        margin-right: 0.5rem;
-    }
-
-    .checkbox-row {
-        display: flex;
-        align-items: center;
-    }
-
-    .submit-row {
-        margin-top: 2rem;
-        display: flex;
-        gap: 1rem;
-        justify-content: flex-end;
-    }
-
-    .btn-primary {
-        background-color: #2563eb;
-        color: white;
-        padding: 0.5rem 1.5rem;
-        border: none;
-        border-radius: 0.375rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
-
-    .btn-primary:hover {
-        background-color: #1d4ed8;
-    }
-
-    .btn-secondary {
-        background-color: #6b7280;
-        color: white;
-        padding: 0.5rem 1.5rem;
-        border: none;
-        border-radius: 0.375rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        text-decoration: none;
-        display: inline-block;
-    }
-
-    .btn-secondary:hover {
-        background-color: #4b5563;
-        color: white;
-    }
-
-    .errorlist {
-        color: #dc2626;
-        list-style: none;
-        padding: 0;
-        margin: 0.5rem 0 0 0;
-        font-size: 0.875rem;
-    }
-
-    .help-text {
-        color: #6b7280;
-        font-size: 0.875rem;
-        margin-top: 0.25rem;
-    }
-</style>
-{% endblock %}
+{% extends "unfold/layouts/base_simple.html" %}
+{% load i18n %}
 
 {% block content %}
-<div class="iframe-form-container">
-    <h1>{% trans "Create Iframe Listing" %}</h1>
+<div style="max-width: 900px; margin: 40px auto; padding: 0 20px;">
+    <div style="background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 30px;">
 
-    {% if messages %}
-    <div class="messagelist">
-        {% for message in messages %}
-        <div class="{% if message.tags %}{{ message.tags }}{% endif %}">
-            {{ message }}
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
+        <h1 style="font-size: 24px; font-weight: 600; color: #1f2937; margin: 0 0 8px 0;">
+            {% trans "Create Iframe Listing" %}
+        </h1>
+        <p style="color: #6b7280; font-size: 14px; margin: 0 0 30px 0;">
+            {% trans "Create a new iframe listing for a user profile" %}
+        </p>
 
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-
-        {% if form.non_field_errors %}
-        <ul class="errorlist">
-            {% for error in form.non_field_errors %}
-            <li>{{ error }}</li>
+        {% if messages %}
+            {% for message in messages %}
+            <div style="padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; {% if message.tags == 'success' %}background: #d1fae5; color: #065f46;{% elif message.tags == 'error' %}background: #fee2e2; color: #991b1b;{% else %}background: #dbeafe; color: #1e40af;{% endif %}">
+                {{ message }}
+            </div>
             {% endfor %}
-        </ul>
         {% endif %}
 
-        <div class="form-row">
-            <label for="{{ form.user_profile.id_for_label }}">
-                {% trans "User Profile" %} *
-            </label>
-            {{ form.user_profile }}
-            {% if form.user_profile.errors %}
-                <ul class="errorlist">
-                    {% for error in form.user_profile.errors %}
+        <form method="post">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div style="background: #fee2e2; color: #991b1b; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px;">
+                <ul style="margin: 0; padding-left: 20px;">
+                    {% for error in form.non_field_errors %}
                     <li>{{ error }}</li>
                     {% endfor %}
                 </ul>
+            </div>
             {% endif %}
-            {% if form.user_profile.help_text %}
-                <p class="help-text">{{ form.user_profile.help_text }}</p>
-            {% endif %}
-        </div>
 
-        <div class="form-row">
-            <label for="{{ form.title.id_for_label }}">
-                {% trans "Title" %} *
-            </label>
-            {{ form.title }}
-            {% if form.title.errors %}
-                <ul class="errorlist">
-                    {% for error in form.title.errors %}
-                    <li>{{ error }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        </div>
+            <div style="margin-bottom: 20px;">
+                <label for="{{ form.user_profile.id_for_label }}" style="display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 6px;">
+                    {% trans "User Profile" %} <span style="color: #dc2626;">*</span>
+                </label>
+                {{ form.user_profile }}
+                {% if form.user_profile.errors %}
+                <p style="margin: 6px 0 0 0; font-size: 13px; color: #dc2626;">{{ form.user_profile.errors.0 }}</p>
+                {% endif %}
+            </div>
 
-        <div class="form-row">
-            <label for="{{ form.subtitle.id_for_label }}">
-                {% trans "Subtitle" %}
-            </label>
-            {{ form.subtitle }}
-            {% if form.subtitle.errors %}
-                <ul class="errorlist">
-                    {% for error in form.subtitle.errors %}
-                    <li>{{ error }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        </div>
+            <div style="margin-bottom: 20px;">
+                <label for="{{ form.title.id_for_label }}" style="display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 6px;">
+                    {% trans "Title" %} <span style="color: #dc2626;">*</span>
+                </label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                <p style="margin: 6px 0 0 0; font-size: 13px; color: #dc2626;">{{ form.title.errors.0 }}</p>
+                {% endif %}
+            </div>
 
-        <div class="form-row">
-            <label for="{{ form.iframe_url.id_for_label }}">
-                {% trans "Iframe URL" %} *
-            </label>
-            {{ form.iframe_url }}
-            {% if form.iframe_url.errors %}
-                <ul class="errorlist">
-                    {% for error in form.iframe_url.errors %}
-                    <li>{{ error }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-            <p class="help-text">{% trans "Enter the full URL to be displayed in the iframe" %}</p>
-        </div>
+            <div style="margin-bottom: 20px;">
+                <label for="{{ form.subtitle.id_for_label }}" style="display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 6px;">
+                    {% trans "Subtitle" %}
+                </label>
+                {{ form.subtitle }}
+                {% if form.subtitle.errors %}
+                <p style="margin: 6px 0 0 0; font-size: 13px; color: #dc2626;">{{ form.subtitle.errors.0 }}</p>
+                {% endif %}
+            </div>
 
-        <div class="form-row">
-            <label for="{{ form.style.id_for_label }}">
-                {% trans "Display Style" %} *
-            </label>
-            {{ form.style }}
-            {% if form.style.errors %}
-                <ul class="errorlist">
-                    {% for error in form.style.errors %}
-                    <li>{{ error }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        </div>
+            <div style="margin-bottom: 20px;">
+                <label for="{{ form.iframe_url.id_for_label }}" style="display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 6px;">
+                    {% trans "Iframe URL" %} <span style="color: #dc2626;">*</span>
+                </label>
+                {{ form.iframe_url }}
+                {% if form.iframe_url.errors %}
+                <p style="margin: 6px 0 0 0; font-size: 13px; color: #dc2626;">{{ form.iframe_url.errors.0 }}</p>
+                {% endif %}
+                <p style="margin: 6px 0 0 0; font-size: 13px; color: #6b7280;">{% trans "Enter the full URL to be displayed in the iframe" %}</p>
+            </div>
 
-        <div class="form-row">
-            <label for="{{ form.order.id_for_label }}">
-                {% trans "Order" %} *
-            </label>
-            {{ form.order }}
-            {% if form.order.errors %}
-                <ul class="errorlist">
-                    {% for error in form.order.errors %}
-                    <li>{{ error }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-            <p class="help-text">{% trans "Lower numbers appear first" %}</p>
-        </div>
+            <div style="margin-bottom: 20px;">
+                <label for="{{ form.style.id_for_label }}" style="display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 6px;">
+                    {% trans "Display Style" %} <span style="color: #dc2626;">*</span>
+                </label>
+                {{ form.style }}
+                {% if form.style.errors %}
+                <p style="margin: 6px 0 0 0; font-size: 13px; color: #dc2626;">{{ form.style.errors.0 }}</p>
+                {% endif %}
+            </div>
 
-        <div class="form-row checkbox-row">
-            {{ form.is_active }}
-            <label for="{{ form.is_active.id_for_label }}">
-                {% trans "Is Active" %}
-            </label>
-            {% if form.is_active.errors %}
-                <ul class="errorlist">
-                    {% for error in form.is_active.errors %}
-                    <li>{{ error }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        </div>
+            <div style="margin-bottom: 20px;">
+                <label for="{{ form.order.id_for_label }}" style="display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 6px;">
+                    {% trans "Order" %} <span style="color: #dc2626;">*</span>
+                </label>
+                {{ form.order }}
+                {% if form.order.errors %}
+                <p style="margin: 6px 0 0 0; font-size: 13px; color: #dc2626;">{{ form.order.errors.0 }}</p>
+                {% endif %}
+                <p style="margin: 6px 0 0 0; font-size: 13px; color: #6b7280;">{% trans "Lower numbers appear first" %}</p>
+            </div>
 
-        <div class="submit-row">
-            <a href="{% url 'admin:api_customlink_changelist' %}" class="btn-secondary">
-                {% trans "Cancel" %}
-            </a>
-            <button type="submit" class="btn-primary">
-                {% trans "Create Iframe Listing" %}
-            </button>
-        </div>
-    </form>
+            <div style="margin-bottom: 30px; display: flex; align-items: center;">
+                {{ form.is_active }}
+                <label for="{{ form.is_active.id_for_label }}" style="margin-left: 8px; font-size: 14px; font-weight: 500; color: #374151;">
+                    {% trans "Is Active" %}
+                </label>
+                {% if form.is_active.errors %}
+                <p style="margin: 0 0 0 8px; font-size: 13px; color: #dc2626;">{{ form.is_active.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; display: flex; justify-content: flex-end; gap: 12px;">
+                <a href="{% url 'admin:api_customlink_changelist' %}"
+                   style="display: inline-block; padding: 10px 20px; background: #f3f4f6; color: #374151; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 500; border: 1px solid #d1d5db;">
+                    {% trans "Cancel" %}
+                </a>
+                <button type="submit"
+                        style="padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer;">
+                    {% trans "Create Iframe Listing" %}
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}

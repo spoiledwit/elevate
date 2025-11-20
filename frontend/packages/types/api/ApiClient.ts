@@ -30,6 +30,7 @@ import { StorefrontService } from './services/StorefrontService';
 import { StripeConnectService } from './services/StripeConnectService';
 import { SubscriptionsService } from './services/SubscriptionsService';
 import { SystemService } from './services/SystemService';
+import { SystemConfigService } from './services/SystemConfigService';
 import { TokenService } from './services/TokenService';
 import { UploadService } from './services/UploadService';
 import { UsersService } from './services/UsersService';
@@ -61,6 +62,7 @@ export class ApiClient {
     public readonly stripeConnect: StripeConnectService;
     public readonly subscriptions: SubscriptionsService;
     public readonly system: SystemService;
+    public readonly systemConfig: SystemConfigService;
     public readonly token: TokenService;
     public readonly upload: UploadService;
     public readonly users: UsersService;
@@ -103,6 +105,7 @@ export class ApiClient {
         this.stripeConnect = new StripeConnectService(this.request);
         this.subscriptions = new SubscriptionsService(this.request);
         this.system = new SystemService(this.request);
+        this.systemConfig = new SystemConfigService(this.request);
         this.token = new TokenService(this.request);
         this.upload = new UploadService(this.request);
         this.users = new UsersService(this.request);

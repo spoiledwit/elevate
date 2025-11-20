@@ -142,6 +142,7 @@ from .apis.email import (
     EmailDraftDetailView,
 )
 from .apis.iframe_menu import IframeMenuItemViewSet
+from .apis.system_config import SystemConfigViewSet
 
 router = routers.DefaultRouter()
 router.register("users", UserViewSet, basename="api-users")
@@ -151,6 +152,7 @@ router.register("ai", OpenAIViewSet, basename="api-ai")
 router.register("orders", OrderViewSet, basename="api-orders")
 router.register("milo-prompts", MiloPromptViewSet, basename="api-milo-prompts")
 router.register("iframe-menu-items", IframeMenuItemViewSet, basename="api-iframe-menu-items")
+router.register("system-config", SystemConfigViewSet, basename="api-system-config")
 
 # Storefront API endpoints
 router.register("storefront/profiles", UserProfileStorefrontViewSet, basename="storefront-profiles")

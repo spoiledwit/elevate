@@ -20,7 +20,7 @@ from .models import (
     SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, PaymentEvent, Plan, PlanFeature, StripeCustomer,
     Folder, Media, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply, AIConfiguration, MiloPrompt,
     StripeConnectAccount, PaymentTransaction, ConnectWebhookEvent, FreebieFollowupEmail, ScheduledFollowupEmail, OptinFollowupEmail, ScheduledOptinEmail,
-    EmailAccount, EmailMessage, EmailAttachment, EmailDraft, IframeMenuItem
+    EmailAccount, EmailMessage, EmailAttachment, EmailDraft, IframeMenuItem, SystemConfig
 )
 from tinymce.widgets import TinyMCE
 from django import forms
@@ -2161,3 +2161,27 @@ class IframeMenuItemAdmin(ModelAdmin, ImportExportModelAdmin):
                 request,
                 f"Menu item '{obj.title}' has been added to {user_permissions.count()} user permissions"
             )
+
+
+@admin.register(SystemConfig)
+class SystemConfigAdmin(ModelAdmin):
+    list_display = ['__str__', 'checkout_url', 'modified_at']
+    readonly_fields = ['created_at', 'modified_at']
+
+    fieldsets = (
+        ('Checkout Settings', {
+            'fields': ('checkout_url',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'modified_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def has_add_permission(self, request):
+        # Only allow one instance
+        return not SystemConfig.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        # Prevent deletion of the singleton instance
+        return False

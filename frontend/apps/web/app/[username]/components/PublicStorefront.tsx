@@ -5,7 +5,7 @@ import { ArrowLeft } from 'lucide-react'
 import { StorefrontHeaderPreview } from '../../(dashboard)/custom-links/components/StorefrontHeaderPreview'
 import { ProductCard } from '../../(dashboard)/custom-links/components/ProductCard'
 import { CheckoutForm } from '../../(dashboard)/custom-links/components/CheckoutForm'
-import { trackProfileViewAction, trackLinkClickAction } from '@/actions'
+import { trackProfileViewAction, trackLinkClickAction, getSystemConfigAction } from '@/actions'
 import logo from '@/assets/logo.png'
 import Image from 'next/image'
 
@@ -19,6 +19,22 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
   const [selectedProduct, setSelectedProduct] = useState<any>(null)
   const [showIframe, setShowIframe] = useState(false)
   const [iframeUrl, setIframeUrl] = useState<string>('')
+  const [checkoutUrl, setCheckoutUrl] = useState<string>('')
+
+  // Fetch system config on mount
+  useEffect(() => {
+    const fetchSystemConfig = async () => {
+      try {
+        const config = await getSystemConfigAction()
+        if (config?.checkout_url) {
+          setCheckoutUrl(config.checkout_url)
+        }
+      } catch (error) {
+        console.error('Failed to fetch system config:', error)
+      }
+    }
+    fetchSystemConfig()
+  }, [])
 
   // Track profile view on mount
   useEffect(() => {
@@ -56,9 +72,14 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
   const handleOrderSuccess = () => {
     // For opt-in products, show iframe instead of redirecting
     if (selectedProduct?.type === 'opt_in') {
-      // Show iframe with the checkout URL (with creator_id parameter)
-      setIframeUrl(`https://highticketpurpose.com/launchspecial`)
-      setShowIframe(true)
+      // Show iframe with the checkout URL from system config
+      if (checkoutUrl) {
+        setIframeUrl(checkoutUrl)
+        setShowIframe(true)
+      } else {
+        // Fallback to products list if no checkout URL is configured
+        setSelectedProduct(null)
+      }
     } else {
       // For other products, just navigate back to products list
       setSelectedProduct(null)

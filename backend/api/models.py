@@ -1877,6 +1877,43 @@ class EmailDraft(models.Model):
         return f"Draft: {self.subject[:50]}"
 
 
+class SystemConfig(models.Model):
+    """
+    Global system configuration settings (Singleton).
+    Only one instance should exist.
+    """
+    checkout_url = models.URLField(
+        _("checkout URL"),
+        max_length=500,
+        help_text="URL for the checkout/payment page"
+    )
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    modified_at = models.DateTimeField(_("modified at"), auto_now=True)
+
+    class Meta:
+        db_table = "system_config"
+        verbose_name = _("System Configuration")
+        verbose_name_plural = _("System Configuration")
+
+    def __str__(self):
+        return "System Configuration"
+
+    def save(self, *args, **kwargs):
+        # Ensure only one instance exists (singleton pattern)
+        if not self.pk and SystemConfig.objects.exists():
+            raise ValueError("Only one SystemConfig instance is allowed")
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get_config(cls):
+        """Get or create the singleton config instance"""
+        config, created = cls.objects.get_or_create(
+            pk=1,
+            defaults={'checkout_url': ''}
+        )
+        return config
+
+
 # ============================================================================
 
 @receiver(post_save, sender=CustomLinkTemplate)

@@ -7,7 +7,7 @@ from rest_framework import exceptions, serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.db.models import Q
 
-from .models import UserProfile, UserSocialLinks, UserPermissions, SocialIcon, IframeMenuItem, CustomLink, CollectInfoField, CollectInfoResponse, CTABanner, SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, Plan, PlanFeature, Subscription, Folder, Media, ProfileView, LinkClick, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply, Order, StripeConnectAccount, PaymentTransaction, ConnectWebhookEvent, MiloPrompt, EmailAccount, EmailMessage, EmailAttachment, EmailDraft
+from .models import UserProfile, UserSocialLinks, UserPermissions, SocialIcon, IframeMenuItem, CustomLink, CollectInfoField, CollectInfoResponse, CTABanner, SocialMediaPlatform, SocialMediaConnection, SocialMediaPost, SocialMediaPostTemplate, Plan, PlanFeature, Subscription, Folder, Media, ProfileView, LinkClick, Comment, AutomationRule, AutomationSettings, CommentReply, DirectMessage, DirectMessageReply, Order, StripeConnectAccount, PaymentTransaction, ConnectWebhookEvent, MiloPrompt, EmailAccount, EmailMessage, EmailAttachment, EmailDraft, SystemConfig
 
 # Backwards compatibility aliases
 CommentAutomationRule = AutomationRule
@@ -2461,4 +2461,12 @@ class IframeMenuItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = IframeMenuItem
         fields = ['id', 'title', 'slug', 'link', 'icon', 'order', 'is_active']
+        read_only_fields = ['id', 'created_at', 'modified_at']
+
+
+class SystemConfigSerializer(serializers.ModelSerializer):
+    """Serializer for system configuration"""
+    class Meta:
+        model = SystemConfig
+        fields = ['id', 'checkout_url', 'created_at', 'modified_at']
         read_only_fields = ['id', 'created_at', 'modified_at']

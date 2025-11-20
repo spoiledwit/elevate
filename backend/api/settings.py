@@ -751,6 +751,11 @@ UNFOLD = {
                 "separator": True,
                 "items": [
                     {
+                        "title": _("System Configuration"),
+                        "icon": "settings",
+                        "link": reverse_lazy("admin:api_systemconfig_changelist"),
+                    },
+                    {
                         "title": _("Iframe Menu Items"),
                         "icon": "menu",
                         "link": reverse_lazy("admin:api_iframemenuitem_changelist"),

@@ -159,6 +159,11 @@ export {
   getIframeMenuItemsAction
 } from './system-action'
 
+// System config actions
+export {
+  getSystemConfigAction
+} from './system-config-action'
+
 // Export types
 export type { RegisterFormSchema } from './register-action'
 export type { ProfileFormSchema } from './profile-action'

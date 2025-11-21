@@ -77,10 +77,12 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
       // Redirect to the checkout URL from system config
       if (checkoutUrl) {
         console.log('Redirecting to:', checkoutUrl)
-        window.open(checkoutUrl, '_blank')
+        // Use window.location.href instead of window.open to avoid popup blockers on mobile
+        window.location.href = checkoutUrl
+      } else {
+        // If no checkout URL, just navigate back to products list
+        setSelectedProduct(null)
       }
-      // Navigate back to products list
-      setSelectedProduct(null)
     } else {
       // For other products, just navigate back to products list
       setSelectedProduct(null)

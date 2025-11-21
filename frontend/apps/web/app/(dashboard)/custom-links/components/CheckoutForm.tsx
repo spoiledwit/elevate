@@ -38,6 +38,7 @@ interface CheckoutFormProps {
   isActive?: boolean
   className?: string
   layout?: 'card' | 'fullpage' | 'mobile' | 'preview'
+  checkoutRedirectUrl?: string
   onOrderSuccess?: (orderData: any) => void
 }
 
@@ -56,6 +57,7 @@ export function CheckoutForm({
   isActive = false,
   className = '',
   layout = 'card',
+  checkoutRedirectUrl,
   onOrderSuccess
 }: CheckoutFormProps) {
   const hasDiscount = discountedPrice && parseFloat(discountedPrice) < parseFloat(price)
@@ -261,6 +263,13 @@ export function CheckoutForm({
           const result = await createOrderAction(linkId, orderData)
 
           if (result.success) {
+            // For opt-in products with redirect URL, redirect immediately (before setTimeout)
+            if (productType === 'opt_in' && checkoutRedirectUrl) {
+              // Redirect immediately while still in user interaction context
+              window.location.href = checkoutRedirectUrl
+              return true
+            }
+
             setShowSuccessMessage(true)
             triggerConfetti()
             setFormData({})

@@ -67,24 +67,9 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
   }
 
   const handleOrderSuccess = () => {
-    console.log('handleOrderSuccess called', {
-      productType: selectedProduct?.type,
-      checkoutUrl
-    })
-
-    // For opt-in products, redirect to the checkout URL
-    if (selectedProduct?.type === 'opt_in') {
-      // Redirect to the checkout URL from system config
-      if (checkoutUrl) {
-        console.log('Redirecting to:', checkoutUrl)
-        // Use window.location.href instead of window.open to avoid popup blockers on mobile
-        window.location.href = checkoutUrl
-      } else {
-        // If no checkout URL, just navigate back to products list
-        setSelectedProduct(null)
-      }
-    } else {
-      // For other products, just navigate back to products list
+    // For opt-in products, the redirect is handled in CheckoutForm immediately after submission
+    // For other products, just navigate back to products list
+    if (selectedProduct?.type !== 'opt_in') {
       setSelectedProduct(null)
     }
   }
@@ -171,6 +156,7 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
                     collectInfoFields={selectedProduct.collect_info_fields || []}
                     isActive={true}
                     className="overflow-hidden"
+                    checkoutRedirectUrl={selectedProduct.type === 'opt_in' ? checkoutUrl : undefined}
                     onOrderSuccess={handleOrderSuccess}
                   />
                 </div>
@@ -235,6 +221,7 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
                 collectInfoFields={selectedProduct.collect_info_fields || []}
                 isActive={true}
                 className="rounded-xl shadow-lg overflow-hidden"
+                checkoutRedirectUrl={selectedProduct.type === 'opt_in' ? checkoutUrl : undefined}
                 onOrderSuccess={handleOrderSuccess}
               />
             </div>

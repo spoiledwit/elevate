@@ -5,7 +5,7 @@ import { ArrowLeft } from 'lucide-react'
 import { StorefrontHeaderPreview } from '../../(dashboard)/custom-links/components/StorefrontHeaderPreview'
 import { ProductCard } from '../../(dashboard)/custom-links/components/ProductCard'
 import { CheckoutForm } from '../../(dashboard)/custom-links/components/CheckoutForm'
-import { trackProfileViewAction, trackLinkClickAction, getSystemConfigAction } from '@/actions'
+import { trackProfileViewAction, trackLinkClickAction } from '@/actions'
 import logo from '@/assets/logo.png'
 import Image from 'next/image'
 
@@ -17,22 +17,6 @@ interface PublicStorefrontProps {
 export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
   const [hasTrackedView, setHasTrackedView] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<any>(null)
-  const [checkoutUrl, setCheckoutUrl] = useState<string>('')
-
-  // Fetch system config on mount
-  useEffect(() => {
-    const fetchSystemConfig = async () => {
-      try {
-        const config = await getSystemConfigAction()
-        if (config?.checkout_url) {
-          setCheckoutUrl(config.checkout_url)
-        }
-      } catch (error) {
-        console.error('Failed to fetch system config:', error)
-      }
-    }
-    fetchSystemConfig()
-  }, [])
 
   // Track profile view on mount
   useEffect(() => {
@@ -67,9 +51,14 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
   }
 
   const handleOrderSuccess = () => {
-    // For opt-in products, the redirect is handled in CheckoutForm immediately after submission
-    // For other products, just navigate back to products list
-    if (selectedProduct?.type !== 'opt_in') {
+    // For opt-in products, redirect to affiliate link if available
+    if (selectedProduct?.type === 'opt_in' && profile?.affiliate_link) {
+      // Open affiliate link immediately (confetti already showed for 5 seconds)
+      window.open(profile.affiliate_link, '_blank')
+      // Also navigate back to products list
+      setSelectedProduct(null)
+    } else {
+      // For other products, just navigate back to products list
       setSelectedProduct(null)
     }
   }
@@ -80,9 +69,6 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
     // If it's a url_media type, redirect directly to the destination URL
     if (link.type === 'url_media' && link.additional_info?.destination_url) {
       window.open(link.additional_info.destination_url, '_blank')
-    } else if (link.type === 'iframe' && link.additional_info?.iframe_url) {
-      // If it's an iframe type, redirect to the iframe URL
-      window.open(link.additional_info.iframe_url, '_blank')
     } else {
       // Otherwise, open the checkout page
       setSelectedProduct(link)
@@ -156,7 +142,6 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
                     collectInfoFields={selectedProduct.collect_info_fields || []}
                     isActive={true}
                     className="overflow-hidden"
-                    checkoutRedirectUrl={selectedProduct.type === 'opt_in' ? checkoutUrl : undefined}
                     onOrderSuccess={handleOrderSuccess}
                   />
                 </div>
@@ -176,8 +161,8 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
                       title={link.title || link.text}
                       subtitle={link.subtitle}
                       displayStyle={link.style}
-                      price={link.type === 'url_media' || link.type === 'opt_in' || link.type === 'iframe' ? undefined : link.checkout_price}
-                      discountedPrice={link.type === 'url_media' || link.type === 'opt_in' || link.type === 'iframe' ? undefined : link.checkout_discounted_price}
+                      price={link.type === 'url_media' || link.type === 'opt_in' ? undefined : link.checkout_price}
+                      discountedPrice={link.type === 'url_media' || link.type === 'opt_in' ? undefined : link.checkout_discounted_price}
                     />
                   </div>
                 ))}
@@ -221,7 +206,6 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
                 collectInfoFields={selectedProduct.collect_info_fields || []}
                 isActive={true}
                 className="rounded-xl shadow-lg overflow-hidden"
-                checkoutRedirectUrl={selectedProduct.type === 'opt_in' ? checkoutUrl : undefined}
                 onOrderSuccess={handleOrderSuccess}
               />
             </div>

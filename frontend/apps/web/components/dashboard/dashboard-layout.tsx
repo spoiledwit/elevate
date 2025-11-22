@@ -496,7 +496,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         {/* HTP Elevate Button */}
         <div className="flex-shrink-0 px-4 pb-4">
           <a
-            href="https://HTPelevate.com"
+            href="https://app.passiveprofit-system.com/"
             target="_blank"
             rel="noopener noreferrer"
             className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white rounded-lg transition-all duration-200 hover:shadow-lg"

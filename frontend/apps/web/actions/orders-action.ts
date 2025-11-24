@@ -162,3 +162,63 @@ export async function deleteOrderAction(orderId: string) {
     return { error: 'Failed to delete order' }
   }
 }
+
+/**
+ * Update email automation preference for a single order
+ */
+export async function updateOrderEmailPreferenceAction(
+  orderId: string,
+  enabled: boolean
+) {
+  const session = await getServerSession(authOptions)
+
+  if (!session) {
+    return { error: 'Authentication required' }
+  }
+
+  try {
+    const apiClient = await getApiClient(session)
+    const response = await apiClient.orders.ordersUpdateEmailPreferencePartialUpdate(
+      orderId,
+      { email_automation_enabled: enabled }
+    )
+
+    return { success: true, data: response }
+  } catch (error) {
+    console.error('Error updating email preference:', error)
+    if (error instanceof ApiError) {
+      return { success: false, error: error.message }
+    }
+    return { success: false, error: 'Failed to update email preference' }
+  }
+}
+
+/**
+ * Bulk update email automation preference for multiple orders
+ */
+export async function bulkUpdateOrderEmailPreferenceAction(
+  orderIds: number[],
+  enabled: boolean
+) {
+  const session = await getServerSession(authOptions)
+
+  if (!session) {
+    return { error: 'Authentication required' }
+  }
+
+  try {
+    const apiClient = await getApiClient(session)
+    const response = await apiClient.orders.ordersBulkUpdateEmailPreferenceCreate({
+      order_ids: orderIds,
+      email_automation_enabled: enabled,
+    } as any)
+
+    return { success: true, data: response }
+  } catch (error) {
+    console.error('Error bulk updating email preferences:', error)
+    if (error instanceof ApiError) {
+      return { success: false, error: error.message }
+    }
+    return { success: false, error: 'Failed to bulk update email preferences' }
+  }
+}

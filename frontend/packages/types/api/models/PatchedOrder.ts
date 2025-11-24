@@ -18,6 +18,10 @@ export type PatchedOrder = {
      */
     form_responses?: any;
     readonly formatted_responses?: string;
+    /**
+     * Whether this lead should receive automated follow-up emails. Set to False if affiliate wants to send manual emails.
+     */
+    email_automation_enabled?: boolean;
     readonly product_title?: string;
     readonly product_subtitle?: string;
     readonly product_thumbnail?: string;

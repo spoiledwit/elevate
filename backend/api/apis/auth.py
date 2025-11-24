@@ -21,6 +21,7 @@ from ..serializers import (
     UserCurrentSerializer,
     UserProfileSerializer,
     UserProfilePublicSerializer,
+    UserProfileEmailAutomationSerializer,
     UserPermissionsSerializer,
     PasswordResetRequestSerializer,
     PasswordResetConfirmSerializer,
@@ -323,6 +324,49 @@ class UserProfileViewSet(viewsets.ReadOnlyModelViewSet):
             serializer = self.get_serializer(profile)
             return Response(serializer.data)
         return super().retrieve(request, *args, **kwargs)
+
+    @extend_schema(
+        request=UserProfileEmailAutomationSerializer,
+        responses={
+            200: {
+                'type': 'object',
+                'properties': {
+                    'message': {'type': 'string'},
+                    'email_automation_enabled': {'type': 'boolean'}
+                }
+            },
+            400: {'type': 'object', 'properties': {'error': {'type': 'string'}}},
+            404: {'type': 'object', 'properties': {'error': {'type': 'string'}}},
+        }
+    )
+    @action(detail=False, methods=['patch'], permission_classes=[IsAuthenticated])
+    def update_email_automation_default(self, request):
+        """
+        Update the default email automation preference for the user's profile.
+        This setting will be used as the default for all new leads.
+        """
+        serializer = UserProfileEmailAutomationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        enabled = serializer.validated_data['enabled']
+
+        # Get the user's profile
+        try:
+            profile = request.user.profile
+        except UserProfile.DoesNotExist:
+            return Response(
+                {'error': 'User profile not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Update the preference
+        profile.email_automation_enabled = bool(enabled)
+        profile.save(update_fields=['email_automation_enabled', 'modified_at'])
+
+        return Response({
+            'message': 'Email automation default preference updated successfully',
+            'email_automation_enabled': profile.email_automation_enabled
+        }, status=status.HTTP_200_OK)
 
 
 # --- SimpleJWT login view that uses the custom serializer ---

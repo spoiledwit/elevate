@@ -158,7 +158,7 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
                   />
                 </div>
               </div>
-            ) : ((selectedProduct.type === 'freebie' || selectedProduct.type === 'opt_in') && selectedProduct.additional_info?.embed_code && username === 'kendryahsmith') ? (
+            ) : ((selectedProduct.type === 'freebie' || selectedProduct.type === 'opt_in') && selectedProduct.additional_info?.embed_code) ? (
               // Freebie/Opt-in External Form View with parsed embed code
               (() => {
                 const embedAttrs = parseEmbedCode(selectedProduct.additional_info.embed_code)
@@ -324,7 +324,7 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
                 />
               </div>
             </div>
-          ) : ((selectedProduct.type === 'freebie' || selectedProduct.type === 'opt_in') && selectedProduct.additional_info?.embed_code && username === 'kendryahsmith') ? (
+          ) : ((selectedProduct.type === 'freebie' || selectedProduct.type === 'opt_in') && selectedProduct.additional_info?.embed_code) ? (
             // Mobile Freebie/Opt-in External Form View with parsed embed code
             (() => {
               const embedAttrs = parseEmbedCode(selectedProduct.additional_info.embed_code)

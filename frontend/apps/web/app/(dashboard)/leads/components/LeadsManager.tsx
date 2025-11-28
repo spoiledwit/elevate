@@ -16,9 +16,10 @@ import {
   ChevronRight,
   Bell,
   BellOff,
-  Trash2
+  Trash2,
+  Download
 } from 'lucide-react'
-import { getOrdersPaginatedAction, updateOrderEmailPreferenceAction, deleteOrderAction } from '@/actions/orders-action'
+import { getOrdersPaginatedAction, updateOrderEmailPreferenceAction, deleteOrderAction, getAllOrdersForExportAction } from '@/actions/orders-action'
 import { updateProfileEmailAutomationAction } from '@/actions/profile-action'
 import { toast } from 'sonner'
 
@@ -39,6 +40,7 @@ export function LeadsManager({ initialOrders, initialPage = 1, initialCount = 0,
   const [totalCount, setTotalCount] = useState(initialCount)
   const [isLoading, setIsLoading] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
   const [profileEmailAutomationEnabled, setProfileEmailAutomationEnabled] = useState(profileEmailAutomation)
 
   const pageSize = 10 // Backend default page size
@@ -186,6 +188,79 @@ export function LeadsManager({ initialOrders, initialPage = 1, initialCount = 0,
     }
   }
 
+  const handleExportCSV = async () => {
+    setIsExporting(true)
+    try {
+      const result = await getAllOrdersForExportAction()
+
+      if ('error' in result) {
+        toast.error(result.error)
+        return
+      }
+
+      const allOrders = result.orders || []
+
+      if (allOrders.length === 0) {
+        toast.error('No leads to export')
+        return
+      }
+
+      // Create CSV content
+      const headers = [
+        'Name',
+        'Email',
+        'Product',
+        'Price',
+        'Status',
+        'Email Automation',
+        'Order ID',
+        'Date'
+      ]
+
+      const rows = allOrders.map((order: any) => [
+        order.customer_name || 'N/A',
+        order.customer_email || '',
+        order.product_title || '',
+        order.checkout_price ? `$${parseFloat(order.checkout_price).toFixed(2)}` : '',
+        order.status || '',
+        order.email_automation_enabled !== false ? 'Enabled' : 'Paused',
+        order.order_id || '',
+        order.created_at ? new Date(order.created_at).toLocaleDateString() : ''
+      ])
+
+      // Escape CSV values
+      const escapeCSV = (value: string) => {
+        if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+          return `"${value.replace(/"/g, '""')}"`
+        }
+        return value
+      }
+
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(escapeCSV).join(','))
+      ].join('\n')
+
+      // Download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `leads-export-${new Date().toISOString().split('T')[0]}.csv`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+
+      toast.success(`Exported ${allOrders.length} leads to CSV`)
+    } catch (error) {
+      console.error('Error exporting leads:', error)
+      toast.error('Failed to export leads')
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
   return (
     <div className="p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -205,6 +280,24 @@ export function LeadsManager({ initialOrders, initialPage = 1, initialCount = 0,
                 </div>
               </div>
               <div className="flex items-center gap-3">
+                <button
+                  onClick={handleExportCSV}
+                  disabled={isExporting || totalCount === 0}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Download all leads as CSV"
+                >
+                  {isExporting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-gray-400 border-t-gray-700 rounded-full animate-spin" />
+                      <span>Exporting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4" />
+                      <span>Export CSV</span>
+                    </>
+                  )}
+                </button>
                 <button
                   onClick={handleToggleProfileEmailAutomation}
                   className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${

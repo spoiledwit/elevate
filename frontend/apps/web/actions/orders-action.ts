@@ -222,3 +222,40 @@ export async function bulkUpdateOrderEmailPreferenceAction(
     return { success: false, error: 'Failed to bulk update email preferences' }
   }
 }
+
+/**
+ * Get all orders for CSV export (fetches all pages)
+ */
+export async function getAllOrdersForExportAction() {
+  const session = await getServerSession(authOptions)
+
+  if (!session) {
+    return { error: 'Authentication required' }
+  }
+
+  try {
+    const apiClient = await getApiClient(session)
+    const allOrders: any[] = []
+    let page = 1
+    let hasMore = true
+
+    while (hasMore) {
+      const response = await apiClient.orders.ordersList(page)
+      if (response.results && response.results.length > 0) {
+        allOrders.push(...response.results)
+        hasMore = !!response.next
+        page++
+      } else {
+        hasMore = false
+      }
+    }
+
+    return { orders: allOrders }
+  } catch (error) {
+    console.error('Error fetching all orders for export:', error)
+    if (error instanceof ApiError) {
+      return { error: error.message }
+    }
+    return { error: 'Failed to fetch orders for export' }
+  }
+}

@@ -12,6 +12,7 @@ import digitalProductImg from '@/assets/product-types/digitalProduct.svg'
 import customProductImg from '@/assets/product-types/product.svg'
 import urlMediaImg from '@/assets/product-types/media.svg'
 import freebieImg from '@/assets/product-types/freebee.png'
+import iframeImg from '@/assets/product-types/iframe.png'
 import uploadImg from '@/assets/imgs/upload.png'
 import {
   Plus,
@@ -42,7 +43,8 @@ import {
   Phone,
   Globe,
   Settings,
-  Gift
+  Gift,
+  Code
 } from 'lucide-react'
 
 interface LinkFormProps {
@@ -153,6 +155,14 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       icon: Gift,
       color: 'bg-pink-50 border-pink-200 text-pink-600',
       image: freebieImg
+    },
+    {
+      id: 'iframe' as const,
+      title: 'Iframe Embed',
+      description: 'Embed external content in an iframe on your storefront.',
+      icon: Code,
+      color: 'bg-purple-50 border-purple-200 text-purple-600',
+      image: iframeImg
     }
   ]
 
@@ -390,6 +400,25 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       } catch (error) {
         console.error('Failed to convert checkout image to file:', error)
       }
+    }
+
+    // Auto-set fields for iframe embed
+    if (type === 'iframe') {
+      // Step 2: Basic info
+      setThumbnailPreview(iframeImg.src)
+
+      // Convert PNG to File object for thumbnail
+      try {
+        const response = await fetch(iframeImg.src)
+        const blob = await response.blob()
+        const file = new File([blob], 'iframe-thumbnail.png', { type: 'image/png' })
+        setThumbnail(file)
+      } catch (error) {
+        console.error('Failed to convert thumbnail to file:', error)
+      }
+
+      setTitle('View Embedded Content')
+      setSubtitle('Click to view the embedded content')
     }
 
     setStep(2) // Immediately go to next step
@@ -1969,7 +1998,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                     />
                   </div>
                   <p className="mt-1 text-xs text-gray-500">
-                    URL to display in iframe popup
+                    URL to embed in the iframe
                   </p>
                 </div>
               </>

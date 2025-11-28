@@ -133,7 +133,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
     {
       id: 'opt_in' as const,
       title: 'Opt In Page',
-      description: 'Add your embedded form to generate leads inside HTP Systems',
+      description: 'Add your own embedded form to generate leads inside HTP Systems',
       icon: Package,
       color: 'bg-green-50 border-green-200 text-green-600',
       image: customProductImg
@@ -141,7 +141,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
     {
       id: 'url-media' as const,
       title: 'My Links',
-      description: 'Direct links to your content, social profiles, or external resources',
+      description: 'Link to a website, affiliate link, or embed YouTube, Spotify, and other media.',
       icon: Link,
       color: 'bg-orange-50 border-orange-200 text-orange-600',
       image: urlMediaImg
@@ -149,7 +149,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
     {
       id: 'freebie' as const,
       title: 'Freebie',
-      description: 'Free digital downloads and resources for your audience',
+      description: 'Add your own freebie embed form to generate leads inside HTP Systems.',
       icon: Gift,
       color: 'bg-pink-50 border-pink-200 text-pink-600',
       image: freebieImg
@@ -407,6 +407,9 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       // Skip checkout configuration (step 3) and collect info (step 4) for url-media and iframe, go straight to step 5
       if (selectedType === 'url-media' || selectedType === 'iframe') {
         setStep(5)
+      } else if (selectedType === 'opt_in' || selectedType === 'freebie') {
+        // Skip step 3 for opt_in and freebie, go directly to step 4 (embed code)
+        setStep(4)
       } else {
         setStep(3)
       }
@@ -439,6 +442,9 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
     if (step > 1) {
       // Skip step 3 and 4 when going back from step 5 for url-media and iframe
       if (step === 5 && (selectedType === 'url-media' || selectedType === 'iframe')) {
+        setStep(2)
+      } else if (step === 4 && (selectedType === 'opt_in' || selectedType === 'freebie')) {
+        // Skip step 3 when going back from step 4 for opt_in and freebie
         setStep(2)
       } else {
         setStep(step - 1)
@@ -903,9 +909,13 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
               {link ? 'Edit Product' : 'Add New Product'}
             </h2>
             <p className="text-sm text-gray-600">
-              Step {(selectedType === 'url-media' || selectedType === 'iframe') && step === 5 ? '3' : step} of {
+              Step {
+                (selectedType === 'url-media' || selectedType === 'iframe') && step === 5 ? '3' :
+                (selectedType === 'opt_in' || selectedType === 'freebie') && step === 4 ? '3' :
+                step
+              } of {
                 (selectedType === 'url-media' || selectedType === 'iframe') ? '3' :
-                (selectedType === 'opt_in' || selectedType === 'freebie') ? '4' : '5'
+                (selectedType === 'opt_in' || selectedType === 'freebie') ? '3' : '5'
               }: {
                 step === 1 ? 'Choose your product type' :
                   step === 2 ? 'Add basic information' :
@@ -1402,7 +1412,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
               {(selectedType === 'opt_in' || selectedType === 'freebie') && (
                 <div>
                   <label htmlFor="embed-code" className="block text-sm font-semibold text-gray-900 mb-2">
-                    Embed Code <span className="text-gray-400 font-normal">(Optional)</span>
+                    Embed Code
                   </label>
                   <textarea
                     id="embed-code"

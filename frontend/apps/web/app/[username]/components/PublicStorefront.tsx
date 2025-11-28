@@ -134,6 +134,39 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
                   />
                 </div>
               </div>
+            ) : ((selectedProduct.type === 'freebie' || selectedProduct.type === 'opt_in') && username === 'kendryahsmith') ? (
+              // Freebie/Opt-in External Form View (only for kendryahsmith)
+              <div className="h-full flex flex-col">
+                {/* Back Button */}
+                <div className="p-4 border-b border-gray-200">
+                  <button
+                    onClick={handleBackToProducts}
+                    className="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center text-gray-600 hover:text-gray-900 hover:shadow-lg transition-all"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                </div>
+                {/* External Form Iframe */}
+                <div className="flex-1 p-4">
+                  <iframe
+                    src="https://api.leadconnectorhq.com/widget/form/nzL5bil2VUVFjVrHXAHq"
+                    style={{ width: '100%', height: '100%', border: 'none', borderRadius: '2px' }}
+                    id="inline-nzL5bil2VUVFjVrHXAHq"
+                    data-layout="{'id':'INLINE'}"
+                    data-trigger-type="alwaysShow"
+                    data-trigger-value=""
+                    data-activation-type="alwaysActivated"
+                    data-activation-value=""
+                    data-deactivation-type="neverDeactivate"
+                    data-deactivation-value=""
+                    data-form-name="Elevate by HTP Opt in Form [DO NOT EDIT]"
+                    data-height="1151"
+                    data-layout-iframe-id="inline-nzL5bil2VUVFjVrHXAHq"
+                    data-form-id="nzL5bil2VUVFjVrHXAHq"
+                    title="Elevate by HTP Opt in Form [DO NOT EDIT]"
+                  />
+                </div>
+              </div>
             ) : (
               // Checkout View
               <div className="h-full">
@@ -222,6 +255,41 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
                   title={selectedProduct.title || selectedProduct.text}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
+                />
+              </div>
+            </div>
+          ) : ((selectedProduct.type === 'freebie' || selectedProduct.type === 'opt_in') && username === 'kendryahsmith') ? (
+            // Mobile Freebie/Opt-in External Form View (only for kendryahsmith)
+            <div className="min-h-screen flex flex-col">
+              {/* Back Button */}
+              <div className="p-4 border-b border-gray-200 bg-white">
+                <button
+                  onClick={handleBackToProducts}
+                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Back to Products
+                </button>
+              </div>
+
+              {/* Mobile External Form Iframe */}
+              <div className="flex-1 p-4">
+                <iframe
+                  src="https://api.leadconnectorhq.com/widget/form/nzL5bil2VUVFjVrHXAHq"
+                  style={{ width: '100%', height: 'calc(100vh - 80px)', border: 'none', borderRadius: '2px' }}
+                  id="inline-nzL5bil2VUVFjVrHXAHq-mobile"
+                  data-layout="{'id':'INLINE'}"
+                  data-trigger-type="alwaysShow"
+                  data-trigger-value=""
+                  data-activation-type="alwaysActivated"
+                  data-activation-value=""
+                  data-deactivation-type="neverDeactivate"
+                  data-deactivation-value=""
+                  data-form-name="Elevate by HTP Opt in Form [DO NOT EDIT]"
+                  data-height="1151"
+                  data-layout-iframe-id="inline-nzL5bil2VUVFjVrHXAHq"
+                  data-form-id="nzL5bil2VUVFjVrHXAHq"
+                  title="Elevate by HTP Opt in Form [DO NOT EDIT]"
                 />
               </div>
             </div>

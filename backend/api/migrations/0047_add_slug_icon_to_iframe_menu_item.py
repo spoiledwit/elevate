@@ -26,11 +26,11 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # Add slug field without unique constraint first
+        # Add slug field without unique constraint and without auto index
         migrations.AddField(
             model_name='iframemenuitem',
             name='slug',
-            field=models.SlugField(default='', max_length=255, help_text='URL-friendly identifier'),
+            field=models.CharField(default='', max_length=255, help_text='URL-friendly identifier', db_index=False),
             preserve_default=False,
         ),
         # Add icon field
@@ -41,6 +41,15 @@ class Migration(migrations.Migration):
         ),
         # Populate slugs for existing records
         migrations.RunPython(populate_slugs, reverse_code=migrations.RunPython.noop),
+        # Drop any existing indexes before adding unique constraint
+        migrations.RunSQL(
+            sql="""
+                DROP INDEX IF EXISTS iframe_menu_items_slug_4306099d_like;
+                DROP INDEX IF EXISTS iframe_menu_items_slug_4306099d;
+                DROP INDEX IF EXISTS iframe_menu_items_slug_key;
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
         # Now add unique constraint
         migrations.AlterField(
             model_name='iframemenuitem',

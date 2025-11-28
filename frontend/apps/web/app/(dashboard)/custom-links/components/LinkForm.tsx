@@ -89,6 +89,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
   const [courseDuration, setCourseDuration] = useState('')
   const [mediaUrl, setMediaUrl] = useState('')
   const [buttonText, setButtonText] = useState('View Content')
+  const [embedCode, setEmbedCode] = useState('')
 
   // Collect info fields state - prefilled with name and email
   const [collectInfoFields, setCollectInfoFields] = useState<{
@@ -132,7 +133,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
     {
       id: 'opt_in' as const,
       title: 'Opt In Page',
-      description: 'Collect leads with a free download or resource in exchange for contact info',
+      description: 'Add your embedded form to generate leads inside HTP Systems',
       icon: Package,
       color: 'bg-green-50 border-green-200 text-green-600',
       image: customProductImg
@@ -212,6 +213,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         } else if (productType === 'opt_in') {
           setDigitalFileUrl(additionalInfo.digital_file_url || '')
           setDownloadInstructions(additionalInfo.download_instructions || '')
+          setEmbedCode(additionalInfo.embed_code || '')
         } else if (productType === 'url-media') {
           setMediaUrl(additionalInfo.destination_url || '')
           setButtonText(additionalInfo.button_text || 'View Content')
@@ -220,6 +222,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         } else if (productType === 'freebie') {
           setDigitalFileUrl(additionalInfo.digital_file_url || '')
           setDownloadInstructions(additionalInfo.download_instructions || '')
+          setEmbedCode(additionalInfo.embed_code || '')
         }
       }
 
@@ -392,9 +395,14 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
     setStep(2) // Immediately go to next step
   }
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   const handleContinue = () => {
     if (step === 1 && selectedType) {
       setStep(2)
+      scrollToTop()
     } else if (step === 2 && title.trim() && selectedStyle && (selectedType === 'url-media' || selectedType === 'iframe' || selectedType === 'opt_in' || selectedType === 'freebie' || checkoutPrice)) {
       // Skip checkout configuration (step 3) and collect info (step 4) for url-media and iframe, go straight to step 5
       if (selectedType === 'url-media' || selectedType === 'iframe') {
@@ -402,6 +410,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       } else {
         setStep(3)
       }
+      scrollToTop()
     } else if (step === 3) {
       // Skip collect info step (step 4) for url-media and iframe, go straight to step 5
       if (selectedType === 'url-media' || selectedType === 'iframe') {
@@ -409,10 +418,17 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       } else {
         setStep(4)
       }
+      scrollToTop()
     } else if (step === 4) {
-      // Validate collect info fields before continuing
+      // For opt_in and freebie, step 4 is the last step - no step 5
+      if (selectedType === 'opt_in' || selectedType === 'freebie') {
+        // Submit will be handled by the button directly
+        return
+      }
+      // Validate collect info fields before continuing for digital products
       if (validateCollectInfoFields()) {
         setStep(5)
+        scrollToTop()
       } else {
         toast.error('Please fix the errors in your information fields')
       }
@@ -427,6 +443,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       } else {
         setStep(step - 1)
       }
+      scrollToTop()
     } else {
       if (onClose) {
         onClose()
@@ -664,7 +681,8 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       } else if (selectedType === 'opt_in') {
         additionalInfo = {
           digital_file_url: finalDigitalFileUrl,
-          download_instructions: downloadInstructions
+          download_instructions: downloadInstructions,
+          embed_code: embedCode || undefined
         }
       } else if (selectedType === 'url-media') {
         additionalInfo = {
@@ -678,7 +696,8 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       } else if (selectedType === 'freebie') {
         additionalInfo = {
           digital_file_url: finalDigitalFileUrl,
-          download_instructions: downloadInstructions
+          download_instructions: downloadInstructions,
+          embed_code: embedCode || undefined
         }
       }
 
@@ -815,7 +834,8 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       } else if (selectedType === 'opt_in') {
         additionalInfo = {
           digital_file_url: finalDigitalFileUrl,
-          download_instructions: downloadInstructions
+          download_instructions: downloadInstructions,
+          embed_code: embedCode || undefined
         }
       } else if (selectedType === 'url-media') {
         additionalInfo = {
@@ -829,7 +849,8 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       } else if (selectedType === 'freebie') {
         additionalInfo = {
           digital_file_url: finalDigitalFileUrl,
-          download_instructions: downloadInstructions
+          download_instructions: downloadInstructions,
+          embed_code: embedCode || undefined
         }
       }
 
@@ -882,11 +903,14 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
               {link ? 'Edit Product' : 'Add New Product'}
             </h2>
             <p className="text-sm text-gray-600">
-              Step {(selectedType === 'url-media' || selectedType === 'iframe') && step === 5 ? '3' : step} of {(selectedType === 'url-media' || selectedType === 'iframe') ? '3' : '5'}: {
+              Step {(selectedType === 'url-media' || selectedType === 'iframe') && step === 5 ? '3' : step} of {
+                (selectedType === 'url-media' || selectedType === 'iframe') ? '3' :
+                (selectedType === 'opt_in' || selectedType === 'freebie') ? '4' : '5'
+              }: {
                 step === 1 ? 'Choose your product type' :
                   step === 2 ? 'Add basic information' :
                     step === 3 ? 'Configure checkout & pricing' :
-                      step === 4 ? 'Information to collect' :
+                      step === 4 ? ((selectedType === 'opt_in' || selectedType === 'freebie') ? 'Embed code' : 'Information to collect') :
                         'Product-specific details'
               }
             </p>
@@ -1191,7 +1215,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       {step === 3 && (
         <div className="p-6">
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className={`${(selectedType === 'opt_in' || selectedType === 'freebie') ? '' : 'grid grid-cols-1 lg:grid-cols-2 gap-8'}`}>
             {/* Form Column */}
             <div className="space-y-6">
               {/* Checkout Image */}
@@ -1323,23 +1347,25 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
               </div>
             </div>
 
-            {/* Preview Column */}
-            <div className="lg:sticky lg:top-6">
-              <CheckoutPreviewer
-                productType={selectedType}
-                thumbnail={checkoutImagePreview || thumbnailPreview}
-                title={title}
-                subtitle={subtitle}
-                checkoutTitle={checkoutTitle}
-                checkoutDescription={checkoutDescription}
-                checkoutBottomTitle={checkoutBottomTitle}
-                checkoutCtaButtonText={checkoutCtaButtonText}
-                price={checkoutPrice || "0.00"}
-                discountedPrice={checkoutDiscountedPrice}
-                customFields={customFields}
-                collectInfoFields={collectInfoFields}
-              />
-            </div>
+            {/* Preview Column - Hide for opt_in and freebie */}
+            {selectedType !== 'opt_in' && selectedType !== 'freebie' && (
+              <div className="lg:sticky lg:top-6">
+                <CheckoutPreviewer
+                  productType={selectedType}
+                  thumbnail={checkoutImagePreview || thumbnailPreview}
+                  title={title}
+                  subtitle={subtitle}
+                  checkoutTitle={checkoutTitle}
+                  checkoutDescription={checkoutDescription}
+                  checkoutBottomTitle={checkoutBottomTitle}
+                  checkoutCtaButtonText={checkoutCtaButtonText}
+                  price={checkoutPrice || "0.00"}
+                  discountedPrice={checkoutDiscountedPrice}
+                  customFields={customFields}
+                  collectInfoFields={collectInfoFields}
+                />
+              </div>
+            )}
           </div>
 
           {/* Form Actions */}
@@ -1364,183 +1390,211 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         </div>
       )}
 
-      {/* Step 4: Collect Info Fields Configuration - Hide for URL/Media and Iframe */}
+      {/* Step 4: Embed Form URL for Opt-In and Freebie, Collect Info Fields for Digital */}
       {step === 4 && selectedType !== 'url-media' && selectedType !== 'iframe' && (
         <div className="p-6">
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Single column for opt_in/freebie, two columns for digital */}
+          <div className={`${selectedType === 'digital' ? 'grid grid-cols-1 lg:grid-cols-2 gap-8' : ''}`}>
             {/* Form Column */}
             <div className="space-y-6">
-              {/* Fields Section */}
-              <div className="space-y-6">
-                <h4 className="text-lg font-semibold text-gray-900">Fields</h4>
-                <p className="text-sm text-gray-600">Basic info fields can't be edited</p>
-
-                {/* Fixed Name and Email Fields */}
-                <div className="space-y-3">
-                  <div className="bg-gray-50 rounded-lg p-4 flex items-center gap-4">
-                    <User className="w-5 h-5 text-gray-600" />
-                    <span className="flex-1 text-gray-900">Name</span>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-4 flex items-center gap-4">
-                    <Mail className="w-5 h-5 text-gray-600" />
-                    <span className="flex-1 text-gray-900">Email</span>
-                  </div>
+              {/* Embed Code for Opt-In and Freebie */}
+              {(selectedType === 'opt_in' || selectedType === 'freebie') && (
+                <div>
+                  <label htmlFor="embed-code" className="block text-sm font-semibold text-gray-900 mb-2">
+                    Embed Code <span className="text-gray-400 font-normal">(Optional)</span>
+                  </label>
+                  <textarea
+                    id="embed-code"
+                    value={embedCode}
+                    onChange={(e) => setEmbedCode(e.target.value)}
+                    placeholder="Paste your embed code here (e.g., <iframe src='...'></iframe>)"
+                    rows={4}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-300 resize-none font-mono text-sm"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Paste the embed code for your external form
+                  </p>
                 </div>
+              )}
 
-                {/* Custom Fields */}
-                {collectInfoFields.length > 2 && (
-                  <div className="space-y-3">
-                    <p className="text-sm text-gray-600">Collect additional customer info</p>
-                    {collectInfoFields.slice(2).map((field, index) => {
-                      const actualIndex = index + 2
-                      const fieldIcon = fieldTypeOptions.find(opt => opt.value === field.field_type)?.icon
+              {/* Collect Info Fields for Digital products only */}
+              {selectedType === 'digital' && (
+                <>
+                  {/* Fields Section */}
+                  <div className="space-y-6">
+                    <h4 className="text-lg font-semibold text-gray-900">Fields</h4>
+                    <p className="text-sm text-gray-600">Basic info fields can't be edited</p>
 
-                      return (
-                        <div key={actualIndex} className="bg-gray-50 rounded-lg p-4">
-                          {/* Field Header */}
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-4 flex-1">
-                              {fieldIcon && React.createElement(fieldIcon, { className: 'w-5 h-5 text-gray-600' })}
-                              <input
-                                type="text"
-                                value={field.label}
-                                onChange={(e) => updateCollectInfoField(actualIndex, { label: e.target.value })}
-                                className="flex-1 bg-transparent border-none text-gray-900 font-medium focus:outline-none"
-                                placeholder="Field title..."
-                              />
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <span className="text-sm text-gray-600">Required</span>
-                              <button
-                                type="button"
-                                onClick={() => updateCollectInfoField(actualIndex, { is_required: !field.is_required })}
-                                className={`w-12 h-6 rounded-full transition-colors relative ${field.is_required ? 'bg-blue-500' : 'bg-gray-300'
-                                  }`}
-                              >
-                                <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${field.is_required ? 'translate-x-6' : 'translate-x-0.5'
-                                  }`} />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => removeCollectInfoField(actualIndex)}
-                                className="p-1 text-gray-400 hover:text-red-500 transition-colors"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </div>
+                    {/* Fixed Name and Email Fields */}
+                    <div className="space-y-3">
+                      <div className="bg-gray-50 rounded-lg p-4 flex items-center gap-4">
+                        <User className="w-5 h-5 text-gray-600" />
+                        <span className="flex-1 text-gray-900">Name</span>
+                      </div>
+                      <div className="bg-gray-50 rounded-lg p-4 flex items-center gap-4">
+                        <Mail className="w-5 h-5 text-gray-600" />
+                        <span className="flex-1 text-gray-900">Email</span>
+                      </div>
+                    </div>
 
-                          {/* Options for select/checkbox/radio */}
-                          {['select', 'checkbox', 'radio'].includes(field.field_type) && (
-                            <div className="space-y-2 ml-9">
-                              {field.options?.map((option, optIndex) => (
-                                <div key={optIndex} className="flex items-center gap-3">
-                                  <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                    {/* Custom Fields */}
+                    {collectInfoFields.length > 2 && (
+                      <div className="space-y-3">
+                        <p className="text-sm text-gray-600">Collect additional customer info</p>
+                        {collectInfoFields.slice(2).map((field, index) => {
+                          const actualIndex = index + 2
+                          const fieldIcon = fieldTypeOptions.find(opt => opt.value === field.field_type)?.icon
+
+                          return (
+                            <div key={actualIndex} className="bg-gray-50 rounded-lg p-4">
+                              {/* Field Header */}
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-4 flex-1">
+                                  {fieldIcon && React.createElement(fieldIcon, { className: 'w-5 h-5 text-gray-600' })}
                                   <input
                                     type="text"
-                                    value={option}
-                                    onChange={(e) => {
-                                      const newOptions = [...(field.options || [])]
-                                      newOptions[optIndex] = e.target.value
-                                      updateCollectInfoField(actualIndex, { options: newOptions })
-                                    }}
-                                    className="flex-1 bg-transparent border-none text-gray-700 focus:outline-none"
-                                    placeholder={`Option ${optIndex + 1}`}
+                                    value={field.label}
+                                    onChange={(e) => updateCollectInfoField(actualIndex, { label: e.target.value })}
+                                    className="flex-1 bg-transparent border-none text-gray-900 font-medium focus:outline-none"
+                                    placeholder="Field title..."
                                   />
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <span className="text-sm text-gray-600">Required</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => updateCollectInfoField(actualIndex, { is_required: !field.is_required })}
+                                    className={`w-12 h-6 rounded-full transition-colors relative ${field.is_required ? 'bg-blue-500' : 'bg-gray-300'
+                                      }`}
+                                  >
+                                    <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${field.is_required ? 'translate-x-6' : 'translate-x-0.5'
+                                      }`} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeCollectInfoField(actualIndex)}
+                                    className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Options for select/checkbox/radio */}
+                              {['select', 'checkbox', 'radio'].includes(field.field_type) && (
+                                <div className="space-y-2 ml-9">
+                                  {field.options?.map((option, optIndex) => (
+                                    <div key={optIndex} className="flex items-center gap-3">
+                                      <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                                      <input
+                                        type="text"
+                                        value={option}
+                                        onChange={(e) => {
+                                          const newOptions = [...(field.options || [])]
+                                          newOptions[optIndex] = e.target.value
+                                          updateCollectInfoField(actualIndex, { options: newOptions })
+                                        }}
+                                        className="flex-1 bg-transparent border-none text-gray-700 focus:outline-none"
+                                        placeholder={`Option ${optIndex + 1}`}
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const newOptions = field.options?.filter((_, i) => i !== optIndex) || []
+                                          updateCollectInfoField(actualIndex, { options: newOptions })
+                                        }}
+                                        className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                                      >
+                                        <X className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  ))}
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      const newOptions = field.options?.filter((_, i) => i !== optIndex) || []
+                                      const newOptions = [...(field.options || []), `Option ${(field.options?.length || 0) + 1}`]
                                       updateCollectInfoField(actualIndex, { options: newOptions })
                                     }}
-                                    className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                                    className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 ml-4"
                                   >
-                                    <X className="w-3 h-3" />
+                                    <Plus className="w-3 h-3" />
+                                    Add Option
                                   </button>
                                 </div>
-                              ))}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const newOptions = [...(field.options || []), `Option ${(field.options?.length || 0) + 1}`]
-                                  updateCollectInfoField(actualIndex, { options: newOptions })
-                                }}
-                                className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 ml-4"
-                              >
-                                <Plus className="w-3 h-3" />
-                                Add Option
-                              </button>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Add Field Button */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setShowFieldTypeDropdown(!showFieldTypeDropdown)}
-                  className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-blue-300 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Field
-                </button>
-
-                {/* Field Type Dropdown */}
-                {showFieldTypeDropdown && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-10"
-                      onClick={() => setShowFieldTypeDropdown(false)}
-                    />
-                    <div className="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
-                      <div className="p-2">
-                        <div className="text-sm font-medium text-gray-700 px-3 py-2">Select field type</div>
-                        <div className="space-y-1">
-                          {fieldTypeOptions.slice(2).map((option) => (
-                            <button
-                              key={option.value}
-                              type="button"
-                              onClick={() => {
-                                addCollectInfoFieldWithType(option.value)
-                                setShowFieldTypeDropdown(false)
-                              }}
-                              className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-gray-50 rounded-md transition-colors"
-                            >
-                              <option.icon className="w-4 h-4 text-gray-600" />
-                              <span className="text-sm text-gray-900">{option.label}</span>
-                            </button>
-                          ))}
-                        </div>
+                          )
+                        })}
                       </div>
-                    </div>
-                  </>
-                )}
-              </div>
+                    )}
+                  </div>
+
+                  {/* Add Field Button */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowFieldTypeDropdown(!showFieldTypeDropdown)}
+                      className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-blue-300 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add Field
+                    </button>
+
+                    {/* Field Type Dropdown */}
+                    {showFieldTypeDropdown && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-10"
+                          onClick={() => setShowFieldTypeDropdown(false)}
+                        />
+                        <div className="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
+                          <div className="p-2">
+                            <div className="text-sm font-medium text-gray-700 px-3 py-2">Select field type</div>
+                            <div className="space-y-1">
+                              {fieldTypeOptions.slice(2).map((option) => (
+                                <button
+                                  key={option.value}
+                                  type="button"
+                                  onClick={() => {
+                                    addCollectInfoFieldWithType(option.value)
+                                    setShowFieldTypeDropdown(false)
+                                  }}
+                                  className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-gray-50 rounded-md transition-colors"
+                                >
+                                  <option.icon className="w-4 h-4 text-gray-600" />
+                                  <span className="text-sm text-gray-900">{option.label}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
 
-            {/* Preview Column */}
-            <div className="lg:sticky lg:top-6">
-              <CheckoutPreviewer
-                productType={selectedType}
-                thumbnail={checkoutImagePreview || thumbnailPreview}
-                title={title}
-                subtitle={subtitle}
-                checkoutTitle={checkoutTitle}
-                checkoutDescription={checkoutDescription}
-                checkoutBottomTitle={checkoutBottomTitle}
-                checkoutCtaButtonText={checkoutCtaButtonText}
-                price={checkoutPrice || "0.00"}
-                discountedPrice={checkoutDiscountedPrice}
-                customFields={customFields}
-                collectInfoFields={collectInfoFields}
-              />
-            </div>
+            {/* Preview Column - Only for digital products */}
+            {selectedType === 'digital' && (
+              <div className="lg:sticky lg:top-6">
+                <CheckoutPreviewer
+                  productType={selectedType}
+                  thumbnail={checkoutImagePreview || thumbnailPreview}
+                  title={title}
+                  subtitle={subtitle}
+                  checkoutTitle={checkoutTitle}
+                  checkoutDescription={checkoutDescription}
+                  checkoutBottomTitle={checkoutBottomTitle}
+                  checkoutCtaButtonText={checkoutCtaButtonText}
+                  price={checkoutPrice || "0.00"}
+                  discountedPrice={checkoutDiscountedPrice}
+                  customFields={customFields}
+                  collectInfoFields={collectInfoFields}
+                />
+              </div>
+            )}
           </div>
 
           {/* Form Actions */}
@@ -1552,14 +1606,27 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
             >
               Back
             </button>
-            <button
-              type="button"
-              onClick={handleContinue}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium"
-            >
-              Continue
-              <ArrowRight className="w-4 h-4" />
-            </button>
+            {/* For opt_in and freebie, show submit button. For digital, show continue */}
+            {(selectedType === 'opt_in' || selectedType === 'freebie') ? (
+              <button
+                type="button"
+                onClick={isEditMode ? handleUpdateProduct : handleCreateProduct}
+                disabled={isSubmitting}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+              >
+                <Plus className="w-4 h-4" />
+                {isSubmitting ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Product' : 'Create Product')}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleContinue}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium"
+              >
+                Continue
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       )}

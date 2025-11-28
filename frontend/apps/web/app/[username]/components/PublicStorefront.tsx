@@ -14,6 +14,30 @@ interface PublicStorefrontProps {
   profile: any
 }
 
+// Helper function to parse embed code and extract iframe attributes
+function parseEmbedCode(embedCode: string): Record<string, string> | null {
+  if (!embedCode || typeof embedCode !== 'string') return null
+
+  // Match iframe tag and extract attributes
+  const iframeMatch = embedCode.match(/<iframe\s+([^>]*)>/i)
+  if (!iframeMatch) return null
+
+  const attributeString = iframeMatch[1]
+  const attributes: Record<string, string> = {}
+
+  // Match all attributes (handles both single and double quotes, and unquoted values)
+  const attrRegex = /([a-zA-Z0-9_-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]*))/g
+  let match
+
+  while ((match = attrRegex.exec(attributeString)) !== null) {
+    const name = match[1]
+    const value = match[2] ?? match[3] ?? match[4] ?? ''
+    attributes[name] = value
+  }
+
+  return Object.keys(attributes).length > 0 ? attributes : null
+}
+
 export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
   const [hasTrackedView, setHasTrackedView] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<any>(null)
@@ -134,39 +158,81 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
                   />
                 </div>
               </div>
-            ) : ((selectedProduct.type === 'freebie' || selectedProduct.type === 'opt_in') && username === 'kendryahsmith') ? (
-              // Freebie/Opt-in External Form View (only for kendryahsmith)
-              <div className="h-full flex flex-col">
-                {/* Back Button */}
-                <div className="p-4 border-b border-gray-200">
-                  <button
-                    onClick={handleBackToProducts}
-                    className="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center text-gray-600 hover:text-gray-900 hover:shadow-lg transition-all"
-                  >
-                    <ArrowLeft className="w-5 h-5" />
-                  </button>
-                </div>
-                {/* External Form Iframe */}
-                <div className="flex-1 p-4">
-                  <iframe
-                    src="https://api.leadconnectorhq.com/widget/form/nzL5bil2VUVFjVrHXAHq"
-                    style={{ width: '100%', height: '100%', border: 'none', borderRadius: '2px' }}
-                    id="inline-nzL5bil2VUVFjVrHXAHq"
-                    data-layout="{'id':'INLINE'}"
-                    data-trigger-type="alwaysShow"
-                    data-trigger-value=""
-                    data-activation-type="alwaysActivated"
-                    data-activation-value=""
-                    data-deactivation-type="neverDeactivate"
-                    data-deactivation-value=""
-                    data-form-name="Elevate by HTP Opt in Form [DO NOT EDIT]"
-                    data-height="1151"
-                    data-layout-iframe-id="inline-nzL5bil2VUVFjVrHXAHq"
-                    data-form-id="nzL5bil2VUVFjVrHXAHq"
-                    title="Elevate by HTP Opt in Form [DO NOT EDIT]"
-                  />
-                </div>
-              </div>
+            ) : ((selectedProduct.type === 'freebie' || selectedProduct.type === 'opt_in') && selectedProduct.additional_info?.embed_code && username === 'kendryahsmith') ? (
+              // Freebie/Opt-in External Form View with parsed embed code
+              (() => {
+                const embedAttrs = parseEmbedCode(selectedProduct.additional_info.embed_code)
+                if (!embedAttrs || !embedAttrs.src) {
+                  // Fallback to checkout form if embed code is invalid
+                  return (
+                    <div className="h-full">
+                      <div className="flex-1 flex items-center justify-center p-8">
+                        <div className="max-w-2xl w-full relative">
+                          <div className="absolute top-6 left-6 z-10">
+                            <button
+                              onClick={handleBackToProducts}
+                              className="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center text-gray-600 hover:text-gray-900 hover:shadow-lg transition-all"
+                            >
+                              <ArrowLeft className="w-5 h-5" />
+                            </button>
+                          </div>
+                          <CheckoutForm
+                            linkId={selectedProduct.id.toString()}
+                            productType={selectedProduct.type || 'digital'}
+                            thumbnail={selectedProduct.checkout_image || selectedProduct.thumbnail}
+                            title={selectedProduct.title || selectedProduct.text}
+                            subtitle={selectedProduct.subtitle}
+                            checkoutTitle={selectedProduct.checkout_title}
+                            checkoutDescription={selectedProduct.checkout_description}
+                            checkoutBottomTitle={selectedProduct.checkout_bottom_title}
+                            checkoutCtaButtonText={selectedProduct.checkout_cta_button_text}
+                            price={selectedProduct.checkout_price}
+                            discountedPrice={selectedProduct.checkout_discounted_price}
+                            customFields={[]}
+                            collectInfoFields={selectedProduct.collect_info_fields || []}
+                            isActive={true}
+                            className="overflow-hidden"
+                            onOrderSuccess={handleOrderSuccess}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )
+                }
+                return (
+                  <div className="h-full flex flex-col">
+                    {/* Back Button */}
+                    <div className="p-4 border-b border-gray-200">
+                      <button
+                        onClick={handleBackToProducts}
+                        className="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center text-gray-600 hover:text-gray-900 hover:shadow-lg transition-all"
+                      >
+                        <ArrowLeft className="w-5 h-5" />
+                      </button>
+                    </div>
+                    {/* External Form Iframe with parsed attributes */}
+                    <div className="flex-1 p-4">
+                      <iframe
+                        src={embedAttrs.src}
+                        style={{ width: '100%', height: '100%', border: 'none', borderRadius: '2px' }}
+                        id={embedAttrs.id || undefined}
+                        data-layout={embedAttrs['data-layout'] || undefined}
+                        data-trigger-type={embedAttrs['data-trigger-type'] || undefined}
+                        data-trigger-value={embedAttrs['data-trigger-value'] || undefined}
+                        data-activation-type={embedAttrs['data-activation-type'] || undefined}
+                        data-activation-value={embedAttrs['data-activation-value'] || undefined}
+                        data-deactivation-type={embedAttrs['data-deactivation-type'] || undefined}
+                        data-deactivation-value={embedAttrs['data-deactivation-value'] || undefined}
+                        data-form-name={embedAttrs['data-form-name'] || undefined}
+                        data-height={embedAttrs['data-height'] || undefined}
+                        data-layout-iframe-id={embedAttrs['data-layout-iframe-id'] || undefined}
+                        data-form-id={embedAttrs['data-form-id'] || undefined}
+                        title={embedAttrs.title || selectedProduct.title || 'Embedded Form'}
+                      />
+                    </div>
+                  </div>
+                )
+              })()
             ) : (
               // Checkout View
               <div className="h-full">
@@ -258,41 +324,82 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
                 />
               </div>
             </div>
-          ) : ((selectedProduct.type === 'freebie' || selectedProduct.type === 'opt_in') && username === 'kendryahsmith') ? (
-            // Mobile Freebie/Opt-in External Form View (only for kendryahsmith)
-            <div className="min-h-screen flex flex-col">
-              {/* Back Button */}
-              <div className="p-4 border-b border-gray-200 bg-white">
-                <button
-                  onClick={handleBackToProducts}
-                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  Back to Products
-                </button>
-              </div>
+          ) : ((selectedProduct.type === 'freebie' || selectedProduct.type === 'opt_in') && selectedProduct.additional_info?.embed_code && username === 'kendryahsmith') ? (
+            // Mobile Freebie/Opt-in External Form View with parsed embed code
+            (() => {
+              const embedAttrs = parseEmbedCode(selectedProduct.additional_info.embed_code)
+              if (!embedAttrs || !embedAttrs.src) {
+                // Fallback to checkout form if embed code is invalid
+                return (
+                  <div className="min-h-screen flex flex-col">
+                    <div className="p-4 border-b border-gray-200 bg-white">
+                      <button
+                        onClick={handleBackToProducts}
+                        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+                      >
+                        <ArrowLeft className="w-4 h-4" />
+                        Back to Products
+                      </button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-4">
+                      <CheckoutForm
+                        linkId={selectedProduct.id.toString()}
+                        productType={selectedProduct.type || 'digital'}
+                        thumbnail={selectedProduct.checkout_image || selectedProduct.thumbnail}
+                        title={selectedProduct.title || selectedProduct.text}
+                        subtitle={selectedProduct.subtitle}
+                        checkoutTitle={selectedProduct.checkout_title}
+                        checkoutDescription={selectedProduct.checkout_description}
+                        checkoutBottomTitle={selectedProduct.checkout_bottom_title}
+                        checkoutCtaButtonText={selectedProduct.checkout_cta_button_text}
+                        price={selectedProduct.checkout_price}
+                        discountedPrice={selectedProduct.checkout_discounted_price}
+                        customFields={[]}
+                        collectInfoFields={selectedProduct.collect_info_fields || []}
+                        isActive={true}
+                        className="rounded-xl shadow-lg overflow-hidden"
+                        onOrderSuccess={handleOrderSuccess}
+                      />
+                    </div>
+                  </div>
+                )
+              }
+              return (
+                <div className="min-h-screen flex flex-col">
+                  {/* Back Button */}
+                  <div className="p-4 border-b border-gray-200 bg-white">
+                    <button
+                      onClick={handleBackToProducts}
+                      className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                      Back to Products
+                    </button>
+                  </div>
 
-              {/* Mobile External Form Iframe */}
-              <div className="flex-1 p-4">
-                <iframe
-                  src="https://api.leadconnectorhq.com/widget/form/nzL5bil2VUVFjVrHXAHq"
-                  style={{ width: '100%', height: 'calc(100vh - 80px)', border: 'none', borderRadius: '2px' }}
-                  id="inline-nzL5bil2VUVFjVrHXAHq-mobile"
-                  data-layout="{'id':'INLINE'}"
-                  data-trigger-type="alwaysShow"
-                  data-trigger-value=""
-                  data-activation-type="alwaysActivated"
-                  data-activation-value=""
-                  data-deactivation-type="neverDeactivate"
-                  data-deactivation-value=""
-                  data-form-name="Elevate by HTP Opt in Form [DO NOT EDIT]"
-                  data-height="1151"
-                  data-layout-iframe-id="inline-nzL5bil2VUVFjVrHXAHq"
-                  data-form-id="nzL5bil2VUVFjVrHXAHq"
-                  title="Elevate by HTP Opt in Form [DO NOT EDIT]"
-                />
-              </div>
-            </div>
+                  {/* Mobile External Form Iframe with parsed attributes */}
+                  <div className="flex-1 p-4">
+                    <iframe
+                      src={embedAttrs.src}
+                      style={{ width: '100%', height: 'calc(100vh - 80px)', border: 'none', borderRadius: '2px' }}
+                      id={embedAttrs.id ? `${embedAttrs.id}-mobile` : undefined}
+                      data-layout={embedAttrs['data-layout'] || undefined}
+                      data-trigger-type={embedAttrs['data-trigger-type'] || undefined}
+                      data-trigger-value={embedAttrs['data-trigger-value'] || undefined}
+                      data-activation-type={embedAttrs['data-activation-type'] || undefined}
+                      data-activation-value={embedAttrs['data-activation-value'] || undefined}
+                      data-deactivation-type={embedAttrs['data-deactivation-type'] || undefined}
+                      data-deactivation-value={embedAttrs['data-deactivation-value'] || undefined}
+                      data-form-name={embedAttrs['data-form-name'] || undefined}
+                      data-height={embedAttrs['data-height'] || undefined}
+                      data-layout-iframe-id={embedAttrs['data-layout-iframe-id'] || undefined}
+                      data-form-id={embedAttrs['data-form-id'] || undefined}
+                      title={embedAttrs.title || selectedProduct.title || 'Embedded Form'}
+                    />
+                  </div>
+                </div>
+              )
+            })()
           ) : (
             // Mobile Checkout View
             <div className="min-h-screen flex flex-col">

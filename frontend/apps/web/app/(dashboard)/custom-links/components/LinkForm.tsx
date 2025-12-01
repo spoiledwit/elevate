@@ -158,8 +158,8 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
     },
     {
       id: 'iframe' as const,
-      title: 'Iframe Embed',
-      description: 'Embed external content in an iframe on your storefront.',
+      title: 'Website Drop-In View',
+      description: 'Add any website URL and display it right inside your storefront (please see instructional video within the “Elevate Training” tab)',
       icon: Code,
       color: 'bg-purple-50 border-purple-200 text-purple-600',
       image: iframeImg
@@ -940,11 +940,11 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
             <p className="text-sm text-gray-600">
               Step {
                 (selectedType === 'url-media' || selectedType === 'iframe') && step === 5 ? '3' :
-                (selectedType === 'opt_in' || selectedType === 'freebie') && step === 4 ? '3' :
-                step
+                  (selectedType === 'opt_in' || selectedType === 'freebie') && step === 4 ? '3' :
+                    step
               } of {
                 (selectedType === 'url-media' || selectedType === 'iframe') ? '3' :
-                (selectedType === 'opt_in' || selectedType === 'freebie') ? '3' : '5'
+                  (selectedType === 'opt_in' || selectedType === 'freebie') ? '3' : '5'
               }: {
                 step === 1 ? 'Choose your product type' :
                   step === 2 ? 'Add basic information' :

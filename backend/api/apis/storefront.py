@@ -482,13 +482,47 @@ class CustomLinkViewSet(viewsets.ModelViewSet):
         print("DEBUG - CREATE method called")
         print("DEBUG - Request data:", dict(request.data))
         print("DEBUG - Content type:", request.content_type)
-        
+
         try:
             return super().create(request, *args, **kwargs)
         except Exception as e:
             print("DEBUG - Exception during create:", str(e))
             # Get serializer to check validation errors
             serializer = self.get_serializer(data=request.data)
+            if not serializer.is_valid():
+                print("DEBUG - Serializer validation errors:", serializer.errors)
+            raise
+
+    def update(self, request, *args, **kwargs):
+        print("DEBUG - UPDATE method called")
+        print("DEBUG - Request data:", dict(request.data))
+        print("DEBUG - Content type:", request.content_type)
+        print("DEBUG - Kwargs:", kwargs)
+
+        try:
+            return super().update(request, *args, **kwargs)
+        except Exception as e:
+            print("DEBUG - Exception during update:", str(e))
+            # Get serializer to check validation errors
+            instance = self.get_object()
+            serializer = self.get_serializer(instance, data=request.data, partial=kwargs.get('partial', False))
+            if not serializer.is_valid():
+                print("DEBUG - Serializer validation errors:", serializer.errors)
+            raise
+
+    def partial_update(self, request, *args, **kwargs):
+        print("DEBUG - PARTIAL_UPDATE method called")
+        print("DEBUG - Request data:", dict(request.data))
+        print("DEBUG - Content type:", request.content_type)
+        print("DEBUG - Kwargs:", kwargs)
+
+        try:
+            return super().partial_update(request, *args, **kwargs)
+        except Exception as e:
+            print("DEBUG - Exception during partial_update:", str(e))
+            # Get serializer to check validation errors
+            instance = self.get_object()
+            serializer = self.get_serializer(instance, data=request.data, partial=True)
             if not serializer.is_valid():
                 print("DEBUG - Serializer validation errors:", serializer.errors)
             raise

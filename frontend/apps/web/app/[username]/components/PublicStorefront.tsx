@@ -14,6 +14,30 @@ interface PublicStorefrontProps {
   profile: any
 }
 
+// Helper function to parse embed code and extract iframe attributes
+function parseEmbedCode(embedCode: string): Record<string, string> | null {
+  if (!embedCode || typeof embedCode !== 'string') return null
+
+  // Match iframe tag and extract attributes
+  const iframeMatch = embedCode.match(/<iframe\s+([^>]*)>/i)
+  if (!iframeMatch) return null
+
+  const attributeString = iframeMatch[1]
+  const attributes: Record<string, string> = {}
+
+  // Match all attributes (handles both single and double quotes, and unquoted values)
+  const attrRegex = /([a-zA-Z0-9_-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]*))/g
+  let match
+
+  while ((match = attrRegex.exec(attributeString)) !== null) {
+    const name = match[1]
+    const value = match[2] ?? match[3] ?? match[4] ?? ''
+    attributes[name] = value
+  }
+
+  return Object.keys(attributes).length > 0 ? attributes : null
+}
+
 export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
   const [hasTrackedView, setHasTrackedView] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<any>(null)
@@ -51,24 +75,11 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
   }
 
   const handleOrderSuccess = () => {
-    // For opt-in products, redirect to affiliate link based on program
-    if (selectedProduct?.type === 'opt_in') {
-      const optinProgram = selectedProduct?.additional_info?.optin_program || 'TCC'
-      let affiliateLink = ''
-
-      if (optinProgram === 'TWC') {
-        affiliateLink = profile?.affiliate_link || ''
-      } else {
-        // TCC or default
-        affiliateLink = profile?.creators_code || ''
-      }
-
-      if (affiliateLink) {
-        // Open affiliate link immediately (confetti already showed for 5 seconds)
-        window.open(affiliateLink, '_blank')
-      }
-
-      // Navigate back to products list
+    // For opt-in products, redirect to affiliate link if available
+    if (selectedProduct?.type === 'opt_in' && profile?.affiliate_link) {
+      // Open affiliate link immediately (confetti already showed for 5 seconds)
+      window.open(profile.affiliate_link, '_blank')
+      // Also navigate back to products list
       setSelectedProduct(null)
     } else {
       // For other products, just navigate back to products list
@@ -124,42 +135,142 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
         {/* Scrollable Products/Checkout - Right Side */}
         <div className="flex-1 ml-[35%] bg-white overflow-y-auto">
           {selectedProduct ? (
-            // Checkout View
-            <div className="h-full">
-              {/* Checkout Form - No Shadows */}
-              <div className="flex-1 flex items-center justify-center p-8">
-                <div className="max-w-2xl w-full relative">
-                  {/* Back Button - Top Left of Image */}
-                  <div className="absolute top-6 left-6 z-10">
-                    <button
-                      onClick={handleBackToProducts}
-                      className="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center text-gray-600 hover:text-gray-900 hover:shadow-lg transition-all"
-                    >
-                      <ArrowLeft className="w-5 h-5" />
-                    </button>
-                  </div>
-
-                  <CheckoutForm
-                    linkId={selectedProduct.id.toString()}
-                    productType={selectedProduct.type || 'digital'}
-                    thumbnail={selectedProduct.checkout_image || selectedProduct.thumbnail}
+            selectedProduct.type === 'iframe' ? (
+              // Iframe View
+              <div className="h-full flex flex-col">
+                {/* Back Button */}
+                <div className="p-4 border-b border-gray-200">
+                  <button
+                    onClick={handleBackToProducts}
+                    className="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center text-gray-600 hover:text-gray-900 hover:shadow-lg transition-all"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                </div>
+                {/* Iframe Content */}
+                <div className="flex-1 p-4">
+                  <iframe
+                    src={selectedProduct.additional_info?.iframe_url}
+                    className="w-full h-full rounded-lg border border-gray-200"
                     title={selectedProduct.title || selectedProduct.text}
-                    subtitle={selectedProduct.subtitle}
-                    checkoutTitle={selectedProduct.checkout_title}
-                    checkoutDescription={selectedProduct.checkout_description}
-                    checkoutBottomTitle={selectedProduct.checkout_bottom_title}
-                    checkoutCtaButtonText={selectedProduct.checkout_cta_button_text}
-                    price={selectedProduct.checkout_price}
-                    discountedPrice={selectedProduct.checkout_discounted_price}
-                    customFields={[]}
-                    collectInfoFields={selectedProduct.collect_info_fields || []}
-                    isActive={true}
-                    className="overflow-hidden"
-                    onOrderSuccess={handleOrderSuccess}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
                   />
                 </div>
               </div>
-            </div>
+            ) : ((selectedProduct.type === 'freebie' || selectedProduct.type === 'opt_in') && selectedProduct.additional_info?.embed_code) ? (
+              // Freebie/Opt-in External Form View with parsed embed code
+              (() => {
+                const embedAttrs = parseEmbedCode(selectedProduct.additional_info.embed_code)
+                if (!embedAttrs || !embedAttrs.src) {
+                  // Fallback to checkout form if embed code is invalid
+                  return (
+                    <div className="h-full">
+                      <div className="flex-1 flex items-center justify-center p-8">
+                        <div className="max-w-2xl w-full relative">
+                          <div className="absolute top-6 left-6 z-10">
+                            <button
+                              onClick={handleBackToProducts}
+                              className="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center text-gray-600 hover:text-gray-900 hover:shadow-lg transition-all"
+                            >
+                              <ArrowLeft className="w-5 h-5" />
+                            </button>
+                          </div>
+                          <CheckoutForm
+                            linkId={selectedProduct.id.toString()}
+                            productType={selectedProduct.type || 'digital'}
+                            thumbnail={selectedProduct.checkout_image || selectedProduct.thumbnail}
+                            title={selectedProduct.title || selectedProduct.text}
+                            subtitle={selectedProduct.subtitle}
+                            checkoutTitle={selectedProduct.checkout_title}
+                            checkoutDescription={selectedProduct.checkout_description}
+                            checkoutBottomTitle={selectedProduct.checkout_bottom_title}
+                            checkoutCtaButtonText={selectedProduct.checkout_cta_button_text}
+                            price={selectedProduct.checkout_price}
+                            discountedPrice={selectedProduct.checkout_discounted_price}
+                            customFields={[]}
+                            collectInfoFields={selectedProduct.collect_info_fields || []}
+                            isActive={true}
+                            className="overflow-hidden"
+                            onOrderSuccess={handleOrderSuccess}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )
+                }
+                return (
+                  <div className="h-full flex flex-col">
+                    {/* Back Button */}
+                    <div className="p-4 border-b border-gray-200">
+                      <button
+                        onClick={handleBackToProducts}
+                        className="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center text-gray-600 hover:text-gray-900 hover:shadow-lg transition-all"
+                      >
+                        <ArrowLeft className="w-5 h-5" />
+                      </button>
+                    </div>
+                    {/* External Form Iframe with parsed attributes */}
+                    <div className="flex-1 p-4">
+                      <iframe
+                        src={embedAttrs.src}
+                        style={{ width: '100%', height: '100%', border: 'none', borderRadius: '2px' }}
+                        id={embedAttrs.id || undefined}
+                        data-layout={embedAttrs['data-layout'] || undefined}
+                        data-trigger-type={embedAttrs['data-trigger-type'] || undefined}
+                        data-trigger-value={embedAttrs['data-trigger-value'] || undefined}
+                        data-activation-type={embedAttrs['data-activation-type'] || undefined}
+                        data-activation-value={embedAttrs['data-activation-value'] || undefined}
+                        data-deactivation-type={embedAttrs['data-deactivation-type'] || undefined}
+                        data-deactivation-value={embedAttrs['data-deactivation-value'] || undefined}
+                        data-form-name={embedAttrs['data-form-name'] || undefined}
+                        data-height={embedAttrs['data-height'] || undefined}
+                        data-layout-iframe-id={embedAttrs['data-layout-iframe-id'] || undefined}
+                        data-form-id={embedAttrs['data-form-id'] || undefined}
+                        title={embedAttrs.title || selectedProduct.title || 'Embedded Form'}
+                      />
+                    </div>
+                  </div>
+                )
+              })()
+            ) : (
+              // Checkout View
+              <div className="h-full">
+                {/* Checkout Form - No Shadows */}
+                <div className="flex-1 flex items-center justify-center p-8">
+                  <div className="max-w-2xl w-full relative">
+                    {/* Back Button - Top Left of Image */}
+                    <div className="absolute top-6 left-6 z-10">
+                      <button
+                        onClick={handleBackToProducts}
+                        className="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center text-gray-600 hover:text-gray-900 hover:shadow-lg transition-all"
+                      >
+                        <ArrowLeft className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    <CheckoutForm
+                      linkId={selectedProduct.id.toString()}
+                      productType={selectedProduct.type || 'digital'}
+                      thumbnail={selectedProduct.checkout_image || selectedProduct.thumbnail}
+                      title={selectedProduct.title || selectedProduct.text}
+                      subtitle={selectedProduct.subtitle}
+                      checkoutTitle={selectedProduct.checkout_title}
+                      checkoutDescription={selectedProduct.checkout_description}
+                      checkoutBottomTitle={selectedProduct.checkout_bottom_title}
+                      checkoutCtaButtonText={selectedProduct.checkout_cta_button_text}
+                      price={selectedProduct.checkout_price}
+                      discountedPrice={selectedProduct.checkout_discounted_price}
+                      customFields={[]}
+                      collectInfoFields={selectedProduct.collect_info_fields || []}
+                      isActive={true}
+                      className="overflow-hidden"
+                      onOrderSuccess={handleOrderSuccess}
+                    />
+                  </div>
+                </div>
+              </div>
+            )
           ) : (
             // Products List View
             <div className={`h-full flex justify-center p-8 pb-16 ${activeCustomLinks.length === 1 ? 'items-center' : ''}`}>
@@ -188,41 +299,144 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
       {/* Mobile Layout */}
       <div className="md:hidden">
         {selectedProduct ? (
-          // Mobile Checkout View
-          <div className="min-h-screen flex flex-col">
-            {/* Back Button */}
-            <div className="p-4 border-b border-gray-200 bg-white">
-              <button
-                onClick={handleBackToProducts}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Back to Products
-              </button>
-            </div>
+          selectedProduct.type === 'iframe' ? (
+            // Mobile Iframe View
+            <div className="min-h-screen flex flex-col">
+              {/* Back Button */}
+              <div className="p-4 border-b border-gray-200 bg-white">
+                <button
+                  onClick={handleBackToProducts}
+                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Back to Products
+                </button>
+              </div>
 
-            {/* Mobile Checkout Form */}
-            <div className="flex-1 overflow-y-auto p-4">
-              <CheckoutForm
-                linkId={selectedProduct.id.toString()}
-                productType={selectedProduct.type || 'digital'}
-                thumbnail={selectedProduct.checkout_image || selectedProduct.thumbnail}
-                title={selectedProduct.title || selectedProduct.text}
-                subtitle={selectedProduct.subtitle}
-                checkoutTitle={selectedProduct.checkout_title}
-                checkoutDescription={selectedProduct.checkout_description}
-                checkoutBottomTitle={selectedProduct.checkout_bottom_title}
-                checkoutCtaButtonText={selectedProduct.checkout_cta_button_text}
-                price={selectedProduct.checkout_price}
-                discountedPrice={selectedProduct.checkout_discounted_price}
-                customFields={[]}
-                collectInfoFields={selectedProduct.collect_info_fields || []}
-                isActive={true}
-                className="rounded-xl shadow-lg overflow-hidden"
-                onOrderSuccess={handleOrderSuccess}
-              />
+              {/* Mobile Iframe Content */}
+              <div className="flex-1 p-4">
+                <iframe
+                  src={selectedProduct.additional_info?.iframe_url}
+                  className="w-full h-[calc(100vh-80px)] rounded-lg border border-gray-200"
+                  title={selectedProduct.title || selectedProduct.text}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
             </div>
-          </div>
+          ) : ((selectedProduct.type === 'freebie' || selectedProduct.type === 'opt_in') && selectedProduct.additional_info?.embed_code) ? (
+            // Mobile Freebie/Opt-in External Form View with parsed embed code
+            (() => {
+              const embedAttrs = parseEmbedCode(selectedProduct.additional_info.embed_code)
+              if (!embedAttrs || !embedAttrs.src) {
+                // Fallback to checkout form if embed code is invalid
+                return (
+                  <div className="min-h-screen flex flex-col">
+                    <div className="p-4 border-b border-gray-200 bg-white">
+                      <button
+                        onClick={handleBackToProducts}
+                        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+                      >
+                        <ArrowLeft className="w-4 h-4" />
+                        Back to Products
+                      </button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-4">
+                      <CheckoutForm
+                        linkId={selectedProduct.id.toString()}
+                        productType={selectedProduct.type || 'digital'}
+                        thumbnail={selectedProduct.checkout_image || selectedProduct.thumbnail}
+                        title={selectedProduct.title || selectedProduct.text}
+                        subtitle={selectedProduct.subtitle}
+                        checkoutTitle={selectedProduct.checkout_title}
+                        checkoutDescription={selectedProduct.checkout_description}
+                        checkoutBottomTitle={selectedProduct.checkout_bottom_title}
+                        checkoutCtaButtonText={selectedProduct.checkout_cta_button_text}
+                        price={selectedProduct.checkout_price}
+                        discountedPrice={selectedProduct.checkout_discounted_price}
+                        customFields={[]}
+                        collectInfoFields={selectedProduct.collect_info_fields || []}
+                        isActive={true}
+                        className="rounded-xl shadow-lg overflow-hidden"
+                        onOrderSuccess={handleOrderSuccess}
+                      />
+                    </div>
+                  </div>
+                )
+              }
+              return (
+                <div className="min-h-screen flex flex-col">
+                  {/* Back Button */}
+                  <div className="p-4 border-b border-gray-200 bg-white">
+                    <button
+                      onClick={handleBackToProducts}
+                      className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                      Back to Products
+                    </button>
+                  </div>
+
+                  {/* Mobile External Form Iframe with parsed attributes */}
+                  <div className="flex-1 p-4">
+                    <iframe
+                      src={embedAttrs.src}
+                      style={{ width: '100%', height: 'calc(100vh - 80px)', border: 'none', borderRadius: '2px' }}
+                      id={embedAttrs.id ? `${embedAttrs.id}-mobile` : undefined}
+                      data-layout={embedAttrs['data-layout'] || undefined}
+                      data-trigger-type={embedAttrs['data-trigger-type'] || undefined}
+                      data-trigger-value={embedAttrs['data-trigger-value'] || undefined}
+                      data-activation-type={embedAttrs['data-activation-type'] || undefined}
+                      data-activation-value={embedAttrs['data-activation-value'] || undefined}
+                      data-deactivation-type={embedAttrs['data-deactivation-type'] || undefined}
+                      data-deactivation-value={embedAttrs['data-deactivation-value'] || undefined}
+                      data-form-name={embedAttrs['data-form-name'] || undefined}
+                      data-height={embedAttrs['data-height'] || undefined}
+                      data-layout-iframe-id={embedAttrs['data-layout-iframe-id'] || undefined}
+                      data-form-id={embedAttrs['data-form-id'] || undefined}
+                      title={embedAttrs.title || selectedProduct.title || 'Embedded Form'}
+                    />
+                  </div>
+                </div>
+              )
+            })()
+          ) : (
+            // Mobile Checkout View
+            <div className="min-h-screen flex flex-col">
+              {/* Back Button */}
+              <div className="p-4 border-b border-gray-200 bg-white">
+                <button
+                  onClick={handleBackToProducts}
+                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Back to Products
+                </button>
+              </div>
+
+              {/* Mobile Checkout Form */}
+              <div className="flex-1 overflow-y-auto p-4">
+                <CheckoutForm
+                  linkId={selectedProduct.id.toString()}
+                  productType={selectedProduct.type || 'digital'}
+                  thumbnail={selectedProduct.checkout_image || selectedProduct.thumbnail}
+                  title={selectedProduct.title || selectedProduct.text}
+                  subtitle={selectedProduct.subtitle}
+                  checkoutTitle={selectedProduct.checkout_title}
+                  checkoutDescription={selectedProduct.checkout_description}
+                  checkoutBottomTitle={selectedProduct.checkout_bottom_title}
+                  checkoutCtaButtonText={selectedProduct.checkout_cta_button_text}
+                  price={selectedProduct.checkout_price}
+                  discountedPrice={selectedProduct.checkout_discounted_price}
+                  customFields={[]}
+                  collectInfoFields={selectedProduct.collect_info_fields || []}
+                  isActive={true}
+                  className="rounded-xl shadow-lg overflow-hidden"
+                  onOrderSuccess={handleOrderSuccess}
+                />
+              </div>
+            </div>
+          )
         ) : (
           // Mobile Products List View
           <div className="max-w-sm mx-auto py-8">
@@ -249,8 +463,8 @@ export function PublicStorefront({ username, profile }: PublicStorefrontProps) {
                       title={link.title || link.text}
                       subtitle={link.subtitle}
                       displayStyle="callout"
-                      price={link.type === 'url_media' || link.type === 'opt_in' ? undefined : link.checkout_price}
-                      discountedPrice={link.type === 'url_media' || link.type === 'opt_in' ? undefined : link.checkout_discounted_price}
+                      price={link.type === 'url_media' || link.type === 'opt_in' || link.type === 'iframe' ? undefined : link.checkout_price}
+                      discountedPrice={link.type === 'url_media' || link.type === 'opt_in' || link.type === 'iframe' ? undefined : link.checkout_discounted_price}
                     />
                   </div>
                 ))}

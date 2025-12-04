@@ -12,6 +12,7 @@ import digitalProductImg from '@/assets/product-types/digitalProduct.svg'
 import customProductImg from '@/assets/product-types/product.svg'
 import urlMediaImg from '@/assets/product-types/media.svg'
 import freebieImg from '@/assets/product-types/freebee.png'
+import iframeImg from '@/assets/product-types/iframe.png'
 import uploadImg from '@/assets/imgs/upload.png'
 import {
   Plus,
@@ -42,7 +43,8 @@ import {
   Phone,
   Globe,
   Settings,
-  Gift
+  Gift,
+  Code
 } from 'lucide-react'
 
 interface LinkFormProps {
@@ -50,7 +52,7 @@ interface LinkFormProps {
   onClose?: () => void
 }
 
-type ProductType = 'digital' | 'url-media' | 'freebie' | 'opt_in' | null
+type ProductType = 'digital' | 'url-media' | 'freebie' | 'opt_in' | 'iframe' | null
 
 export function LinkForm({ link, onClose }: LinkFormProps) {
   const router = useRouter()
@@ -89,7 +91,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
   const [courseDuration, setCourseDuration] = useState('')
   const [mediaUrl, setMediaUrl] = useState('')
   const [buttonText, setButtonText] = useState('View Content')
-  const [optinProgram, setOptinProgram] = useState<'TWC' | 'TCC' | ''>('')
+  const [embedCode, setEmbedCode] = useState('')
 
   // Collect info fields state - prefilled with name and email
   const [collectInfoFields, setCollectInfoFields] = useState<{
@@ -133,7 +135,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
     {
       id: 'opt_in' as const,
       title: 'Opt In Page',
-      description: 'Collect leads with a free download or resource in exchange for contact info',
+      description: 'Add your own embedded form to generate leads inside HTP Systems',
       icon: Package,
       color: 'bg-green-50 border-green-200 text-green-600',
       image: customProductImg
@@ -141,7 +143,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
     {
       id: 'url-media' as const,
       title: 'My Links',
-      description: 'Direct links to your content, social profiles, or external resources',
+      description: 'Link to a website, affiliate link, or embed YouTube, Spotify, and other media.',
       icon: Link,
       color: 'bg-orange-50 border-orange-200 text-orange-600',
       image: urlMediaImg
@@ -149,10 +151,18 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
     {
       id: 'freebie' as const,
       title: 'Freebie',
-      description: 'Free digital downloads and resources for your audience',
+      description: 'Add your own freebie embed form to generate leads inside HTP Systems.',
       icon: Gift,
       color: 'bg-pink-50 border-pink-200 text-pink-600',
       image: freebieImg
+    },
+    {
+      id: 'iframe' as const,
+      title: 'Website Drop-In View',
+      description: 'Add any website URL and display it right inside your storefront (please see instructional video within the "Elevate Training" tab)',
+      icon: Code,
+      color: 'bg-purple-50 border-purple-200 text-purple-600',
+      image: iframeImg
     }
   ]
 
@@ -168,6 +178,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
           case 'opt_in': return 'opt_in'
           case 'url_media': return 'url-media'
           case 'freebie': return 'freebie'
+          case 'iframe': return 'iframe'
           default: return 'digital'
         }
       }
@@ -212,13 +223,16 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         } else if (productType === 'opt_in') {
           setDigitalFileUrl(additionalInfo.digital_file_url || '')
           setDownloadInstructions(additionalInfo.download_instructions || '')
-          setOptinProgram(additionalInfo.optin_program || '')
+          setEmbedCode(additionalInfo.embed_code || '')
         } else if (productType === 'url-media') {
           setMediaUrl(additionalInfo.destination_url || '')
           setButtonText(additionalInfo.button_text || 'View Content')
+        } else if (productType === 'iframe') {
+          setMediaUrl(additionalInfo.iframe_url || '')
         } else if (productType === 'freebie') {
           setDigitalFileUrl(additionalInfo.digital_file_url || '')
           setDownloadInstructions(additionalInfo.download_instructions || '')
+          setEmbedCode(additionalInfo.embed_code || '')
         }
       }
 
@@ -388,30 +402,65 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       }
     }
 
+    // Auto-set fields for iframe embed
+    if (type === 'iframe') {
+      // Step 2: Basic info
+      setThumbnailPreview(iframeImg.src)
+
+      // Convert PNG to File object for thumbnail
+      try {
+        const response = await fetch(iframeImg.src)
+        const blob = await response.blob()
+        const file = new File([blob], 'iframe-thumbnail.png', { type: 'image/png' })
+        setThumbnail(file)
+      } catch (error) {
+        console.error('Failed to convert thumbnail to file:', error)
+      }
+
+      setTitle('View Embedded Content')
+      setSubtitle('Click to view the embedded content')
+    }
+
     setStep(2) // Immediately go to next step
+  }
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handleContinue = () => {
     if (step === 1 && selectedType) {
       setStep(2)
-    } else if (step === 2 && title.trim() && selectedStyle && (selectedType === 'url-media' || selectedType === 'opt_in' || selectedType === 'freebie' || checkoutPrice)) {
-      // Skip checkout configuration (step 3) and collect info (step 4) for url-media, go straight to step 5
-      if (selectedType === 'url-media') {
+      scrollToTop()
+    } else if (step === 2 && title.trim() && selectedStyle && (selectedType === 'url-media' || selectedType === 'iframe' || selectedType === 'opt_in' || selectedType === 'freebie' || checkoutPrice)) {
+      // Skip checkout configuration (step 3) and collect info (step 4) for url-media and iframe, go straight to step 5
+      if (selectedType === 'url-media' || selectedType === 'iframe') {
         setStep(5)
+      } else if (selectedType === 'opt_in' || selectedType === 'freebie') {
+        // Skip step 3 for opt_in and freebie, go directly to step 4 (embed code)
+        setStep(4)
       } else {
         setStep(3)
       }
+      scrollToTop()
     } else if (step === 3) {
-      // Skip collect info step (step 4) for url-media, go straight to step 5
-      if (selectedType === 'url-media') {
+      // Skip collect info step (step 4) for url-media and iframe, go straight to step 5
+      if (selectedType === 'url-media' || selectedType === 'iframe') {
         setStep(5)
       } else {
         setStep(4)
       }
+      scrollToTop()
     } else if (step === 4) {
-      // Validate collect info fields before continuing
+      // For opt_in and freebie, step 4 is the last step - no step 5
+      if (selectedType === 'opt_in' || selectedType === 'freebie') {
+        // Submit will be handled by the button directly
+        return
+      }
+      // Validate collect info fields before continuing for digital products
       if (validateCollectInfoFields()) {
         setStep(5)
+        scrollToTop()
       } else {
         toast.error('Please fix the errors in your information fields')
       }
@@ -420,12 +469,16 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
 
   const handleBack = () => {
     if (step > 1) {
-      // Skip step 3 and 4 when going back from step 5 for url-media
-      if (step === 5 && selectedType === 'url-media') {
+      // Skip step 3 and 4 when going back from step 5 for url-media and iframe
+      if (step === 5 && (selectedType === 'url-media' || selectedType === 'iframe')) {
+        setStep(2)
+      } else if (step === 4 && (selectedType === 'opt_in' || selectedType === 'freebie')) {
+        // Skip step 3 when going back from step 4 for opt_in and freebie
         setStep(2)
       } else {
         setStep(step - 1)
       }
+      scrollToTop()
     } else {
       if (onClose) {
         onClose()
@@ -647,6 +700,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
           case 'opt_in': return 'opt_in'
           case 'url-media': return 'url_media'
           case 'freebie': return 'freebie'
+          case 'iframe': return 'iframe'
           default: return 'generic'
         }
       }
@@ -663,17 +717,22 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         additionalInfo = {
           digital_file_url: finalDigitalFileUrl,
           download_instructions: downloadInstructions,
-          optin_program: optinProgram
+          embed_code: embedCode || undefined
         }
       } else if (selectedType === 'url-media') {
         additionalInfo = {
           destination_url: mediaUrl,
           button_text: buttonText
         }
+      } else if (selectedType === 'iframe') {
+        additionalInfo = {
+          iframe_url: mediaUrl
+        }
       } else if (selectedType === 'freebie') {
         additionalInfo = {
           digital_file_url: finalDigitalFileUrl,
-          download_instructions: downloadInstructions
+          download_instructions: downloadInstructions,
+          embed_code: embedCode || undefined
         }
       }
 
@@ -710,9 +769,9 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         const result = await updateCustomLinkWithFileAction(link.id.toString(), formData)
 
         if (result.error) {
-          toast.error(`Failed to update listing: ${result.error}`)
+          toast.error(`Failed to update product: ${result.error}`)
         } else {
-          toast.success('Listing updated successfully!')
+          toast.success('Product updated successfully!')
           if (onClose) {
             onClose()
           } else {
@@ -740,9 +799,9 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         const result = await updateCustomLinkAction(link.id.toString(), updateData)
 
         if ('error' in result) {
-          toast.error(`Failed to update listing: ${result.error}`)
+          toast.error(`Failed to update product: ${result.error}`)
         } else {
-          toast.success('Listing updated successfully!')
+          toast.success('Product updated successfully!')
           if (onClose) {
             onClose()
           } else {
@@ -752,7 +811,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       }
 
     } catch (error) {
-      console.error('Error updating listing:', error)
+      console.error('Error updating product:', error)
       toast.error('An unexpected error occurred')
     } finally {
       setIsSubmitting(false)
@@ -794,6 +853,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
           case 'opt_in': return 'opt_in'
           case 'url-media': return 'url_media'
           case 'freebie': return 'freebie'
+          case 'iframe': return 'iframe'
           default: return 'generic'
         }
       }
@@ -810,17 +870,22 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         additionalInfo = {
           digital_file_url: finalDigitalFileUrl,
           download_instructions: downloadInstructions,
-          optin_program: optinProgram
+          embed_code: embedCode || undefined
         }
       } else if (selectedType === 'url-media') {
         additionalInfo = {
           destination_url: mediaUrl,
           button_text: buttonText
         }
+      } else if (selectedType === 'iframe') {
+        additionalInfo = {
+          iframe_url: mediaUrl
+        }
       } else if (selectedType === 'freebie') {
         additionalInfo = {
           digital_file_url: finalDigitalFileUrl,
-          download_instructions: downloadInstructions
+          download_instructions: downloadInstructions,
+          embed_code: embedCode || undefined
         }
       }
 
@@ -849,14 +914,14 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
       const result = await createNewProductAction(productData)
 
       if (result.error) {
-        toast.error(`Failed to create listing: ${result.error}`)
+        toast.error(`Failed to create product: ${result.error}`)
       } else {
-        toast.success('Listing created successfully!')
+        toast.success('Product created successfully!')
         router.push('/custom-links')
       }
 
     } catch (error) {
-      console.error('Error creating listing:', error)
+      console.error('Error creating product:', error)
       toast.error('An unexpected error occurred')
     } finally {
       setIsSubmitting(false)
@@ -870,15 +935,22 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         <div className="flex items-center gap-3">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">
-              {link ? 'Edit Listing' : 'Add New Listing'}
+              {link ? 'Edit Product' : 'Add New Product'}
             </h2>
             <p className="text-sm text-gray-600">
-              Step {selectedType === 'url-media' && step === 5 ? '3' : step} of {selectedType === 'url-media' ? '3' : '5'}: {
-                step === 1 ? 'Choose your listing type' :
+              Step {
+                (selectedType === 'url-media' || selectedType === 'iframe') && step === 5 ? '3' :
+                  (selectedType === 'opt_in' || selectedType === 'freebie') && step === 4 ? '3' :
+                    step
+              } of {
+                (selectedType === 'url-media' || selectedType === 'iframe') ? '3' :
+                  (selectedType === 'opt_in' || selectedType === 'freebie') ? '3' : '5'
+              }: {
+                step === 1 ? 'Choose your product type' :
                   step === 2 ? 'Add basic information' :
                     step === 3 ? 'Configure checkout & pricing' :
-                      step === 4 ? 'Information to collect' :
-                        'Listing-specific details'
+                      step === 4 ? ((selectedType === 'opt_in' || selectedType === 'freebie') ? 'Embed code' : 'Information to collect') :
+                        'Product-specific details'
               }
             </p>
           </div>
@@ -942,7 +1014,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
               {/* Thumbnail Upload */}
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Listing Thumbnail
+                  Product Thumbnail
                 </label>
 
                 {thumbnailPreview ? (
@@ -992,14 +1064,14 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
               {/* Title Field */}
               <div>
                 <label htmlFor="title" className="block text-sm font-semibold text-gray-900 mb-2">
-                  Listing Title
+                  Product Title
                 </label>
                 <input
                   type="text"
                   id="title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Enter a catchy title for your listing"
+                  placeholder="Enter a catchy title for your product"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-300"
                   maxLength={100}
                 />
@@ -1011,7 +1083,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
               {/* Subtitle Field */}
               <div>
                 <label htmlFor="subtitle" className="block text-sm font-semibold text-gray-900 mb-2">
-                  Listing Subtitle <span className="text-gray-400 font-normal">(Optional)</span>
+                  Product Subtitle <span className="text-gray-400 font-normal">(Optional)</span>
                 </label>
                 <input
                   type="text"
@@ -1085,8 +1157,8 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                 </div>
               </div>
 
-              {/* Pricing Section - Hide for Opt-In, Freebie, and URL/Media */}
-              {selectedType !== 'opt_in' && selectedType !== 'freebie' && selectedType !== 'url-media' && (
+              {/* Pricing Section - Hide for Opt-In, Freebie, URL/Media, and Iframe */}
+              {selectedType !== 'opt_in' && selectedType !== 'freebie' && selectedType !== 'url-media' && selectedType !== 'iframe' && (
                 <div>
                   <label className="block text-sm font-semibold text-gray-900 mb-3">
                     Pricing
@@ -1168,7 +1240,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
             <button
               type="button"
               onClick={handleContinue}
-              disabled={!title.trim() || !selectedStyle || !checkoutPrice}
+              disabled={!title.trim() || !selectedStyle || (!checkoutPrice && selectedType !== 'url-media' && selectedType !== 'iframe' && selectedType !== 'opt_in' && selectedType !== 'freebie')}
               className={`${!(isEditMode && step === 2) ? 'flex-1' : 'w-full'} flex items-center justify-center gap-2 px-4 py-3 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium`}
             >
               Continue
@@ -1260,7 +1332,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
               {/* Checkout Description */}
               <div>
                 <label htmlFor="checkout-description" className="block text-sm font-semibold text-gray-900 mb-2">
-                  Listing Description
+                  Product Description
                 </label>
                 <div className="border border-gray-300 rounded-lg overflow-hidden">
                   <TinyMCEEditor
@@ -1355,183 +1427,211 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
         </div>
       )}
 
-      {/* Step 4: Collect Info Fields Configuration - Hide for URL/Media */}
-      {step === 4 && selectedType !== 'url-media' && (
+      {/* Step 4: Embed Form URL for Opt-In and Freebie, Collect Info Fields for Digital */}
+      {step === 4 && selectedType !== 'url-media' && selectedType !== 'iframe' && (
         <div className="p-6">
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Single column for opt_in/freebie, two columns for digital */}
+          <div className={`${selectedType === 'digital' ? 'grid grid-cols-1 lg:grid-cols-2 gap-8' : ''}`}>
             {/* Form Column */}
             <div className="space-y-6">
-              {/* Fields Section */}
-              <div className="space-y-6">
-                <h4 className="text-lg font-semibold text-gray-900">Fields</h4>
-                <p className="text-sm text-gray-600">Basic info fields can't be edited</p>
-
-                {/* Fixed Name and Email Fields */}
-                <div className="space-y-3">
-                  <div className="bg-gray-50 rounded-lg p-4 flex items-center gap-4">
-                    <User className="w-5 h-5 text-gray-600" />
-                    <span className="flex-1 text-gray-900">Name</span>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-4 flex items-center gap-4">
-                    <Mail className="w-5 h-5 text-gray-600" />
-                    <span className="flex-1 text-gray-900">Email</span>
-                  </div>
+              {/* Embed Code for Opt-In and Freebie */}
+              {(selectedType === 'opt_in' || selectedType === 'freebie') && (
+                <div>
+                  <label htmlFor="embed-code" className="block text-sm font-semibold text-gray-900 mb-2">
+                    Embed Code
+                  </label>
+                  <textarea
+                    id="embed-code"
+                    value={embedCode}
+                    onChange={(e) => setEmbedCode(e.target.value)}
+                    placeholder="Paste your embed code here (e.g., <iframe src='...'></iframe>)"
+                    rows={4}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-300 resize-none font-mono text-sm"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Paste the embed code for your external form
+                  </p>
                 </div>
+              )}
 
-                {/* Custom Fields */}
-                {collectInfoFields.length > 2 && (
-                  <div className="space-y-3">
-                    <p className="text-sm text-gray-600">Collect additional customer info</p>
-                    {collectInfoFields.slice(2).map((field, index) => {
-                      const actualIndex = index + 2
-                      const fieldIcon = fieldTypeOptions.find(opt => opt.value === field.field_type)?.icon
+              {/* Collect Info Fields for Digital products only */}
+              {selectedType === 'digital' && (
+                <>
+                  {/* Fields Section */}
+                  <div className="space-y-6">
+                    <h4 className="text-lg font-semibold text-gray-900">Fields</h4>
+                    <p className="text-sm text-gray-600">Basic info fields can't be edited</p>
 
-                      return (
-                        <div key={actualIndex} className="bg-gray-50 rounded-lg p-4">
-                          {/* Field Header */}
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-4 flex-1">
-                              {fieldIcon && React.createElement(fieldIcon, { className: 'w-5 h-5 text-gray-600' })}
-                              <input
-                                type="text"
-                                value={field.label}
-                                onChange={(e) => updateCollectInfoField(actualIndex, { label: e.target.value })}
-                                className="flex-1 bg-transparent border-none text-gray-900 font-medium focus:outline-none"
-                                placeholder="Field title..."
-                              />
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <span className="text-sm text-gray-600">Required</span>
-                              <button
-                                type="button"
-                                onClick={() => updateCollectInfoField(actualIndex, { is_required: !field.is_required })}
-                                className={`w-12 h-6 rounded-full transition-colors relative ${field.is_required ? 'bg-blue-500' : 'bg-gray-300'
-                                  }`}
-                              >
-                                <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${field.is_required ? 'translate-x-6' : 'translate-x-0.5'
-                                  }`} />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => removeCollectInfoField(actualIndex)}
-                                className="p-1 text-gray-400 hover:text-red-500 transition-colors"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </div>
+                    {/* Fixed Name and Email Fields */}
+                    <div className="space-y-3">
+                      <div className="bg-gray-50 rounded-lg p-4 flex items-center gap-4">
+                        <User className="w-5 h-5 text-gray-600" />
+                        <span className="flex-1 text-gray-900">Name</span>
+                      </div>
+                      <div className="bg-gray-50 rounded-lg p-4 flex items-center gap-4">
+                        <Mail className="w-5 h-5 text-gray-600" />
+                        <span className="flex-1 text-gray-900">Email</span>
+                      </div>
+                    </div>
 
-                          {/* Options for select/checkbox/radio */}
-                          {['select', 'checkbox', 'radio'].includes(field.field_type) && (
-                            <div className="space-y-2 ml-9">
-                              {field.options?.map((option, optIndex) => (
-                                <div key={optIndex} className="flex items-center gap-3">
-                                  <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                    {/* Custom Fields */}
+                    {collectInfoFields.length > 2 && (
+                      <div className="space-y-3">
+                        <p className="text-sm text-gray-600">Collect additional customer info</p>
+                        {collectInfoFields.slice(2).map((field, index) => {
+                          const actualIndex = index + 2
+                          const fieldIcon = fieldTypeOptions.find(opt => opt.value === field.field_type)?.icon
+
+                          return (
+                            <div key={actualIndex} className="bg-gray-50 rounded-lg p-4">
+                              {/* Field Header */}
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-4 flex-1">
+                                  {fieldIcon && React.createElement(fieldIcon, { className: 'w-5 h-5 text-gray-600' })}
                                   <input
                                     type="text"
-                                    value={option}
-                                    onChange={(e) => {
-                                      const newOptions = [...(field.options || [])]
-                                      newOptions[optIndex] = e.target.value
-                                      updateCollectInfoField(actualIndex, { options: newOptions })
-                                    }}
-                                    className="flex-1 bg-transparent border-none text-gray-700 focus:outline-none"
-                                    placeholder={`Option ${optIndex + 1}`}
+                                    value={field.label}
+                                    onChange={(e) => updateCollectInfoField(actualIndex, { label: e.target.value })}
+                                    className="flex-1 bg-transparent border-none text-gray-900 font-medium focus:outline-none"
+                                    placeholder="Field title..."
                                   />
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <span className="text-sm text-gray-600">Required</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => updateCollectInfoField(actualIndex, { is_required: !field.is_required })}
+                                    className={`w-12 h-6 rounded-full transition-colors relative ${field.is_required ? 'bg-blue-500' : 'bg-gray-300'
+                                      }`}
+                                  >
+                                    <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${field.is_required ? 'translate-x-6' : 'translate-x-0.5'
+                                      }`} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeCollectInfoField(actualIndex)}
+                                    className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Options for select/checkbox/radio */}
+                              {['select', 'checkbox', 'radio'].includes(field.field_type) && (
+                                <div className="space-y-2 ml-9">
+                                  {field.options?.map((option, optIndex) => (
+                                    <div key={optIndex} className="flex items-center gap-3">
+                                      <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                                      <input
+                                        type="text"
+                                        value={option}
+                                        onChange={(e) => {
+                                          const newOptions = [...(field.options || [])]
+                                          newOptions[optIndex] = e.target.value
+                                          updateCollectInfoField(actualIndex, { options: newOptions })
+                                        }}
+                                        className="flex-1 bg-transparent border-none text-gray-700 focus:outline-none"
+                                        placeholder={`Option ${optIndex + 1}`}
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const newOptions = field.options?.filter((_, i) => i !== optIndex) || []
+                                          updateCollectInfoField(actualIndex, { options: newOptions })
+                                        }}
+                                        className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                                      >
+                                        <X className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  ))}
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      const newOptions = field.options?.filter((_, i) => i !== optIndex) || []
+                                      const newOptions = [...(field.options || []), `Option ${(field.options?.length || 0) + 1}`]
                                       updateCollectInfoField(actualIndex, { options: newOptions })
                                     }}
-                                    className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                                    className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 ml-4"
                                   >
-                                    <X className="w-3 h-3" />
+                                    <Plus className="w-3 h-3" />
+                                    Add Option
                                   </button>
                                 </div>
-                              ))}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const newOptions = [...(field.options || []), `Option ${(field.options?.length || 0) + 1}`]
-                                  updateCollectInfoField(actualIndex, { options: newOptions })
-                                }}
-                                className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 ml-4"
-                              >
-                                <Plus className="w-3 h-3" />
-                                Add Option
-                              </button>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Add Field Button */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setShowFieldTypeDropdown(!showFieldTypeDropdown)}
-                  className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-blue-300 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Field
-                </button>
-
-                {/* Field Type Dropdown */}
-                {showFieldTypeDropdown && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-10"
-                      onClick={() => setShowFieldTypeDropdown(false)}
-                    />
-                    <div className="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
-                      <div className="p-2">
-                        <div className="text-sm font-medium text-gray-700 px-3 py-2">Select field type</div>
-                        <div className="space-y-1">
-                          {fieldTypeOptions.slice(2).map((option) => (
-                            <button
-                              key={option.value}
-                              type="button"
-                              onClick={() => {
-                                addCollectInfoFieldWithType(option.value)
-                                setShowFieldTypeDropdown(false)
-                              }}
-                              className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-gray-50 rounded-md transition-colors"
-                            >
-                              <option.icon className="w-4 h-4 text-gray-600" />
-                              <span className="text-sm text-gray-900">{option.label}</span>
-                            </button>
-                          ))}
-                        </div>
+                          )
+                        })}
                       </div>
-                    </div>
-                  </>
-                )}
-              </div>
+                    )}
+                  </div>
+
+                  {/* Add Field Button */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowFieldTypeDropdown(!showFieldTypeDropdown)}
+                      className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-blue-300 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add Field
+                    </button>
+
+                    {/* Field Type Dropdown */}
+                    {showFieldTypeDropdown && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-10"
+                          onClick={() => setShowFieldTypeDropdown(false)}
+                        />
+                        <div className="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
+                          <div className="p-2">
+                            <div className="text-sm font-medium text-gray-700 px-3 py-2">Select field type</div>
+                            <div className="space-y-1">
+                              {fieldTypeOptions.slice(2).map((option) => (
+                                <button
+                                  key={option.value}
+                                  type="button"
+                                  onClick={() => {
+                                    addCollectInfoFieldWithType(option.value)
+                                    setShowFieldTypeDropdown(false)
+                                  }}
+                                  className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-gray-50 rounded-md transition-colors"
+                                >
+                                  <option.icon className="w-4 h-4 text-gray-600" />
+                                  <span className="text-sm text-gray-900">{option.label}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
 
-            {/* Preview Column */}
-            <div className="lg:sticky lg:top-6">
-              <CheckoutPreviewer
-                productType={selectedType}
-                thumbnail={checkoutImagePreview || thumbnailPreview}
-                title={title}
-                subtitle={subtitle}
-                checkoutTitle={checkoutTitle}
-                checkoutDescription={checkoutDescription}
-                checkoutBottomTitle={checkoutBottomTitle}
-                checkoutCtaButtonText={checkoutCtaButtonText}
-                price={checkoutPrice || "0.00"}
-                discountedPrice={checkoutDiscountedPrice}
-                customFields={customFields}
-                collectInfoFields={collectInfoFields}
-              />
-            </div>
+            {/* Preview Column - Only for digital products */}
+            {selectedType === 'digital' && (
+              <div className="lg:sticky lg:top-6">
+                <CheckoutPreviewer
+                  productType={selectedType}
+                  thumbnail={checkoutImagePreview || thumbnailPreview}
+                  title={title}
+                  subtitle={subtitle}
+                  checkoutTitle={checkoutTitle}
+                  checkoutDescription={checkoutDescription}
+                  checkoutBottomTitle={checkoutBottomTitle}
+                  checkoutCtaButtonText={checkoutCtaButtonText}
+                  price={checkoutPrice || "0.00"}
+                  discountedPrice={checkoutDiscountedPrice}
+                  customFields={customFields}
+                  collectInfoFields={collectInfoFields}
+                />
+              </div>
+            )}
           </div>
 
           {/* Form Actions */}
@@ -1543,19 +1643,32 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
             >
               Back
             </button>
-            <button
-              type="button"
-              onClick={handleContinue}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium"
-            >
-              Continue
-              <ArrowRight className="w-4 h-4" />
-            </button>
+            {/* For opt_in and freebie, show submit button. For digital, show continue */}
+            {(selectedType === 'opt_in' || selectedType === 'freebie') ? (
+              <button
+                type="button"
+                onClick={isEditMode ? handleUpdateProduct : handleCreateProduct}
+                disabled={isSubmitting}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+              >
+                <Plus className="w-4 h-4" />
+                {isSubmitting ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Product' : 'Create Product')}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleContinue}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium"
+              >
+                Continue
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       )}
 
-      {/* Step 5: Product-Specific Details */}
+      {/* Step 5: Product-Specific Details - Only for digital, url-media, and iframe */}
       {step === 5 && (
         <div className="p-6">
           {/* Only show header for non-digital products */}
@@ -1571,133 +1684,8 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
           )}
 
           <div className="space-y-6">
-            {/* Freebie Fields */}
-            {selectedType === 'freebie' && (
-              <>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2">
-                    Free Download File <span className="text-red-500">*</span>
-                  </label>
-
-                  {/* Upload Option */}
-                  <div className="mb-4">
-                    {digitalFile || digitalFileUrl ? (
-                      <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-                        <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <img src={uploadImg.src} alt="Upload" className="w-7 h-7" />
-                        </div>
-                        <div className="flex-1">
-                          {digitalFile ? (
-                            <>
-                              <p className="text-sm font-medium text-gray-900">{digitalFileName || digitalFile.name}</p>
-                              <p className="text-xs text-gray-600 mt-1">Free download ready to upload</p>
-                            </>
-                          ) : (
-                            <>
-                              <p className="text-sm font-medium text-gray-900">Download link set</p>
-                              <p className="text-xs text-gray-600 mt-1 truncate">{digitalFileUrl}</p>
-                            </>
-                          )}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setDigitalFile(null)
-                            setDigitalFileName('')
-                            setDigitalFileUrl('')
-                            if (digitalFileInputRef.current) {
-                              digitalFileInputRef.current.value = ''
-                            }
-                          }}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div
-                        onClick={() => digitalFileInputRef.current?.click()}
-                        className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-pink-400 hover:bg-pink-50 transition-colors"
-                      >
-                        <img src={uploadImg.src} alt="Upload" className="w-12 h-12 mx-auto mb-2" />
-                        <p className="text-sm font-medium text-gray-900">
-                          Click to upload your free download file
-                        </p>
-                      </div>
-                    )}
-
-                    <input
-                      ref={digitalFileInputRef}
-                      type="file"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0]
-                        if (file) {
-                          setDigitalFile(file)
-                          setDigitalFileName(file.name)
-                          setDigitalFileUrl('') // Clear URL when file is selected
-                        }
-                      }}
-                      className="hidden"
-                      accept="*/*"
-                    />
-                  </div>
-
-                  {/* OR Divider */}
-                  <div className="relative mb-4">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t border-gray-300" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-white px-2 text-gray-500">Or enter URL directly</span>
-                    </div>
-                  </div>
-
-                  {/* URL Input */}
-                  <div>
-                    <div className="relative">
-                      <ExternalLink className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input
-                        type="url"
-                        id="freebie-file-url"
-                        value={digitalFileUrl}
-                        onChange={(e) => {
-                          setDigitalFileUrl(e.target.value)
-                          setDigitalFile(null) // Clear file when URL is entered
-                          setDigitalFileName('')
-                        }}
-                        placeholder="https://example.com/download/free-resource.pdf"
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-300"
-                        disabled={!!digitalFile}
-                      />
-                    </div>
-                    <p className="mt-1 text-xs text-gray-500">
-                      Direct link to the free downloadable file
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="freebie-instructions" className="block text-sm font-semibold text-gray-900 mb-2">
-                    Download Instructions <span className="text-gray-400 font-normal">(Optional)</span>
-                  </label>
-                  <textarea
-                    id="freebie-instructions"
-                    value={downloadInstructions}
-                    onChange={(e) => setDownloadInstructions(e.target.value)}
-                    placeholder="Click the download button to get instant access to your free resource..."
-                    rows={3}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-300 resize-none"
-                    maxLength={300}
-                  />
-                  <p className="mt-1 text-xs text-gray-500">
-                    {downloadInstructions.length}/300 characters
-                  </p>
-                </div>
-              </>
-            )}
-
             {/* Digital Product Fields */}
-            {(selectedType === 'digital' || selectedType === 'opt_in') && (
+            {selectedType === 'digital' && (
               <>
                 <div>
                   <label className="block text-sm font-semibold text-gray-900 mb-2">
@@ -1818,68 +1806,6 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                     {downloadInstructions.length}/300 characters
                   </p>
                 </div>
-
-                {/* Opt-in Program Selection - Only for opt_in */}
-                {selectedType === 'opt_in' && (
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-2">
-                      Select Program <span className="text-red-500">*</span>
-                    </label>
-                    <p className="text-xs text-gray-600 mb-3">
-                      Choose which program this opt-in is for
-                    </p>
-                    <div className="space-y-3">
-                      <button
-                        type="button"
-                        onClick={() => setOptinProgram('TWC')}
-                        className={`w-full flex items-center gap-3 p-4 border-2 rounded-lg transition-all duration-200 ${
-                          optinProgram === 'TWC'
-                            ? 'border-green-500 bg-green-50'
-                            : 'border-gray-300 hover:border-gray-400'
-                        }`}
-                      >
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          optinProgram === 'TWC' ? 'border-green-500' : 'border-gray-300'
-                        }`}>
-                          {optinProgram === 'TWC' && (
-                            <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                          )}
-                        </div>
-                        <div className="flex-1 text-left">
-                          <p className="font-semibold text-gray-900">TWC</p>
-                          <p className="text-sm text-gray-600">The Wealth Creator</p>
-                        </div>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setOptinProgram('TCC')}
-                        className={`w-full flex items-center gap-3 p-4 border-2 rounded-lg transition-all duration-200 ${
-                          optinProgram === 'TCC'
-                            ? 'border-green-500 bg-green-50'
-                            : 'border-gray-300 hover:border-gray-400'
-                        }`}
-                      >
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          optinProgram === 'TCC' ? 'border-green-500' : 'border-gray-300'
-                        }`}>
-                          {optinProgram === 'TCC' && (
-                            <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                          )}
-                        </div>
-                        <div className="flex-1 text-left">
-                          <p className="font-semibold text-gray-900">TCC</p>
-                          <p className="text-sm text-gray-600">The Creators Code</p>
-                        </div>
-                      </button>
-                    </div>
-                    {!optinProgram && (
-                      <p className="mt-2 text-xs text-red-600">
-                        Please select a program to continue
-                      </p>
-                    )}
-                  </div>
-                )}
               </>
             )}
 
@@ -1925,6 +1851,29 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
                 </div>
               </>
             )}
+
+            {/* iframe Fields */}
+            {selectedType === 'iframe' && (
+              <div>
+                <label htmlFor="iframe-url" className="block text-sm font-semibold text-gray-900 mb-2">
+                  Website URL <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <ExternalLink className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="url"
+                    id="iframe-url"
+                    value={mediaUrl}
+                    onChange={(e) => setMediaUrl(e.target.value)}
+                    placeholder="https://example.com"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-300"
+                  />
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  Enter the URL of the website you want to embed
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Form Actions */}
@@ -1942,14 +1891,13 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
               disabled={
                 isSubmitting ||
                 (selectedType === 'digital' && !digitalFileUrl && !digitalFile) ||
-                (selectedType === 'opt_in' && (!digitalFileUrl && !digitalFile || !optinProgram)) ||
-                (selectedType === 'freebie' && !digitalFileUrl && !digitalFile) ||
-                (selectedType === 'url-media' && !mediaUrl)
+                (selectedType === 'url-media' && !mediaUrl) ||
+                (selectedType === 'iframe' && !mediaUrl)
               }
               className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
               <Plus className="w-4 h-4" />
-              {isSubmitting ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Listing' : 'Create Listing')}
+              {isSubmitting ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Product' : 'Create Product')}
             </button>
           </div>
         </div>

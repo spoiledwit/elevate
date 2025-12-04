@@ -4,7 +4,7 @@ import { Eye } from 'lucide-react'
 import { ProductCard } from './ProductCard'
 
 interface ThumbnailPreviewerProps {
-  productType: 'digital' | 'opt_in' | 'url-media' | 'freebie' | null
+  productType: 'digital' | 'opt_in' | 'url-media' | 'freebie' | 'iframe' | null
   thumbnail: string | null
   title: string
   subtitle?: string
@@ -65,8 +65,8 @@ export function ThumbnailPreviewer({
                     title={title}
                     subtitle={subtitle}
                     displayStyle={displayStyle}
-                    price={price}
-                    discountedPrice={discountedPrice}
+                    price={productType === 'url-media' || productType === 'opt_in' || productType === 'iframe' ? undefined : price}
+                    discountedPrice={productType === 'url-media' || productType === 'opt_in' || productType === 'iframe' ? undefined : discountedPrice}
                   />
                 </div>
               </div>

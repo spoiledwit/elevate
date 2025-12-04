@@ -91,7 +91,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       items: [
         { id: 'storefront', label: 'My Storefront', icon: Store },
         { id: 'custom-links', label: 'My Listings', icon: Package },
-        { id: 'leads', label: 'Leads', icon: Users },
       ]
     },
     // {
@@ -549,9 +548,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {!disableOnboarding && (
         <OnboardingTrigger expandSection={(sectionId: string) => setExpandedSections([sectionId])} />
       )}
-
-      {/* Milo Chatbot */}
-      {hasPermission('milo') && <MiloChatbot />}
     </div>
   )
 }

@@ -135,7 +135,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
     {
       id: 'opt_in' as const,
       title: 'Opt In Page',
-      description: 'Add your own embedded form to generate leads inside HTP Systems',
+      description: 'Add your own embedded form to generate leads inside Firm.',
       icon: Package,
       color: 'bg-green-50 border-green-200 text-green-600',
       image: customProductImg
@@ -151,7 +151,7 @@ export function LinkForm({ link, onClose }: LinkFormProps) {
     {
       id: 'freebie' as const,
       title: 'Freebie',
-      description: 'Add your own freebie embed form to generate leads inside HTP Systems.',
+      description: 'Add your own freebie embed form to generate leads inside Firm.',
       icon: Gift,
       color: 'bg-pink-50 border-pink-200 text-pink-600',
       image: freebieImg

@@ -451,19 +451,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       </button>
                     )}
 
-                    {/* Canva Designs */}
-                    {hasPermission('canva') && (
-                      <button
-                        onClick={() => {
-                          setActiveItem('canva')
-                          router.push('/canva')
-                        }}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
-                      >
-                        <Palette className="w-5 h-5 text-gray-500" />
-                        <span>Canva Designs</span>
-                      </button>
-                    )}
+
 
                     {/* Elevate Training */}
                     {hasPermission('training') && (
